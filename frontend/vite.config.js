@@ -10,7 +10,6 @@ export default defineConfig({
     port: 3000,
     host: true
   },
-  base: '/frontend/',
   build: {
     outDir: 'dist',
     sourcemap: true,

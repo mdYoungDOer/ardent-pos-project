@@ -49,14 +49,10 @@ RUN composer install --no-dev --optimize-autoloader
 # Switch back to root for final setup
 USER root
 
-# Copy frontend build files properly
-COPY --from=frontend-build /app/dist ./public/frontend
-# Copy API files
+# Copy frontend build files to root of public
+COPY --from=frontend-build /app/dist/* ./public/
+# Copy API files (ensure they don't get overwritten)
 COPY backend/public/api ./public/api
-# Create index.html at root that redirects to frontend
-RUN echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/frontend/"></head><body>Redirecting...</body></html>' > ./public/index.html
-# Debug: List files to verify structure
-RUN ls -la ./public/ && ls -la ./public/frontend/ || echo "Frontend directory not found"
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
