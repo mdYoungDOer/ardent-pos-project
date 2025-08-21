@@ -63,7 +63,7 @@ class Router
         $route = $this->findRoute($method, $uri);
         
         if (!$route) {
-            $this->sendResponse(404, ['error' => 'Route not found']);
+            $this->sendResponse(404, ['error' => 'Route not found', 'method' => $method, 'uri' => $uri]);
             return;
         }
 
@@ -98,14 +98,13 @@ class Router
                 throw new \Exception("Method {$action} not found in {$controllerClass}");
             }
 
-            $params = $route['params'] ?? [];
-            $result = $controller->$action(...array_values($params));
-            
-            if ($result !== null) {
-                $this->sendResponse(200, $result);
-            }
+            // Call the controller method
+            $controller->$action();
 
         } catch (\Exception $e) {
+            error_log("Router Error: " . $e->getMessage());
+            error_log("Router Error Trace: " . $e->getTraceAsString());
+            
             $this->sendResponse(500, [
                 'error' => 'Internal Server Error',
                 'message' => Config::get('app.debug') ? $e->getMessage() : 'Something went wrong'

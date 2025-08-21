@@ -19,9 +19,19 @@ const RegisterPage = () => {
   const password = watch('password')
 
   const onSubmit = async (data) => {
+    console.log('Registration form submitted:', data)
+    
     const result = await registerUser(data)
+    console.log('Registration result:', result)
+    
     if (result.success) {
-      navigate('/app', { replace: true })
+      console.log('Registration successful, navigating to /app')
+      // Add a small delay to ensure state is updated
+      setTimeout(() => {
+        navigate('/app', { replace: true })
+      }, 100)
+    } else {
+      console.error('Registration failed:', result.error)
     }
   }
 

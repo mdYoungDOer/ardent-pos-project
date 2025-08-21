@@ -15,7 +15,11 @@ const useAuthStore = create(
       login: async (credentials) => {
         set({ isLoading: true })
         try {
+          console.log('Attempting login with:', credentials.email)
+          
           const response = await api.post('/auth/login', credentials)
+          console.log('Login response:', response.data)
+          
           const { token, user, tenant } = response.data
 
           set({
@@ -32,8 +36,18 @@ const useAuthStore = create(
           toast.success('Login successful!')
           return { success: true }
         } catch (error) {
+          console.error('Login error:', error)
           set({ isLoading: false })
-          const message = error.response?.data?.error || 'Login failed'
+          
+          let message = 'Login failed'
+          if (error.response?.data?.error) {
+            message = error.response.data.error
+          } else if (error.response?.data?.message) {
+            message = error.response.data.message
+          } else if (error.message) {
+            message = error.message
+          }
+          
           toast.error(message)
           return { success: false, error: message }
         }
@@ -42,7 +56,11 @@ const useAuthStore = create(
       register: async (userData) => {
         set({ isLoading: true })
         try {
+          console.log('Attempting registration with:', userData.email)
+          
           const response = await api.post('/auth/register', userData)
+          console.log('Registration response:', response.data)
+          
           const { token, user, tenant } = response.data
 
           set({
@@ -59,8 +77,18 @@ const useAuthStore = create(
           toast.success('Registration successful!')
           return { success: true }
         } catch (error) {
+          console.error('Registration error:', error)
           set({ isLoading: false })
-          const message = error.response?.data?.error || 'Registration failed'
+          
+          let message = 'Registration failed'
+          if (error.response?.data?.error) {
+            message = error.response.data.error
+          } else if (error.response?.data?.message) {
+            message = error.response.data.message
+          } else if (error.message) {
+            message = error.message
+          }
+          
           toast.error(message)
           return { success: false, error: message }
         }
@@ -71,13 +99,15 @@ const useAuthStore = create(
           await api.post('/auth/logout')
         } catch (error) {
           // Ignore logout errors
+          console.log('Logout error (ignored):', error)
         }
 
         set({
           user: null,
           tenant: null,
           token: null,
-          isAuthenticated: false
+          isAuthenticated: false,
+          isLoading: false
         })
 
         // Remove token from API headers
@@ -90,7 +120,7 @@ const useAuthStore = create(
         const { token } = get()
         
         if (!token) {
-          set({ isLoading: false })
+          set({ isLoading: false, isAuthenticated: false })
           return
         }
 
@@ -110,6 +140,7 @@ const useAuthStore = create(
             isLoading: false
           })
         } catch (error) {
+          console.log('Auth check failed:', error)
           // Token is invalid, clear auth state
           set({
             user: null,
@@ -192,14 +223,14 @@ const useAuthStore = create(
         if (!user) return false
 
         const permissions = {
-          dashboard: ['admin', 'manager', 'cashier', 'inventory_staff', 'viewer'],
-          products: ['admin', 'manager'],
-          inventory: ['admin', 'manager', 'inventory_staff'],
-          sales: ['admin', 'manager', 'cashier'],
-          customers: ['admin', 'manager'],
-          reports: ['admin', 'manager', 'viewer'],
-          settings: ['admin'],
-          users: ['admin']
+          dashboard: ['admin', 'manager', 'cashier', 'inventory_staff', 'viewer', 'super_admin'],
+          products: ['admin', 'manager', 'super_admin'],
+          inventory: ['admin', 'manager', 'inventory_staff', 'super_admin'],
+          sales: ['admin', 'manager', 'cashier', 'super_admin'],
+          customers: ['admin', 'manager', 'super_admin'],
+          reports: ['admin', 'manager', 'viewer', 'super_admin'],
+          settings: ['admin', 'super_admin'],
+          users: ['admin', 'super_admin']
         }
 
         return permissions[feature]?.includes(user.role) || false
