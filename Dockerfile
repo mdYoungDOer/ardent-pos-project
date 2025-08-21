@@ -10,6 +10,10 @@ COPY frontend/ ./
 ENV VITE_API_URL=/api
 RUN npm run build
 
+# Debug: List the build output
+RUN ls -la dist/
+RUN ls -la dist/assets/ || echo "No assets directory found"
+
 # PHP Backend with Apache
 FROM php:8.2-apache AS backend
 
@@ -53,6 +57,10 @@ USER root
 
 # Copy frontend build files to public directory
 COPY --from=frontend-build /app/dist/* ./public/
+
+# Debug: List what was copied
+RUN ls -la public/
+RUN ls -la public/assets/ || echo "No assets directory found in public"
 
 # Ensure API directory exists and copy API files
 RUN mkdir -p ./public/api
