@@ -28,7 +28,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Configure Apache
 RUN a2enmod rewrite headers
 COPY backend/apache.conf /etc/apache2/sites-available/000-default.conf
-RUN echo "Listen 80" >> /etc/apache2/ports.conf
+
+# Create non-root user for Composer
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # Set working directory
 WORKDIR /var/www/html
@@ -36,8 +38,15 @@ WORKDIR /var/www/html
 # Copy backend files
 COPY backend/ ./
 
-# Install PHP dependencies
+# Change ownership to appuser for Composer installation
+RUN chown -R appuser:appuser /var/www/html
+
+# Install PHP dependencies as non-root user
+USER appuser
 RUN composer install --no-dev --optimize-autoloader
+
+# Switch back to root for final setup
+USER root
 
 # Copy frontend build
 COPY --from=frontend-build /app/dist ./public/dist
