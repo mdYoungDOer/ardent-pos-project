@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ardent_pos_db
+    environment:
+      POSTGRES_DB: ardent_pos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ardent_network
+
+  # PHP Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ardent_pos_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - ./uploads:/var/www/html/uploads
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=ardent_pos
+      - DB_USER=postgres
+      - DB_PASS=password
+    depends_on:
+      - postgres
+    networks:
+      - ardent_network
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ardent_pos_frontend
+    ports:
+      - "3000:3000"
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxx
+    depends_on:
+      - backend
+    networks:
+      - ardent_network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: ardent_pos_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ardent_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  ardent_network:
+    driver: bridge

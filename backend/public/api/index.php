@@ -1,0 +1,160 @@
+<?php
+
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+use ArdentPOS\Core\Router;
+use ArdentPOS\Core\Database;
+use ArdentPOS\Core\Config;
+use ArdentPOS\Middleware\CorsMiddleware;
+use ArdentPOS\Middleware\AuthMiddleware;
+use ArdentPOS\Middleware\TenantMiddleware;
+
+// Load environment variables
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->load();
+
+// Set error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', $_ENV['APP_DEBUG'] ?? false);
+
+// Set content type
+header('Content-Type: application/json');
+
+try {
+    // Initialize configuration
+    Config::init();
+    
+    // Initialize database connection
+    Database::init();
+    
+    // Create router instance
+    $router = new Router();
+    
+    // Apply CORS middleware
+    CorsMiddleware::handle();
+    
+    // Handle preflight requests
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        exit;
+    }
+    
+    // Get request method and URI
+    $method = $_SERVER['REQUEST_METHOD'];
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $uri = str_replace('/api', '', $uri);
+    
+    // Public routes (no authentication required)
+    $router->post('/auth/register', 'AuthController@register');
+    $router->post('/auth/login', 'AuthController@login');
+    $router->post('/auth/forgot-password', 'AuthController@forgotPassword');
+    $router->post('/auth/reset-password', 'AuthController@resetPassword');
+    $router->post('/webhooks/paystack', 'PaystackController@webhook');
+    $router->get('/health', 'HealthController@check');
+    
+    // Paystack configuration (requires auth)
+    $router->get('/paystack/config', 'PaystackConfigController@getConfig');
+    
+    // Protected routes (require authentication)
+    $router->group('/auth', function($router) {
+        $router->post('/logout', 'AuthController@logout');
+        $router->get('/me', 'AuthController@me');
+        $router->put('/profile', 'AuthController@updateProfile');
+        $router->put('/password', 'AuthController@changePassword');
+    }, [AuthMiddleware::class]);
+    
+    // Tenant-scoped routes
+    $router->group('', function($router) {
+        // Dashboard
+        $router->get('/dashboard', 'DashboardController@index');
+        $router->get('/dashboard/stats', 'DashboardController@stats');
+        
+        // Products
+        $router->get('/products', 'ProductController@index');
+        $router->post('/products', 'ProductController@store');
+        $router->get('/products/{id}', 'ProductController@show');
+        $router->put('/products/{id}', 'ProductController@update');
+        $router->delete('/products/{id}', 'ProductController@destroy');
+        $router->post('/products/import', 'ProductController@import');
+        
+        // Categories
+        $router->get('/categories', 'CategoryController@index');
+        $router->post('/categories', 'CategoryController@store');
+        $router->put('/categories/{id}', 'CategoryController@update');
+        $router->delete('/categories/{id}', 'CategoryController@destroy');
+        
+        // Inventory
+        $router->get('/inventory', 'InventoryController@index');
+        $router->post('/inventory/{id}/adjust', 'InventoryController@adjustStock');
+        $router->get('/inventory/{id}/history', 'InventoryController@adjustmentHistory');
+        $router->get('/inventory/low-stock', 'InventoryController@lowStockReport');
+        $router->get('/inventory/valuation', 'InventoryController@stockValuation');
+        
+        // Sales
+        $router->get('/sales', 'SalesController@index');
+        $router->post('/sales', 'SalesController@store');
+        $router->get('/sales/{id}', 'SalesController@show');
+        $router->post('/sales/{id}/refund', 'SalesController@refund');
+        $router->get('/sales/daily-summary', 'SalesController@dailySummary');
+        
+        // Customers
+        $router->get('/customers', 'CustomerController@index');
+        $router->post('/customers', 'CustomerController@store');
+        $router->get('/customers/{id}', 'CustomerController@show');
+        $router->put('/customers/{id}', 'CustomerController@update');
+        $router->delete('/customers/{id}', 'CustomerController@destroy');
+        $router->get('/customers/search', 'CustomerController@search');
+        
+        // Users (Admin only)
+        $router->get('/users', 'UserController@index');
+        $router->post('/users', 'UserController@store');
+        $router->get('/users/{id}', 'UserController@show');
+        $router->put('/users/{id}', 'UserController@update');
+        $router->delete('/users/{id}', 'UserController@destroy');
+        $router->post('/users/{id}/change-password', 'UserController@changePassword');
+        
+        // Reports
+        $router->get('/reports/sales', 'ReportsController@salesReport');
+        $router->get('/reports/inventory', 'ReportsController@inventoryReport');
+        $router->get('/reports/customers', 'ReportsController@customerReport');
+        $router->get('/reports/profit', 'ReportsController@profitReport');
+        $router->get('/reports/export', 'ReportsController@exportReport');
+        
+        // Settings
+        $router->get('/settings', 'SettingsController@index');
+        $router->put('/settings', 'SettingsController@update');
+        
+        // Subscriptions
+        $router->get('/subscription', 'SubscriptionController@show');
+        $router->post('/subscription/upgrade', 'SubscriptionController@upgrade');
+        $router->post('/subscription/cancel', 'SubscriptionController@cancel');
+        
+        // Notifications
+        $router->get('/notifications/settings', 'NotificationController@getNotificationSettings');
+        $router->put('/notifications/settings', 'NotificationController@updateNotificationSettings');
+        $router->post('/notifications/low-stock-alerts', 'NotificationController@sendLowStockAlerts');
+        $router->post('/notifications/sale-receipt/{id}', 'NotificationController@sendSaleReceipt');
+        $router->get('/notifications/history', 'NotificationController@getNotificationHistory');
+        
+    }, [AuthMiddleware::class, TenantMiddleware::class]);
+    
+    // Super admin routes
+    $router->group('/admin', function($router) {
+        $router->get('/tenants', 'Admin\TenantController@index');
+        $router->post('/tenants', 'Admin\TenantController@store');
+        $router->get('/tenants/{id}', 'Admin\TenantController@show');
+        $router->put('/tenants/{id}', 'Admin\TenantController@update');
+        $router->delete('/tenants/{id}', 'Admin\TenantController@destroy');
+        $router->get('/analytics', 'Admin\AnalyticsController@index');
+    }, [AuthMiddleware::class, 'role:super_admin']);
+    
+    // Dispatch the request
+    $router->dispatch($method, $uri);
+    
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Internal Server Error',
+        'message' => $_ENV['APP_DEBUG'] ? $e->getMessage() : 'Something went wrong'
+    ]);
+}
