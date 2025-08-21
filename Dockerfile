@@ -48,8 +48,10 @@ RUN composer install --no-dev --optimize-autoloader
 # Switch back to root for final setup
 USER root
 
-# Copy frontend build
-COPY --from=frontend-build /app/dist ./public/dist
+# Copy frontend build files to public directory root
+COPY --from=frontend-build /app/dist/* ./public/
+# Copy API files to ensure they're not overwritten
+COPY backend/public/api ./public/api
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \

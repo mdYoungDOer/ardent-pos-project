@@ -9,9 +9,12 @@ use ArdentPOS\Middleware\CorsMiddleware;
 use ArdentPOS\Middleware\AuthMiddleware;
 use ArdentPOS\Middleware\TenantMiddleware;
 
-// Load environment variables
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
-$dotenv->load();
+// Load environment variables (only if .env file exists)
+$envPath = __DIR__ . '/../../';
+if (file_exists($envPath . '.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable($envPath);
+    $dotenv->load();
+}
 
 // Set error reporting
 error_reporting(E_ALL);
