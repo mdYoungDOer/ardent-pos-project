@@ -51,6 +51,10 @@ try {
     $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $uri = str_replace('/api', '', $uri);
     
+    // Debug logging
+    error_log("API Request: $method $uri");
+    error_log("Request Body: " . file_get_contents('php://input'));
+    
     // Public routes (no authentication required)
     $router->post('/auth/register', 'AuthController@register');
     $router->post('/auth/login', 'AuthController@login');
@@ -159,6 +163,9 @@ try {
     $router->dispatch($method, $uri);
     
 } catch (Exception $e) {
+    error_log("API Error: " . $e->getMessage());
+    error_log("API Error Trace: " . $e->getTraceAsString());
+    
     http_response_code(500);
     echo json_encode([
         'error' => 'Internal Server Error',
