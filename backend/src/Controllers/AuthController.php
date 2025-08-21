@@ -74,7 +74,11 @@ class AuthController
         try {
             $input = json_decode(file_get_contents('php://input'), true);
             
+            error_log("Login attempt - Raw input: " . file_get_contents('php://input'));
+            error_log("Login attempt - Decoded input: " . json_encode($input));
+            
             if (empty($input['email']) || empty($input['password'])) {
+                error_log("Login failed - Missing email or password");
                 http_response_code(400);
                 echo json_encode(['error' => 'Email and password are required']);
                 return;
@@ -83,12 +87,25 @@ class AuthController
             // Debug: Log the login attempt
             error_log("Login attempt for email: " . $input['email']);
 
+            // Test database connection first
+            try {
+                Database::getConnection();
+                error_log("Database connection successful");
+            } catch (\Exception $e) {
+                error_log("Database connection failed: " . $e->getMessage());
+                http_response_code(500);
+                echo json_encode(['error' => 'Database connection failed', 'message' => $e->getMessage()]);
+                return;
+            }
+
             $user = Database::fetch(
                 'SELECT u.*, t.name as tenant_name FROM users u 
                  JOIN tenants t ON u.tenant_id = t.id 
                  WHERE u.email = ? AND u.status = ? AND t.status = ?',
                 [$input['email'], 'active', 'active']
             );
+
+            error_log("User query result: " . ($user ? "User found" : "User not found"));
 
             if (!$user) {
                 error_log("User not found for email: " . $input['email']);
@@ -97,6 +114,8 @@ class AuthController
                 return;
             }
 
+            error_log("Password verification for user: " . $user['id']);
+            
             if (!password_verify($input['password'], $user['password_hash'])) {
                 error_log("Invalid password for email: " . $input['email']);
                 http_response_code(401);
@@ -104,9 +123,12 @@ class AuthController
                 return;
             }
 
+            error_log("Password verified successfully");
+
             // Update last login
             Database::update('users', ['last_login' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
 
+            error_log("Generating token for user: " . $user['id']);
             $token = $this->generateToken($user['id'], $user['tenant_id']);
 
             error_log("Login successful for user: " . $user['id']);
@@ -129,10 +151,12 @@ class AuthController
 
         } catch (\Exception $e) {
             error_log("Login error: " . $e->getMessage());
+            error_log("Login error trace: " . $e->getTraceAsString());
             http_response_code(500);
             echo json_encode([
                 'error' => 'Login failed', 
-                'message' => Config::get('app.debug') ? $e->getMessage() : 'Something went wrong'
+                'message' => Config::get('app.debug') ? $e->getMessage() : 'Something went wrong',
+                'debug' => Config::get('app.debug') ? $e->getTraceAsString() : null
             ]);
         }
     }
