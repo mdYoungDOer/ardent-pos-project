@@ -72,13 +72,16 @@ class AuthController
     public function login(): void
     {
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
+            // Read input data from request body
+            $rawInput = file_get_contents('php://input');
+            error_log("Login attempt - Raw input: " . $rawInput);
             
-            error_log("Login attempt - Raw input: " . file_get_contents('php://input'));
+            $input = json_decode($rawInput, true);
             error_log("Login attempt - Decoded input: " . json_encode($input));
             
             if (empty($input['email']) || empty($input['password'])) {
                 error_log("Login failed - Missing email or password");
+                error_log("Input data: " . json_encode($input));
                 http_response_code(400);
                 echo json_encode(['error' => 'Email and password are required']);
                 return;

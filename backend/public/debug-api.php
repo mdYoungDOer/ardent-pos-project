@@ -20,7 +20,12 @@ $input = [
     'password' => '@am171293GH!!'
 ];
 
-// Override php://input
+// Create a temporary file to simulate php://input
+$tempFile = tmpfile();
+fwrite($tempFile, json_encode($input));
+rewind($tempFile);
+
+// Override php://input stream
 $GLOBALS['HTTP_RAW_POST_DATA'] = json_encode($input);
 
 $debug = [
