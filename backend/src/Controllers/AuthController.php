@@ -71,47 +71,70 @@ class AuthController
 
     public function login(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true);
-        
-        if (empty($input['email']) || empty($input['password'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Email and password are required']);
-            return;
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (empty($input['email']) || empty($input['password'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Email and password are required']);
+                return;
+            }
+
+            // Debug: Log the login attempt
+            error_log("Login attempt for email: " . $input['email']);
+
+            $user = Database::fetch(
+                'SELECT u.*, t.name as tenant_name FROM users u 
+                 JOIN tenants t ON u.tenant_id = t.id 
+                 WHERE u.email = ? AND u.status = ? AND t.status = ?',
+                [$input['email'], 'active', 'active']
+            );
+
+            if (!$user) {
+                error_log("User not found for email: " . $input['email']);
+                http_response_code(401);
+                echo json_encode(['error' => 'Invalid credentials']);
+                return;
+            }
+
+            if (!password_verify($input['password'], $user['password_hash'])) {
+                error_log("Invalid password for email: " . $input['email']);
+                http_response_code(401);
+                echo json_encode(['error' => 'Invalid credentials']);
+                return;
+            }
+
+            // Update last login
+            Database::update('users', ['last_login' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
+
+            $token = $this->generateToken($user['id'], $user['tenant_id']);
+
+            error_log("Login successful for user: " . $user['id']);
+
+            echo json_encode([
+                'message' => 'Login successful',
+                'token' => $token,
+                'user' => [
+                    'id' => $user['id'],
+                    'email' => $user['email'],
+                    'first_name' => $user['first_name'],
+                    'last_name' => $user['last_name'],
+                    'role' => $user['role']
+                ],
+                'tenant' => [
+                    'id' => $user['tenant_id'],
+                    'name' => $user['tenant_name']
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Login error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Login failed', 
+                'message' => Config::get('app.debug') ? $e->getMessage() : 'Something went wrong'
+            ]);
         }
-
-        $user = Database::fetch(
-            'SELECT u.*, t.name as tenant_name FROM users u 
-             JOIN tenants t ON u.tenant_id = t.id 
-             WHERE u.email = ? AND u.status = ? AND t.status = ?',
-            [$input['email'], 'active', 'active']
-        );
-
-        if (!$user || !password_verify($input['password'], $user['password_hash'])) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Invalid credentials']);
-            return;
-        }
-
-        // Update last login
-        Database::update('users', ['last_login' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
-
-        $token = $this->generateToken($user['id'], $user['tenant_id']);
-
-        echo json_encode([
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => [
-                'id' => $user['id'],
-                'email' => $user['email'],
-                'first_name' => $user['first_name'],
-                'last_name' => $user['last_name'],
-                'role' => $user['role']
-            ],
-            'tenant' => [
-                'id' => $user['tenant_id'],
-                'name' => $user['tenant_name']
-            ]
-        ]);
     }
 
     public function logout(): void
