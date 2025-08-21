@@ -25,15 +25,16 @@ try {
     $email = 'deyoungdoer@gmail.com';
     $password = '@am171293GH!!';
 
-    echo json_encode([
+    $result = [
         'test' => 'Final login test',
         'email' => $email,
-        'password_provided' => !empty($password)
-    ]);
+        'password_provided' => !empty($password),
+        'steps' => []
+    ];
 
     // Test database connection
     $connection = Database::getConnection();
-    echo json_encode(['database' => 'Connection successful']);
+    $result['steps'][] = ['database' => 'Connection successful'];
     
     // Test the login logic directly
     $user = Database::fetch(
@@ -44,18 +45,20 @@ try {
     );
 
     if (!$user) {
-        echo json_encode(['error' => 'User not found']);
+        $result['error'] = 'User not found';
+        echo json_encode($result);
         exit;
     }
 
-    echo json_encode(['user' => 'User found: ' . $user['email']]);
+    $result['steps'][] = ['user' => 'User found: ' . $user['email']];
 
     if (!password_verify($password, $user['password_hash'])) {
-        echo json_encode(['error' => 'Invalid password']);
+        $result['error'] = 'Invalid password';
+        echo json_encode($result);
         exit;
     }
 
-    echo json_encode(['password' => 'Password verified successfully']);
+    $result['steps'][] = ['password' => 'Password verified successfully'];
 
     // Generate token
     $payload = [
@@ -67,22 +70,22 @@ try {
 
     $token = JWT::encode($payload, Config::get('jwt.secret'), 'HS256');
 
-    echo json_encode([
-        'success' => true,
-        'message' => 'Login test successful',
-        'token' => $token,
-        'user' => [
-            'id' => $user['id'],
-            'email' => $user['email'],
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
-            'role' => $user['role']
-        ],
-        'tenant' => [
-            'id' => $user['tenant_id'],
-            'name' => $user['tenant_name']
-        ]
-    ]);
+    $result['success'] = true;
+    $result['message'] = 'Login test successful';
+    $result['token'] = $token;
+    $result['user'] = [
+        'id' => $user['id'],
+        'email' => $user['email'],
+        'first_name' => $user['first_name'],
+        'last_name' => $user['last_name'],
+        'role' => $user['role']
+    ];
+    $result['tenant'] = [
+        'id' => $user['tenant_id'],
+        'name' => $user['tenant_name']
+    ];
+
+    echo json_encode($result);
 
 } catch (Exception $e) {
     http_response_code(500);
