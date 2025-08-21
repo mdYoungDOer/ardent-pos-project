@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import { 
   HiCash, 
   HiShoppingCart, 
   HiUsers, 
-  HiExclamationTriangle,
+  HiExclamationCircle,
   HiTrendingUp,
   HiTrendingDown
 } from 'react-icons/hi'
@@ -140,7 +140,7 @@ const DashboardPage = () => {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <HiExclamationTriangle className="h-6 w-6 text-yellow-400" />
+                <HiExclamationCircle className="h-6 w-6 text-yellow-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>

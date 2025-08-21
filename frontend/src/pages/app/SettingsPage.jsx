@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { HiCog, HiUser, HiCreditCard, HiBell, HiShieldCheck } from 'react-icons/hi'
 import api from '../../services/api'

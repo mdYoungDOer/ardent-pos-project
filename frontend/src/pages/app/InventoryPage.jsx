@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { HiExclamationTriangle, HiPencil, HiPlus, HiSearch } from 'react-icons/hi'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { HiExclamationCircle, HiPencil, HiPlus, HiSearch } from 'react-icons/hi'
 import api from '../../services/api'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
@@ -143,12 +143,12 @@ const InventoryPage = () => {
                     <td>
                       {item.quantity <= 0 ? (
                         <span className="badge badge-danger flex items-center">
-                          <HiExclamationTriangle className="h-3 w-3 mr-1" />
+                          <HiExclamationCircle className="h-3 w-3 mr-1" />
                           Out of Stock
                         </span>
                       ) : item.quantity <= item.min_stock ? (
                         <span className="badge badge-warning flex items-center">
-                          <HiExclamationTriangle className="h-3 w-3 mr-1" />
+                          <HiExclamationCircle className="h-3 w-3 mr-1" />
                           Low Stock
                         </span>
                       ) : (

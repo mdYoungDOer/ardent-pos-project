@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { HiPlus, HiPencil, HiTrash, HiSearch, HiMail, HiPhone } from 'react-icons/hi'
 import api from '../../services/api'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
