@@ -29,6 +29,7 @@ A robust, mobile-first SaaS Point of Sale platform for small to medium businesse
 ├── db/               # Database migrations and documentation
 ├── docker-compose.yml # Development environment
 ├── Dockerfile        # Production container
+├── .do/              # Digital Ocean App Platform config
 └── README.md         # This file
 ```
 
@@ -82,7 +83,7 @@ JWT_SECRET=your-secret-key
 
 # SendGrid
 SENDGRID_API_KEY=your-sendgrid-key
-FROM_EMAIL=noreply@ardentpos.com
+SENDGRID_FROM_EMAIL=noreply@ardentpos.com
 
 # Paystack
 PAYSTACK_PUBLIC_KEY=pk_test_xxx
@@ -92,6 +93,50 @@ PAYSTACK_SECRET_KEY=sk_test_xxx
 APP_URL=http://localhost:3000
 API_URL=http://localhost:8000
 ```
+
+## Deployment to Digital Ocean App Platform
+
+### Prerequisites
+
+1. Digital Ocean account with App Platform access
+2. Managed PostgreSQL database
+3. Environment variables configured
+
+### Deployment Steps
+
+1. **Push to GitHub**: Ensure your code is pushed to the main branch
+
+2. **Configure Environment Variables** in Digital Ocean App Platform:
+   ```
+   APP_URL=https://ardent-pos-app-sdq3t.ondigitalocean.app
+   DB_HOST=db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com
+   DB_PORT=25060
+   DB_NAME=defaultdb
+   DB_USER=doadmin
+   DB_PASS=[your-secret-password]
+   JWT_SECRET=[your-secret-jwt-key]
+   CORS_ALLOWED_ORIGINS=https://ardent-pos-app-sdq3t.ondigitalocean.app
+   PAYSTACK_PUBLIC_KEY=pk_test_af9bf6a2a8cf6ac7693e03ce00aeb5fdd48c25f3
+   PAYSTACK_SECRET_KEY=[your-paystack-secret]
+   SENDGRID_API_KEY=[your-sendgrid-key]
+   SENDGRID_FROM_EMAIL=notify@ardentwebservices.com
+   JWT_EXPIRY=3600
+   API_URL=https://ardent-pos-app-sdq3t.ondigitalocean.app/api
+   APP_DEBUG=false
+   DEFAULT_CURRENCY=GHS
+   DEFAULT_LOCALE=en-GH
+   ```
+
+3. **Deploy**: Digital Ocean will automatically build and deploy from your GitHub repository
+
+4. **Verify Deployment**: Check the health endpoint at `/health.php`
+
+### Troubleshooting
+
+- **Database Connection Issues**: Verify PostgreSQL connection string and credentials
+- **CORS Errors**: Check CORS_ALLOWED_ORIGINS environment variable
+- **Build Failures**: Check Docker build logs in Digital Ocean dashboard
+- **Environment Variables**: Ensure all required variables are set in App Platform
 
 ## User Roles
 
@@ -121,13 +166,11 @@ composer test
 npm run test:e2e
 ```
 
-## Deployment
+## Health Checks
 
-The application is configured for deployment on Digital Ocean App Platform:
-
-1. Push to main branch
-2. Digital Ocean will automatically build and deploy
-3. Environment variables are configured in the App Platform dashboard
+The application provides health check endpoints:
+- `/health.php` - Basic health check
+- `/api/health` - Detailed API health check
 
 ## License
 

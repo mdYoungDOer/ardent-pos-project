@@ -12,15 +12,32 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false, // Disable sourcemaps for production
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
-          ui: ['react-hook-form', 'react-toastify', 'framer-motion']
+          ui: ['react-hook-form', 'react-toastify', 'framer-motion'],
+          charts: ['chart.js', 'react-chartjs-2']
         }
       }
+    },
+    // Optimize build size
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false, // Keep console logs for debugging
+        drop_debugger: true
+      }
     }
+  },
+  // Environment variable handling
+  define: {
+    'process.env': {}
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom']
   }
 })

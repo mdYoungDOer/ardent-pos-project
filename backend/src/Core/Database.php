@@ -20,8 +20,9 @@ class Database
     {
         $config = Config::get('db');
         
+        // Build PostgreSQL connection string with proper SSL handling
         $dsn = sprintf(
-            'pgsql:host=%s;port=%s;dbname=%s',
+            'pgsql:host=%s;port=%s;dbname=%s;sslmode=require',
             $config['host'],
             $config['port'],
             $config['database']
@@ -36,9 +37,16 @@ class Database
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
+                    PDO::ATTR_PERSISTENT => false, // Disable persistent connections for better reliability
                 ]
             );
+            
+            // Test the connection
+            self::$connection->query('SELECT 1');
+            
         } catch (PDOException $e) {
+            // Log the error for debugging
+            error_log('Database connection failed: ' . $e->getMessage());
             throw new \Exception('Database connection failed: ' . $e->getMessage());
         }
     }
@@ -54,9 +62,14 @@ class Database
 
     public static function query(string $sql, array $params = []): \PDOStatement
     {
-        $stmt = self::getConnection()->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
+        try {
+            $stmt = self::getConnection()->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (PDOException $e) {
+            error_log('Database query failed: ' . $e->getMessage());
+            throw new \Exception('Database query failed: ' . $e->getMessage());
+        }
     }
 
     public static function fetch(string $sql, array $params = []): ?array

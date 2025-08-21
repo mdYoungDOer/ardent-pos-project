@@ -3,9 +3,11 @@ FROM node:18-alpine AS frontend-build
 
 WORKDIR /app
 COPY frontend/package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm ci --legacy-peer-deps
 
 COPY frontend/ ./
+# Set environment variables for build
+ENV VITE_API_URL=/api
 RUN npm run build
 
 # PHP Backend with Apache
@@ -29,8 +31,6 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN a2enmod rewrite headers mime
 COPY backend/apache.conf /etc/apache2/sites-available/000-default.conf
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-# Ensure proper MIME types are loaded
-RUN echo "LoadModule mime_module modules/mod_mime.so" >> /etc/apache2/apache2.conf
 
 # Create non-root user for Composer
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -46,14 +46,16 @@ RUN chown -R appuser:appuser /var/www/html
 
 # Install PHP dependencies as non-root user
 USER appuser
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Switch back to root for final setup
 USER root
 
-# Copy frontend build files to root of public
+# Copy frontend build files to public directory
 COPY --from=frontend-build /app/dist/* ./public/
-# Copy API files (ensure they don't get overwritten)
+
+# Ensure API directory exists and copy API files
+RUN mkdir -p ./public/api
 COPY backend/public/api ./public/api
 
 # Set permissions
@@ -63,6 +65,13 @@ RUN chown -R www-data:www-data /var/www/html \
 # Create uploads directory
 RUN mkdir -p uploads && chown -R www-data:www-data uploads
 
+# Create a simple health check file
+RUN echo '<?php echo json_encode(["status" => "ok", "timestamp" => date("c")]); ?>' > ./public/health.php
+
 EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/health.php || exit 1
 
 CMD ["apache2-foreground"]

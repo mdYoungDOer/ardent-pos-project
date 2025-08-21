@@ -9,16 +9,20 @@ use ArdentPOS\Middleware\CorsMiddleware;
 use ArdentPOS\Middleware\AuthMiddleware;
 use ArdentPOS\Middleware\TenantMiddleware;
 
-// Load environment variables (only if .env file exists)
-$envPath = __DIR__ . '/../../';
-if (file_exists($envPath . '.env')) {
-    $dotenv = Dotenv\Dotenv::createImmutable($envPath);
-    $dotenv->load();
+// Load environment variables from system (Digital Ocean App Platform)
+// No need to check for .env file as Digital Ocean uses system environment variables
+if (class_exists('Dotenv\Dotenv')) {
+    $envPath = __DIR__ . '/../../';
+    if (file_exists($envPath . '.env')) {
+        $dotenv = Dotenv\Dotenv::createImmutable($envPath);
+        $dotenv->load();
+    }
 }
 
-// Set error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', $_ENV['APP_DEBUG'] ?? false);
+// Set error reporting based on environment
+$debug = filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+error_reporting($debug ? E_ALL : 0);
+ini_set('display_errors', $debug ? '1' : '0');
 
 // Set content type
 header('Content-Type: application/json');
@@ -158,6 +162,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'error' => 'Internal Server Error',
-        'message' => $_ENV['APP_DEBUG'] ? $e->getMessage() : 'Something went wrong'
+        'message' => $debug ? $e->getMessage() : 'Something went wrong',
+        'trace' => $debug ? $e->getTraceAsString() : null
     ]);
 }

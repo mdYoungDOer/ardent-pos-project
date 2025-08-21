@@ -12,18 +12,18 @@ class Config
             'db' => [
                 'host' => $_ENV['DB_HOST'] ?? 'localhost',
                 'port' => $_ENV['DB_PORT'] ?? '5432',
-                'database' => $_ENV['DB_NAME'] ?? 'ardent_pos',
+                'database' => $_ENV['DB_NAME'] ?? 'defaultdb',
                 'username' => $_ENV['DB_USER'] ?? 'postgres',
                 'password' => $_ENV['DB_PASS'] ?? 'password',
             ],
             'jwt' => [
-                'secret' => $_ENV['JWT_SECRET'] ?? 'your-secret-key',
+                'secret' => $_ENV['JWT_SECRET'] ?? 'your-secret-key-change-in-production',
                 'expiry' => (int)($_ENV['JWT_EXPIRY'] ?? 3600),
             ],
             'sendgrid' => [
                 'api_key' => $_ENV['SENDGRID_API_KEY'] ?? '',
-                'from_email' => $_ENV['FROM_EMAIL'] ?? 'noreply@ardentpos.com',
-                'from_name' => $_ENV['FROM_NAME'] ?? 'Ardent POS',
+                'from_email' => $_ENV['SENDGRID_FROM_EMAIL'] ?? 'noreply@ardentpos.com',
+                'from_name' => $_ENV['SENDGRID_FROM_NAME'] ?? 'Ardent POS',
             ],
             'paystack' => [
                 'public_key' => $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '',
@@ -31,13 +31,13 @@ class Config
                 'webhook_secret' => $_ENV['PAYSTACK_WEBHOOK_SECRET'] ?? '',
             ],
             'app' => [
-                'url' => $_ENV['APP_URL'] ?? 'http://localhost:3000',
-                'api_url' => $_ENV['API_URL'] ?? 'http://localhost:8000',
-                'env' => $_ENV['APP_ENV'] ?? 'development',
-                'debug' => filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'url' => $_ENV['APP_URL'] ?? 'https://ardent-pos-app-sdq3t.ondigitalocean.app',
+                'api_url' => $_ENV['API_URL'] ?? 'https://ardent-pos-app-sdq3t.ondigitalocean.app/api',
+                'env' => $_ENV['APP_ENV'] ?? 'production',
+                'debug' => filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN),
             ],
             'cors' => [
-                'allowed_origins' => explode(',', $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'http://localhost:3000'),
+                'allowed_origins' => explode(',', $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'https://ardent-pos-app-sdq3t.ondigitalocean.app'),
             ],
             'upload' => [
                 'max_size' => (int)($_ENV['MAX_UPLOAD_SIZE'] ?? 5242880), // 5MB
@@ -46,6 +46,10 @@ class Config
             'rate_limit' => [
                 'requests' => (int)($_ENV['RATE_LIMIT_REQUESTS'] ?? 100),
                 'window' => (int)($_ENV['RATE_LIMIT_WINDOW'] ?? 3600),
+            ],
+            'defaults' => [
+                'currency' => $_ENV['DEFAULT_CURRENCY'] ?? 'GHS',
+                'locale' => $_ENV['DEFAULT_LOCALE'] ?? 'en-GH',
             ],
         ];
     }

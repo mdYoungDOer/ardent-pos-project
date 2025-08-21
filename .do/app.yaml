@@ -1,160 +1,52 @@
-name: ardent-pos
-region: fra
-
+name: ardent-pos-app
 services:
-  # Backend API Service
-  - name: api
-    source_dir: /backend
-    github:
-      repo: mdYoungDOer/ardent-pos-project
-      branch: main
-    run_command: php -S 0.0.0.0:8080 -t public
-    environment_slug: php
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    http_port: 8080
-    routes:
-      - path: /api
-    health_check:
-      http_path: /api/health
-    envs:
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: "false"
-      - key: DB_HOST
-        value: ${db.HOSTNAME}
-      - key: DB_PORT
-        value: ${db.PORT}
-      - key: DB_NAME
-        value: ${db.DATABASE}
-      - key: DB_USER
-        value: ${db.USERNAME}
-      - key: DB_PASS
-        value: ${db.PASSWORD}
-      - key: JWT_SECRET
-        value: ${JWT_SECRET}
-        type: SECRET
-      - key: JWT_EXPIRY
-        value: "86400"
-      - key: SENDGRID_API_KEY
-        value: ${SENDGRID_API_KEY}
-        type: SECRET
-      - key: SENDGRID_FROM_EMAIL
-        value: ${SENDGRID_FROM_EMAIL}
-      - key: SENDGRID_FROM_NAME
-        value: "Ardent POS"
-      - key: PAYSTACK_PUBLIC_KEY
-        value: ${PAYSTACK_PUBLIC_KEY}
-      - key: PAYSTACK_SECRET_KEY
-        value: ${PAYSTACK_SECRET_KEY}
-        type: SECRET
-      - key: PAYSTACK_WEBHOOK_SECRET
-        value: ${PAYSTACK_WEBHOOK_SECRET}
-        type: SECRET
-      - key: DEFAULT_CURRENCY
-        value: "GHS"
-      - key: DEFAULT_LOCALE
-        value: "en-GH"
-      - key: CORS_ALLOWED_ORIGINS
-        value: ${APP_URL}
-
-  # Frontend Service
-  - name: web
-    source_dir: /frontend
-    github:
-      repo: mdYoungDOer/ardent-pos-project
-      branch: main
-    build_command: npm install --legacy-peer-deps && npm run build
-    run_command: npm run preview -- --host 0.0.0.0 --port 8080
-    environment_slug: node-js
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    http_port: 8080
-    routes:
-      - path: /
-    envs:
-      - key: VITE_API_URL
-        value: ${APP_URL}/api
-      - key: VITE_APP_URL
-        value: ${APP_URL}
-      - key: NODE_ENV
-        value: production
-
-# Database
-databases:
-  - name: db
-    engine: PG
-    version: "14"
-    size: basic-xs
-    num_nodes: 1
-
-# Static Assets (if needed)
-static_sites:
-  - name: assets
-    source_dir: /frontend/dist/assets
-    github:
-      repo: mdYoungDOer/ardent-pos-project
-      branch: main
-    build_command: cd frontend && npm install --legacy-peer-deps && npm run build
-    output_dir: /frontend/dist/assets
-    routes:
-      - path: /assets
-
-# Jobs for background tasks
-jobs:
-  - name: send-notifications
-    source_dir: /backend
-    github:
-      repo: mdYoungDOer/ardent-pos-project
-      branch: main
-    run_command: php scripts/send-notifications.php
-    environment_slug: php
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    kind: CRON
-    cron: "0 9 * * *"  # Daily at 9 AM
-    envs:
-      - key: APP_ENV
-        value: production
-      - key: DB_HOST
-        value: ${db.HOSTNAME}
-      - key: DB_PORT
-        value: ${db.PORT}
-      - key: DB_NAME
-        value: ${db.DATABASE}
-      - key: DB_USER
-        value: ${db.USERNAME}
-      - key: DB_PASS
-        value: ${db.PASSWORD}
-      - key: SENDGRID_API_KEY
-        value: ${SENDGRID_API_KEY}
-        type: SECRET
-
-  - name: monthly-reports
-    source_dir: /backend
-    github:
-      repo: mdYoungDOer/ardent-pos-project
-      branch: main
-    run_command: php scripts/monthly-reports.php
-    environment_slug: php
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    kind: CRON
-    cron: "0 8 1 * *"  # Monthly on 1st at 8 AM
-    envs:
-      - key: APP_ENV
-        value: production
-      - key: DB_HOST
-        value: ${db.HOSTNAME}
-      - key: DB_PORT
-        value: ${db.PORT}
-      - key: DB_NAME
-        value: ${db.DATABASE}
-      - key: DB_USER
-        value: ${db.USERNAME}
-      - key: DB_PASS
-        value: ${db.PASSWORD}
-      - key: SENDGRID_API_KEY
-        value: ${SENDGRID_API_KEY}
-        type: SECRET
+- name: web
+  source_dir: /
+  github:
+    repo: mdYoungDOer/ardent-pos-project
+    branch: main
+  run_command: apache2-foreground
+  http_port: 80
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  health_check:
+    http_path: /health.php
+  envs:
+  - key: APP_URL
+    value: https://ardent-pos-app-sdq3t.ondigitalocean.app
+  - key: DB_HOST
+    value: db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com
+  - key: DB_PORT
+    value: "25060"
+  - key: DB_NAME
+    value: defaultdb
+  - key: DB_USER
+    value: doadmin
+  - key: DB_PASS
+    value: ${DB_PASS}
+    type: SECRET
+  - key: JWT_SECRET
+    value: ${JWT_SECRET}
+    type: SECRET
+  - key: CORS_ALLOWED_ORIGINS
+    value: https://ardent-pos-app-sdq3t.ondigitalocean.app
+  - key: PAYSTACK_PUBLIC_KEY
+    value: pk_test_af9bf6a2a8cf6ac7693e03ce00aeb5fdd48c25f3
+  - key: PAYSTACK_SECRET_KEY
+    value: ${PAYSTACK_SECRET_KEY}
+    type: SECRET
+  - key: SENDGRID_API_KEY
+    value: ${SENDGRID_API_KEY}
+    type: SECRET
+  - key: SENDGRID_FROM_EMAIL
+    value: notify@ardentwebservices.com
+  - key: JWT_EXPIRY
+    value: "3600"
+  - key: API_URL
+    value: https://ardent-pos-app-sdq3t.ondigitalocean.app/api
+  - key: APP_DEBUG
+    value: "false"
+  - key: DEFAULT_CURRENCY
+    value: GHS
+  - key: DEFAULT_LOCALE
+    value: en-GH
