@@ -72,9 +72,21 @@ class AuthController
     public function login(): void
     {
         try {
-            // Read input data from request body
+            // Read input data from multiple sources for robustness
             $rawInput = file_get_contents('php://input');
-            error_log("Login attempt - Raw input: " . $rawInput);
+            error_log("Login attempt - Raw input from php://input: " . $rawInput);
+            
+            // If php://input is empty, try HTTP_RAW_POST_DATA
+            if (empty($rawInput) && isset($GLOBALS['HTTP_RAW_POST_DATA'])) {
+                $rawInput = $GLOBALS['HTTP_RAW_POST_DATA'];
+                error_log("Login attempt - Raw input from HTTP_RAW_POST_DATA: " . $rawInput);
+            }
+            
+            // If still empty, try $_POST
+            if (empty($rawInput) && !empty($_POST)) {
+                $rawInput = json_encode($_POST);
+                error_log("Login attempt - Raw input from $_POST: " . $rawInput);
+            }
             
             $input = json_decode($rawInput, true);
             error_log("Login attempt - Decoded input: " . json_encode($input));
@@ -82,6 +94,7 @@ class AuthController
             if (empty($input['email']) || empty($input['password'])) {
                 error_log("Login failed - Missing email or password");
                 error_log("Input data: " . json_encode($input));
+                error_log("Raw input: " . $rawInput);
                 http_response_code(400);
                 echo json_encode(['error' => 'Email and password are required']);
                 return;
