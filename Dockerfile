@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configure Apache
+# Configure Apache - enable modules properly
 RUN a2enmod rewrite headers mime
 COPY backend/apache.conf /etc/apache2/sites-available/000-default.conf
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -67,6 +67,9 @@ RUN mkdir -p uploads && chown -R www-data:www-data uploads
 
 # Create a simple health check file
 RUN echo '<?php echo json_encode(["status" => "ok", "timestamp" => date("c")]); ?>' > ./public/health.php
+
+# Test Apache configuration
+RUN apache2ctl configtest
 
 EXPOSE 80
 
