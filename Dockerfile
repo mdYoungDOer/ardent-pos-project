@@ -55,8 +55,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Switch back to root for final setup
 USER root
 
-# Copy frontend build files to public directory
-COPY --from=frontend-build /app/dist/* ./public/
+# Copy frontend build files to public directory - ensure assets directory is copied
+COPY --from=frontend-build /app/dist/ ./public/
 
 # Debug: List what was copied
 RUN ls -la public/
