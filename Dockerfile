@@ -55,6 +55,8 @@ COPY --from=frontend-build /app/dist ./public/frontend
 COPY backend/public/api ./public/api
 # Create index.html at root that redirects to frontend
 RUN echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/frontend/"></head><body>Redirecting...</body></html>' > ./public/index.html
+# Debug: List files to verify structure
+RUN ls -la ./public/ && ls -la ./public/frontend/ || echo "Frontend directory not found"
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
