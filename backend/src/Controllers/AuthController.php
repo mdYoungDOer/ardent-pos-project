@@ -76,7 +76,13 @@ class AuthController
             $rawInput = file_get_contents('php://input');
             error_log("Login attempt - Raw input from php://input: " . $rawInput);
             
-            // If php://input is empty, try HTTP_RAW_POST_DATA
+            // If php://input is empty, try the globally stored request body
+            if (empty($rawInput) && isset($GLOBALS['REQUEST_BODY'])) {
+                $rawInput = $GLOBALS['REQUEST_BODY'];
+                error_log("Login attempt - Raw input from REQUEST_BODY: " . $rawInput);
+            }
+            
+            // If still empty, try HTTP_RAW_POST_DATA
             if (empty($rawInput) && isset($GLOBALS['HTTP_RAW_POST_DATA'])) {
                 $rawInput = $GLOBALS['HTTP_RAW_POST_DATA'];
                 error_log("Login attempt - Raw input from HTTP_RAW_POST_DATA: " . $rawInput);

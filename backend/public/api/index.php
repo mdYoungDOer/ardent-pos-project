@@ -53,7 +53,11 @@ try {
     
     // Debug logging
     error_log("API Request: $method $uri");
-    error_log("Request Body: " . file_get_contents('php://input'));
+    $requestBody = file_get_contents('php://input');
+    error_log("Request Body: " . $requestBody);
+    
+    // Store the request body globally so controllers can access it
+    $GLOBALS['REQUEST_BODY'] = $requestBody;
     
     // Public routes (no authentication required)
     $router->post('/auth/register', 'AuthController@register');
