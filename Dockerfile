@@ -3,7 +3,7 @@ FROM node:18-alpine AS frontend-build
 
 WORKDIR /app
 COPY frontend/package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
 COPY frontend/ ./
 # Set environment variables for build
