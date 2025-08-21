@@ -23,16 +23,17 @@ $input = [
 // Override php://input
 $GLOBALS['HTTP_RAW_POST_DATA'] = json_encode($input);
 
-echo json_encode([
+$debug = [
     'debug' => 'Starting API debug test...',
     'method' => $_SERVER['REQUEST_METHOD'],
     'uri' => $_SERVER['REQUEST_URI'],
-    'input' => $input
-]);
+    'input' => $input,
+    'steps' => []
+];
 
 try {
-    echo json_encode(['autoload' => 'Autoload successful']);
-    echo json_encode(['classes' => 'Classes loaded']);
+    $debug['steps'][] = ['autoload' => 'Autoload successful'];
+    $debug['steps'][] = ['classes' => 'Classes loaded'];
 
     // Load environment variables
     if (class_exists('Dotenv\Dotenv')) {
@@ -43,35 +44,35 @@ try {
         }
     }
 
-    echo json_encode(['env' => 'Environment loaded']);
+    $debug['steps'][] = ['env' => 'Environment loaded'];
 
     // Initialize configuration
     Config::init();
-    echo json_encode(['config' => 'Config initialized']);
+    $debug['steps'][] = ['config' => 'Config initialized'];
     
     // Initialize database connection
     Database::init();
-    echo json_encode(['database' => 'Database initialized']);
+    $debug['steps'][] = ['database' => 'Database initialized'];
     
     // Create router instance
     $router = new Router();
-    echo json_encode(['router' => 'Router created']);
+    $debug['steps'][] = ['router' => 'Router created'];
     
     // Apply CORS middleware
     CorsMiddleware::handle();
-    echo json_encode(['cors' => 'CORS middleware applied']);
+    $debug['steps'][] = ['cors' => 'CORS middleware applied'];
     
     // Get request method and URI
     $method = $_SERVER['REQUEST_METHOD'];
     $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $uri = str_replace('/api', '', $uri);
     
-    echo json_encode([
+    $debug['steps'][] = [
         'request' => 'Request processed',
         'method' => $method,
         'uri' => $uri,
         'original_uri' => $_SERVER['REQUEST_URI']
-    ]);
+    ];
     
     // Public routes (no authentication required)
     $router->post('/auth/register', 'AuthController@register');
@@ -81,18 +82,27 @@ try {
     $router->post('/webhooks/paystack', 'PaystackController@webhook');
     $router->get('/health', 'HealthController@check');
     
-    echo json_encode(['routes' => 'Routes registered']);
+    $debug['steps'][] = ['routes' => 'Routes registered'];
     
     // Dispatch the request
-    echo json_encode(['dispatch' => 'About to dispatch request']);
+    $debug['steps'][] = ['dispatch' => 'About to dispatch request'];
+    
+    // Capture the output from the router
+    ob_start();
     $router->dispatch($method, $uri);
+    $routerOutput = ob_get_clean();
+    
+    $debug['steps'][] = ['dispatch' => 'Request dispatched successfully'];
+    $debug['router_output'] = $routerOutput;
+    
+    echo json_encode($debug);
     
 } catch (Exception $e) {
-    echo json_encode([
-        'error' => 'API debug failed',
-        'message' => $e->getMessage(),
-        'trace' => $e->getTraceAsString(),
-        'file' => $e->getFile(),
-        'line' => $e->getLine()
-    ]);
+    $debug['error'] = 'API debug failed';
+    $debug['message'] = $e->getMessage();
+    $debug['trace'] = $e->getTraceAsString();
+    $debug['file'] = $e->getFile();
+    $debug['line'] = $e->getLine();
+    
+    echo json_encode($debug);
 }
