@@ -28,6 +28,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Configure Apache
 RUN a2enmod rewrite headers
 COPY backend/apache.conf /etc/apache2/sites-available/000-default.conf
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Create non-root user for Composer
 RUN groupadd -r appuser && useradd -r -g appuser appuser
