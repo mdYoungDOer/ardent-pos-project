@@ -31,11 +31,12 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 
 function App() {
-  const { isLoading, checkAuth } = useAuthStore()
+  const { isLoading, isAuthenticated, init } = useAuthStore()
 
   useEffect(() => {
-    checkAuth()
-  }, [checkAuth])
+    // Initialize auth state on app load
+    init()
+  }, [init])
 
   if (isLoading) {
     return (

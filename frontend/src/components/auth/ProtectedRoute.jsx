@@ -3,16 +3,8 @@ import { useAuthStore } from '../../stores/authStore'
 import LoadingSpinner from '../ui/LoadingSpinner'
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading, user, token } = useAuthStore()
+  const { isAuthenticated, isLoading, user } = useAuthStore()
   const location = useLocation()
-
-  console.log('ProtectedRoute Debug:', {
-    isAuthenticated,
-    isLoading,
-    hasUser: !!user,
-    hasToken: !!token,
-    pathname: location.pathname
-  })
 
   if (isLoading) {
     return (
@@ -22,13 +14,11 @@ const ProtectedRoute = ({ children }) => {
     )
   }
 
-  if (!isAuthenticated || !user || !token) {
-    console.log('Redirecting to login - not authenticated')
+  if (!isAuthenticated || !user) {
     // Redirect to login page with return url
     return <Navigate to="/auth/login" state={{ from: location }} replace />
   }
 
-  console.log('Rendering protected content for user:', user.email)
   return children
 }
 

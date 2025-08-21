@@ -1,84 +1,229 @@
 import axios from 'axios'
+import toast from 'react-hot-toast'
 
-// Get API URL from environment variables with fallback
-const API_URL = import.meta.env.VITE_API_URL || 
-                (window.location.origin + '/api') || 
-                'http://localhost:8000'
-
-console.log('API URL:', API_URL) // Debug log
-
+// Create axios instance
 const api = axios.create({
-  baseURL: API_URL.startsWith('http') ? `${API_URL}/api` : `${API_URL}`,
+  baseURL: window.location.origin,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
-  },
-  timeout: 30000, // Increased timeout for production
-  withCredentials: true, // Enable credentials for CORS
+  }
 })
 
-// Request interceptor
+// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    // Add tenant ID to headers if available
-    try {
-      const authData = JSON.parse(localStorage.getItem('auth-storage') || '{}')
-      if (authData.state?.tenant?.id) {
-        config.headers['X-Tenant-ID'] = authData.state.tenant.id
-      }
-      
-      // Add authorization header if token exists
-      if (authData.state?.token) {
-        config.headers['Authorization'] = `Bearer ${authData.state.token}`
-      }
-    } catch (error) {
-      console.warn('Error parsing auth data:', error)
+    const token = localStorage.getItem('auth-token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
-    
-    // Log request for debugging
-    console.log('API Request:', config.method?.toUpperCase(), config.url)
-    
     return config
   },
   (error) => {
-    console.error('Request error:', error)
     return Promise.reject(error)
   }
 )
 
-// Response interceptor
+// Response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => {
-    // Log successful response for debugging
-    console.log('API Response:', response.status, response.config.url)
     return response
   },
   (error) => {
-    console.error('API Error:', error.response?.status, error.response?.data, error.config?.url)
-    
-    // Handle common errors
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('auth-storage')
+      // Clear invalid token
+      localStorage.removeItem('auth-token')
+      localStorage.removeItem('auth-user')
+      localStorage.removeItem('auth-tenant')
       window.location.href = '/auth/login'
     }
-    
-    if (error.response?.status === 403) {
-      // Insufficient permissions
-      console.error('Access denied:', error.response.data.message)
-    }
-    
-    if (error.response?.status >= 500) {
-      // Server error
-      console.error('Server error:', error.response.data.message)
-    }
-    
-    // Network errors
-    if (!error.response) {
-      console.error('Network error:', error.message)
-    }
-    
     return Promise.reject(error)
   }
 )
+
+// Authentication API methods
+export const authAPI = {
+  // Login
+  login: async (credentials) => {
+    try {
+      const response = await api.post('/auth/login.php', credentials)
+      const { token, user, tenant } = response.data
+      
+      // Store auth data
+      localStorage.setItem('auth-token', token)
+      localStorage.setItem('auth-user', JSON.stringify(user))
+      localStorage.setItem('auth-tenant', JSON.stringify(tenant))
+      
+      return { success: true, data: response.data }
+    } catch (error) {
+      const message = error.response?.data?.error || 'Login failed'
+      toast.error(message)
+      return { success: false, error: message }
+    }
+  },
+
+  // Register
+  register: async (userData) => {
+    try {
+      const response = await api.post('/auth/register.php', userData)
+      const { token, user, tenant } = response.data
+      
+      // Store auth data
+      localStorage.setItem('auth-token', token)
+      localStorage.setItem('auth-user', JSON.stringify(user))
+      localStorage.setItem('auth-tenant', JSON.stringify(tenant))
+      
+      return { success: true, data: response.data }
+    } catch (error) {
+      const message = error.response?.data?.error || 'Registration failed'
+      toast.error(message)
+      return { success: false, error: message }
+    }
+  },
+
+  // Verify token
+  verifyToken: async () => {
+    try {
+      const token = localStorage.getItem('auth-token')
+      if (!token) {
+        return { success: false, error: 'No token found' }
+      }
+
+      const response = await api.post('/auth/verify.php')
+      const { user, tenant } = response.data
+      
+      // Update stored data
+      localStorage.setItem('auth-user', JSON.stringify(user))
+      localStorage.setItem('auth-tenant', JSON.stringify(tenant))
+      
+      return { success: true, data: response.data }
+    } catch (error) {
+      // Clear invalid data
+      localStorage.removeItem('auth-token')
+      localStorage.removeItem('auth-user')
+      localStorage.removeItem('auth-tenant')
+      
+      return { success: false, error: 'Invalid token' }
+    }
+  },
+
+  // Logout
+  logout: () => {
+    localStorage.removeItem('auth-token')
+    localStorage.removeItem('auth-user')
+    localStorage.removeItem('auth-tenant')
+    window.location.href = '/auth/login'
+  },
+
+  // Get current user
+  getCurrentUser: () => {
+    const user = localStorage.getItem('auth-user')
+    return user ? JSON.parse(user) : null
+  },
+
+  // Get current tenant
+  getCurrentTenant: () => {
+    const tenant = localStorage.getItem('auth-tenant')
+    return tenant ? JSON.parse(tenant) : null
+  },
+
+  // Check if authenticated
+  isAuthenticated: () => {
+    return !!localStorage.getItem('auth-token')
+  }
+}
+
+// Dashboard API methods
+export const dashboardAPI = {
+  getStats: async () => {
+    try {
+      const response = await api.get('/api/dashboard/stats')
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+}
+
+// Products API methods
+export const productsAPI = {
+  getAll: async () => {
+    try {
+      const response = await api.get('/api/products')
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  create: async (productData) => {
+    try {
+      const response = await api.post('/api/products', productData)
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  update: async (id, productData) => {
+    try {
+      const response = await api.put(`/api/products/${id}`, productData)
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      const response = await api.delete(`/api/products/${id}`)
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+}
+
+// Sales API methods
+export const salesAPI = {
+  getAll: async () => {
+    try {
+      const response = await api.get('/api/sales')
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  create: async (saleData) => {
+    try {
+      const response = await api.post('/api/sales', saleData)
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+}
+
+// Customers API methods
+export const customersAPI = {
+  getAll: async () => {
+    try {
+      const response = await api.get('/api/customers')
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  create: async (customerData) => {
+    try {
+      const response = await api.post('/api/customers', customerData)
+      return { success: true, data: response.data }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+}
 
 export default api
