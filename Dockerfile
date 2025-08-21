@@ -26,8 +26,9 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Configure Apache
-RUN a2enmod rewrite
+RUN a2enmod rewrite headers
 COPY backend/apache.conf /etc/apache2/sites-available/000-default.conf
+RUN echo "Listen 80" >> /etc/apache2/ports.conf
 
 # Set working directory
 WORKDIR /var/www/html
