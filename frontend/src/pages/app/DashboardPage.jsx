@@ -1,268 +1,195 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { 
-  HiCash, 
-  HiShoppingCart, 
-  HiUsers, 
-  HiExclamationCircle,
-  HiTrendingUp,
-  HiTrendingDown
-} from 'react-icons/hi'
-import api from '../../services/api'
-import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { useAuthStore } from '../../stores/authStore'
+  ChartBarIcon, 
+  ShoppingCartIcon, 
+  UsersIcon, 
+  CurrencyDollarIcon,
+  TrendingUpIcon,
+  CubeIcon
+} from '@heroicons/react/24/outline'
+import useAuthStore from '../../stores/authStore'
 
 const DashboardPage = () => {
   const { user, tenant } = useAuthStore()
+  const [stats, setStats] = useState({
+    totalSales: 0,
+    totalOrders: 0,
+    totalCustomers: 0,
+    totalProducts: 0,
+    todaySales: 0,
+    monthlyGrowth: 0
+  })
+  const [recentSales, setRecentSales] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const { data: dashboardData, isLoading, error } = useQuery(
-    'dashboard',
-    () => api.get('/dashboard').then(res => res.data),
-    {
-      refetchInterval: 30000, // Refresh every 30 seconds
+  useEffect(() => {
+    // Simulate loading dashboard data
+    const loadDashboardData = async () => {
+      try {
+        // In a real app, you would fetch this data from your API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        setStats({
+          totalSales: 125000,
+          totalOrders: 1247,
+          totalCustomers: 89,
+          totalProducts: 156,
+          todaySales: 3200,
+          monthlyGrowth: 12.5
+        })
+        
+        setRecentSales([
+          { id: 1, customer: 'John Doe', amount: 150.00, status: 'completed', date: '2024-01-15' },
+          { id: 2, customer: 'Jane Smith', amount: 89.99, status: 'pending', date: '2024-01-15' },
+          { id: 3, customer: 'Bob Johnson', amount: 245.50, status: 'completed', date: '2024-01-14' },
+          { id: 4, customer: 'Alice Brown', amount: 67.25, status: 'completed', date: '2024-01-14' },
+          { id: 5, customer: 'Charlie Wilson', amount: 189.99, status: 'pending', date: '2024-01-13' }
+        ])
+      } catch (error) {
+        console.error('Error loading dashboard data:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
-  )
+
+    loadDashboardData()
+  }, [])
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     )
   }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600">Failed to load dashboard data</p>
-      </div>
-    )
-  }
-
-  const stats = dashboardData?.stats || {}
-  const recentSales = dashboardData?.recent_sales || []
-  const lowStockProducts = dashboardData?.low_stock_products || []
-  const topProducts = dashboardData?.top_products || []
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-white shadow-sm rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {user?.first_name}!
-            </h1>
-            <p className="text-gray-600">{tenant?.name} Dashboard</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </p>
-          </div>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-600">
+          Welcome back, {user?.first_name}! Here's what's happening with {tenant?.name}.
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <HiCash className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Today's Sales
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    ₦{stats.today_sales?.total?.toLocaleString() || '0'}
-                  </dd>
-                  <dd className="text-sm text-gray-500">
-                    {stats.today_sales?.count || 0} transactions
-                  </dd>
-                </dl>
-              </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Sales</p>
+              <p className="text-2xl font-bold text-gray-900">${stats.totalSales.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <HiShoppingCart className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    This Month
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    ₦{stats.month_sales?.total?.toLocaleString() || '0'}
-                  </dd>
-                  <dd className="text-sm text-gray-500">
-                    {stats.month_sales?.count || 0} transactions
-                  </dd>
-                </dl>
-              </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <ShoppingCartIcon className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Orders</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <HiUsers className="h-6 w-6 text-purple-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Customers
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.total_customers || 0}
-                  </dd>
-                </dl>
-              </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <UsersIcon className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Customers</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <HiExclamationCircle className="h-6 w-6 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Low Stock Items
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.low_stock_count || 0}
-                  </dd>
-                </dl>
-              </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <CubeIcon className="h-6 w-6 text-orange-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Products</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Sales */}
-        <div className="bg-white shadow-sm rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Sales</h3>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Sales</h3>
+            <Link to="/app/sales" className="text-sm text-indigo-600 hover:text-indigo-500">
+              View all
+            </Link>
           </div>
-          <div className="p-6">
-            {recentSales.length > 0 ? (
-              <div className="space-y-4">
-                {recentSales.map((sale) => (
-                  <div key={sale.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        #{sale.sale_number}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {sale.customer_name || 'Walk-in Customer'}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(sale.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        ₦{parseFloat(sale.total_amount).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">No recent sales</p>
-            )}
-          </div>
-        </div>
-
-        {/* Low Stock Alert */}
-        <div className="bg-white shadow-sm rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Low Stock Alert</h3>
-          </div>
-          <div className="p-6">
-            {lowStockProducts.length > 0 ? (
-              <div className="space-y-4">
-                {lowStockProducts.map((product) => (
-                  <div key={product.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {product.name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        SKU: {product.sku}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-red-600">
-                        {product.quantity} left
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Min: {product.min_stock}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">All products well stocked</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Top Products */}
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Top Products (Last 30 Days)</h3>
-        </div>
-        <div className="p-6">
-          {topProducts.length > 0 ? (
-            <div className="space-y-4">
-              {topProducts.map((product, index) => (
-                <div key={product.id} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="flex items-center justify-center w-6 h-6 bg-primary text-white text-xs font-medium rounded-full mr-3">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {product.name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {product.total_sold} units sold
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">
-                      ₦{parseFloat(product.total_revenue).toLocaleString()}
-                    </p>
-                  </div>
+          <div className="space-y-4">
+            {recentSales.map((sale) => (
+              <div key={sale.id} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{sale.customer}</p>
+                  <p className="text-sm text-gray-500">{sale.date}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No sales data available</p>
-          )}
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">${sale.amount}</p>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    sale.status === 'completed' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {sale.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="space-y-3">
+            <Link
+              to="/app/sales"
+              className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <ShoppingCartIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              Create New Sale
+            </Link>
+            <Link
+              to="/app/products"
+              className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <CubeIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              Add New Product
+            </Link>
+            <Link
+              to="/app/customers"
+              className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <UsersIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              Add New Customer
+            </Link>
+            <Link
+              to="/app/reports"
+              className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <ChartBarIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              View Reports
+            </Link>
+          </div>
         </div>
       </div>
     </div>

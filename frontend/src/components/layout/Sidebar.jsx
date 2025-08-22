@@ -1,109 +1,76 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useAuthStore } from '../../stores/authStore'
-import { clsx } from 'clsx'
+import useAuthStore from '../../stores/authStore'
 import {
-  HiHome,
-  HiCube,
-  HiClipboardList,
-  HiCreditCard,
-  HiUsers,
-  HiChartBar,
-  HiCog,
-  HiLogout,
-  HiX
-} from 'react-icons/hi'
+  HomeIcon,
+  CubeIcon,
+  ShoppingCartIcon,
+  UsersIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  ClipboardDocumentListIcon
+} from '@heroicons/react/24/outline'
 
-const Sidebar = ({ onClose }) => {
+const Sidebar = () => {
   const location = useLocation()
-  const { user, tenant, logout, canAccess } = useAuthStore()
+  const { user } = useAuthStore()
 
   const navigation = [
-    { name: 'Dashboard', href: '/app/dashboard', icon: HiHome, access: 'dashboard' },
-    { name: 'Products', href: '/app/products', icon: HiCube, access: 'products' },
-    { name: 'Inventory', href: '/app/inventory', icon: HiClipboardList, access: 'inventory' },
-    { name: 'Sales', href: '/app/sales', icon: HiCreditCard, access: 'sales' },
-    { name: 'Customers', href: '/app/customers', icon: HiUsers, access: 'customers' },
-    { name: 'Reports', href: '/app/reports', icon: HiChartBar, access: 'reports' },
-    { name: 'Settings', href: '/app/settings', icon: HiCog, access: 'settings' },
+    { name: 'Dashboard', href: '/app/dashboard', icon: HomeIcon },
+    { name: 'Products', href: '/app/products', icon: CubeIcon },
+    { name: 'Sales', href: '/app/sales', icon: ShoppingCartIcon },
+    { name: 'Inventory', href: '/app/inventory', icon: ClipboardDocumentListIcon },
+    { name: 'Customers', href: '/app/customers', icon: UsersIcon },
+    { name: 'Reports', href: '/app/reports', icon: ChartBarIcon },
+    { name: 'Settings', href: '/app/settings', icon: Cog6ToothIcon },
   ]
 
-  const handleLogout = async () => {
-    await logout()
-    if (onClose) onClose()
-  }
-
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
-      {/* Header */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <span className="text-xl font-bold text-primary">Ardent POS</span>
-        </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-          >
-            <HiX className="h-6 w-6" />
-          </button>
-        )}
+    <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:border-r lg:border-gray-200 lg:bg-gray-50 lg:pt-5 lg:pb-4">
+      <div className="flex items-center flex-shrink-0 px-6">
+        <h1 className="text-xl font-semibold text-gray-900">Ardent POS</h1>
       </div>
-
-      {/* Tenant Info */}
-      <div className="px-4 py-3 border-b border-gray-200">
-        <div className="text-sm font-medium text-gray-900 truncate">
-          {tenant?.name}
-        </div>
-        <div className="text-xs text-gray-500 truncate">
-          {user?.first_name} {user?.last_name}
-        </div>
-        <div className="text-xs text-gray-400 capitalize">
-          {user?.role?.replace('_', ' ')}
+      
+      {/* User info */}
+      <div className="mt-6 px-6">
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
+            <span className="text-sm font-medium text-white">
+              {user?.first_name?.[0]}{user?.last_name?.[0]}
+            </span>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm font-medium text-gray-700">
+              {user?.first_name} {user?.last_name}
+            </p>
+            <p className="text-xs text-gray-500">{user?.role}</p>
+          </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+      <nav className="mt-8 flex-1 px-3 space-y-1">
         {navigation.map((item) => {
-          if (!canAccess(item.access)) return null
-          
           const isActive = location.pathname === item.href
-          const Icon = item.icon
-
           return (
             <Link
               key={item.name}
               to={item.href}
-              onClick={onClose}
-              className={clsx(
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
+              className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                 isActive
-                  ? 'bg-primary-50 text-primary border-r-2 border-primary'
+                  ? 'bg-indigo-100 text-indigo-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              )}
+              }`}
             >
-              <Icon
-                className={clsx(
-                  'mr-3 flex-shrink-0 h-5 w-5',
-                  isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'
-                )}
+              <item.icon
+                className={`mr-3 h-5 w-5 ${
+                  isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'
+                }`}
               />
               {item.name}
             </Link>
           )
         })}
       </nav>
-
-      {/* Logout */}
-      <div className="px-2 py-4 border-t border-gray-200">
-        <button
-          onClick={handleLogout}
-          className="group flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
-        >
-          <HiLogout className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-          Sign out
-        </button>
-      </div>
     </div>
   )
 }

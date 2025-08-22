@@ -1,71 +1,54 @@
-import { HiMenu, HiBell, HiSearch } from 'react-icons/hi'
-import { useAuthStore } from '../../stores/authStore'
+import useAuthStore from '../../stores/authStore'
+import { Menu, Bell, User } from 'lucide-react'
 
 const AppHeader = ({ onMenuClick }) => {
-  const { user, tenant } = useAuthStore()
+  const { user, logout } = useAuthStore()
+
+  const handleLogout = () => {
+    logout()
+  }
 
   return (
-    <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
-      <button
-        type="button"
-        className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary md:hidden"
-        onClick={onMenuClick}
-      >
-        <span className="sr-only">Open sidebar</span>
-        <HiMenu className="h-6 w-6" />
-      </button>
-      
-      <div className="flex-1 px-4 flex justify-between">
-        <div className="flex-1 flex">
-          <div className="w-full flex md:ml-0">
-            <label htmlFor="search-field" className="sr-only">
-              Search
-            </label>
-            <div className="relative w-full text-gray-400 focus-within:text-gray-600">
-              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                <HiSearch className="h-5 w-5" />
-              </div>
-              <input
-                id="search-field"
-                className="block w-full h-full pl-8 pr-3 py-2 border-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-0 focus:border-transparent sm:text-sm"
-                placeholder="Search products, customers..."
-                type="search"
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div className="ml-4 flex items-center md:ml-6">
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3">
+        {/* Left side - Menu button and title */}
+        <div className="flex items-center">
           <button
-            type="button"
-            className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            onClick={onMenuClick}
+            className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
           >
-            <span className="sr-only">View notifications</span>
-            <HiBell className="h-6 w-6" />
+            <Menu className="h-6 w-6" />
+          </button>
+          <h1 className="ml-3 text-lg font-semibold text-gray-900">Ardent POS</h1>
+        </div>
+
+        {/* Right side - Notifications and user menu */}
+        <div className="flex items-center space-x-4">
+          {/* Notifications */}
+          <button className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+            <Bell className="h-6 w-6" />
           </button>
 
-          <div className="ml-3 relative">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.first_name?.[0]}{user?.last_name?.[0]}
-                  </span>
-                </div>
-              </div>
-              <div className="ml-3 hidden md:block">
-                <div className="text-sm font-medium text-gray-700">
-                  {user?.first_name} {user?.last_name}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {tenant?.name}
-                </div>
-              </div>
-            </div>
+          {/* User menu */}
+          <div className="relative">
+            <button className="flex items-center space-x-2 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+              <User className="h-6 w-6" />
+              <span className="text-sm font-medium text-gray-700">
+                {user?.first_name} {user?.last_name}
+              </span>
+            </button>
           </div>
+
+          {/* Logout button */}
+          <button
+            onClick={handleLogout}
+            className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+          >
+            Logout
+          </button>
         </div>
       </div>
-    </div>
+    </header>
   )
 }
 
