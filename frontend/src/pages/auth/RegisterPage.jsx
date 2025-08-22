@@ -36,7 +36,7 @@ const RegisterPage = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              to="/login"
+              to="/auth/login"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               sign in to your existing account

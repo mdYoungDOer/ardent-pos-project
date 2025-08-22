@@ -48,7 +48,7 @@ const LoginPage = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
-              to="/register"
+              to="/auth/register"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               create a new business account
@@ -102,7 +102,7 @@ const LoginPage = () => {
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <Link
-                to="/forgot-password"
+                to="/auth/forgot-password"
                 className="font-medium text-indigo-600 hover:text-indigo-500"
               >
                 Forgot your password?
