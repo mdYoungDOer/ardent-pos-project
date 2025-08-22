@@ -4,13 +4,11 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
@@ -18,101 +16,103 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    // Step 1: Load autoloader
-    $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
-    if (!file_exists($autoloadPath)) {
-        throw new Exception('Composer autoloader not found');
+    // Load autoloader
+    $autoloaderPaths = [
+        __DIR__ . '/../vendor/autoload.php',
+        __DIR__ . '/vendor/autoload.php',
+        '/var/www/html/vendor/autoload.php',
+        '/var/www/html/backend/vendor/autoload.php'
+    ];
+    
+    $autoloaderFound = false;
+    foreach ($autoloaderPaths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            $autoloaderFound = true;
+            break;
+        }
     }
-    require_once $autoloadPath;
-
-    // Step 2: Load environment variables
-    $envPath = __DIR__ . '/../../';
-    if (file_exists($envPath . '.env') && class_exists('Dotenv\Dotenv')) {
-        $dotenv = Dotenv\Dotenv::createImmutable($envPath);
-        $dotenv->load();
+    
+    if (!$autoloaderFound) {
+        throw new Exception('Autoloader not found');
     }
-
-    // Step 3: Get configuration
+    
+    // Get environment variables
     $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
     $dbPort = $_ENV['DB_PORT'] ?? '5432';
-    $dbName = $_ENV['DB_DATABASE'] ?? 'defaultdb';
+    $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
     $dbUser = $_ENV['DB_USERNAME'] ?? '';
     $dbPass = $_ENV['DB_PASSWORD'] ?? '';
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
-
-    // Validate configuration
-    if (empty($dbUser) || empty($dbPass)) {
-        throw new Exception('Database credentials not configured');
-    }
-
-    // Step 4: Read request body
-    $rawInput = file_get_contents('php://input');
-    if (empty($rawInput)) {
-        throw new Exception('No request body received');
-    }
-
-    $input = json_decode($rawInput, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        throw new Exception('Invalid JSON in request body');
-    }
-
-    if (empty($input['email']) || empty($input['password'])) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Email and password are required']);
-        exit;
-    }
-
-    // Step 5: Connect to database
+    
+    // Connect to database
     $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-
-    // Step 6: Find user
+    
+    // Get request data
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
+    if (!$data) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid JSON data']);
+        exit;
+    }
+    
+    $email = $data['email'] ?? '';
+    $password = $data['password'] ?? '';
+    
+    if (empty($email) || empty($password)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Email and password are required']);
+        exit;
+    }
+    
+    // Find user
     $stmt = $pdo->prepare("
-        SELECT u.*, t.name as tenant_name 
+        SELECT u.*, t.name as tenant_name, t.status as tenant_status
         FROM users u 
         JOIN tenants t ON u.tenant_id = t.id 
-        WHERE u.email = ? AND u.status = 'active' AND t.status = 'active'
+        WHERE u.email = ? AND u.status = 'active'
     ");
-    $stmt->execute([$input['email']]);
+    $stmt->execute([$email]);
     $user = $stmt->fetch();
-
+    
     if (!$user) {
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
         exit;
     }
-
-    // Step 7: Verify password
-    if (!password_verify($input['password'], $user['password_hash'])) {
+    
+    if ($user['tenant_status'] !== 'active') {
+        http_response_code(401);
+        echo json_encode(['error' => 'Account is inactive']);
+        exit;
+    }
+    
+    // Verify password
+    if (!password_verify($password, $user['password_hash'])) {
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
         exit;
     }
-
-    // Step 8: Update last login
-    $updateStmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
-    $updateStmt->execute([$user['id']]);
-
-    // Step 9: Generate JWT token
-    if (!class_exists('Firebase\JWT\JWT')) {
-        throw new Exception('JWT library not available');
-    }
-
+    
+    // Generate JWT token
     $payload = [
         'user_id' => $user['id'],
         'tenant_id' => $user['tenant_id'],
         'email' => $user['email'],
         'role' => $user['role'],
         'iat' => time(),
-        'exp' => time() + (24 * 60 * 60) // 24 hours
+        'exp' => time() + (24 * 60 * 60)
     ];
-
+    
     $token = Firebase\JWT\JWT::encode($payload, $jwtSecret, 'HS256');
-
-    // Step 10: Return success response
+    
+    // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'Login successful',
@@ -129,18 +129,14 @@ try {
             'name' => $user['tenant_name']
         ]
     ]);
-
-} catch (Exception $e) {
-    error_log("Login error: " . $e->getMessage());
-    error_log("Login error trace: " . $e->getTraceAsString());
     
+} catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
-        'error' => 'Login failed',
-        'message' => $e->getMessage(),
-        'debug' => [
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ]
+        'success' => false,
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
     ]);
 }
+?>
