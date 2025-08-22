@@ -37,7 +37,7 @@ try {
     // Get database configuration
     $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
     $dbPort = $_ENV['DB_PORT'] ?? '5432';
-    $dbName = $_ENV['DB_DATABASE'] ?? 'defaultdb';
+    $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
     $dbUser = $_ENV['DB_USERNAME'] ?? '';
     $dbPass = $_ENV['DB_PASSWORD'] ?? '';
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
