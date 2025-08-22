@@ -1,166 +1,336 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { HiDownload, HiCalendar, HiTrendingUp, HiCash, HiShoppingCart } from 'react-icons/hi'
-import api from '../../services/api'
-import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import React, { useState, useEffect } from 'react';
+import { FiBarChart2, FiTrendingUp, FiTrendingDown, FiDollarSign, FiPackage, FiUsers, FiCalendar, FiDownload } from 'react-icons/fi';
+import { dashboardAPI } from '../../services/api';
+import useAuthStore from '../../stores/authStore';
 
 const ReportsPage = () => {
-  const [dateRange, setDateRange] = useState('last_30_days')
-  const [reportType, setReportType] = useState('sales')
+  const { user } = useAuthStore();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dateRange, setDateRange] = useState('30'); // days
 
-  const { data: reportData, isLoading } = useQuery(
-    ['reports', reportType, dateRange],
-    () => api.get(`/reports/${reportType}`, {
-      params: { period: dateRange }
-    }).then(res => res.data)
-  )
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await dashboardAPI.getStats();
+      if (response.data.success) {
+        setStats(response.data.data);
+      } else {
+        setError('Failed to load reports');
+      }
+    } catch (err) {
+      setError('Error loading reports');
+      console.error('Reports error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const reportTypes = [
-    { value: 'sales', label: 'Sales Report', icon: HiCash },
-    { value: 'products', label: 'Product Performance', icon: HiShoppingCart },
-    { value: 'customers', label: 'Customer Analytics', icon: HiTrendingUp },
-    { value: 'inventory', label: 'Inventory Report', icon: HiShoppingCart }
-  ]
+  useEffect(() => {
+    fetchStats();
+  }, [dateRange]);
 
-  const dateRanges = [
-    { value: 'today', label: 'Today' },
-    { value: 'yesterday', label: 'Yesterday' },
-    { value: 'last_7_days', label: 'Last 7 Days' },
-    { value: 'last_30_days', label: 'Last 30 Days' },
-    { value: 'this_month', label: 'This Month' },
-    { value: 'last_month', label: 'Last Month' },
-    { value: 'this_year', label: 'This Year' }
-  ]
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-GH', {
+      style: 'currency',
+      currency: 'GHS'
+    }).format(amount);
+  };
 
-  if (isLoading) {
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-GH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getPercentageChange = (current, previous) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e41e5b]"></div>
+        <span className="ml-3 text-[#746354]">Loading reports...</span>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-          <p className="text-gray-600">Insights into your business performance</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <button className="btn-outline flex items-center">
-            <HiDownload className="h-5 w-5 mr-2" />
-            Export Report
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white shadow-sm rounded-lg p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
           <div>
-            <label className="form-label">Report Type</label>
-            <select
-              className="form-input"
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-            >
-              {reportTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+            <h1 className="text-3xl font-bold text-[#2c2c2c]">Reports & Analytics</h1>
+            <p className="text-[#746354] mt-1">
+              Comprehensive insights into your business performance
+            </p>
           </div>
-          
-          <div>
-            <label className="form-label">Date Range</label>
+          <div className="flex items-center space-x-4">
             <select
-              className="form-input"
+              className="px-4 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
             >
-              {dateRanges.map((range) => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last year</option>
             </select>
+            <button className="flex items-center px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors">
+              <FiDownload className="h-4 w-4 mr-2" />
+              Export
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Report Content */}
-      <div className="bg-white shadow-sm rounded-lg p-6">
-        {reportData ? (
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-6">
-              {reportTypes.find(t => t.value === reportType)?.label} - {dateRanges.find(r => r.value === dateRange)?.label}
-            </h3>
-            
-            {/* Summary Stats */}
-            {reportData.summary && (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                {Object.entries(reportData.summary).map(([key, value]) => (
-                  <div key={key} className="bg-gray-50 rounded-lg p-4">
-                    <dt className="text-sm font-medium text-gray-500 capitalize">
-                      {key.replace('_', ' ')}
-                    </dt>
-                    <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                      {typeof value === 'number' && key.includes('amount') 
-                        ? `₦${value.toLocaleString()}`
-                        : value
-                      }
-                    </dd>
-                  </div>
-                ))}
+      {error ? (
+        <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-8 text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Reports</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchStats}
+            className="bg-[#e41e5b] text-white px-6 py-2 rounded-lg hover:bg-[#9a0864] transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      ) : stats ? (
+        <div className="space-y-6">
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[#746354]">Total Sales</p>
+                  <p className="text-2xl font-bold text-[#2c2c2c]">{formatCurrency(stats.totalSales)}</p>
+                </div>
+                <div className="w-12 h-12 bg-[#e41e5b]/10 rounded-xl flex items-center justify-center">
+                  <FiDollarSign className="h-6 w-6 text-[#e41e5b]" />
+                </div>
               </div>
-            )}
+              <div className="mt-4 flex items-center">
+                <FiTrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                <span className="text-sm text-green-600">+12.5% from last month</span>
+              </div>
+            </div>
 
-            {/* Detailed Data */}
-            {reportData.data && reportData.data.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="table">
-                  <thead className="table-header">
-                    <tr>
-                      {Object.keys(reportData.data[0]).map((key) => (
-                        <th key={key} className="capitalize">
-                          {key.replace('_', ' ')}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="table-body">
-                    {reportData.data.map((row, index) => (
-                      <tr key={index}>
-                        {Object.entries(row).map(([key, value]) => (
-                          <td key={key} className="text-sm text-gray-900">
-                            {typeof value === 'number' && key.includes('amount')
-                              ? `₦${value.toLocaleString()}`
-                              : value
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[#746354]">Total Orders</p>
+                  <p className="text-2xl font-bold text-[#2c2c2c]">{stats.totalOrders}</p>
+                </div>
+                <div className="w-12 h-12 bg-[#9a0864]/10 rounded-xl flex items-center justify-center">
+                  <FiBarChart2 className="h-6 w-6 text-[#9a0864]" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center">
+                <FiTrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                <span className="text-sm text-green-600">+8.2% from last month</span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[#746354]">Total Customers</p>
+                  <p className="text-2xl font-bold text-[#2c2c2c]">{stats.totalCustomers}</p>
+                </div>
+                <div className="w-12 h-12 bg-[#a67c00]/10 rounded-xl flex items-center justify-center">
+                  <FiUsers className="h-6 w-6 text-[#a67c00]" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center">
+                <FiTrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                <span className="text-sm text-green-600">+15.3% from last month</span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[#746354]">Total Products</p>
+                  <p className="text-2xl font-bold text-[#2c2c2c]">{stats.totalProducts}</p>
+                </div>
+                <div className="w-12 h-12 bg-[#746354]/10 rounded-xl flex items-center justify-center">
+                  <FiPackage className="h-6 w-6 text-[#746354]" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center">
+                <FiTrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                <span className="text-sm text-green-600">+5.7% from last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Monthly Trend */}
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <h3 className="text-lg font-semibold text-[#2c2c2c] mb-4">Monthly Sales Trend</h3>
+              {stats.monthlyTrend && stats.monthlyTrend.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.monthlyTrend.slice(0, 6).map((month, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <FiCalendar className="h-4 w-4 text-[#746354] mr-2" />
+                        <span className="text-sm text-[#746354]">
+                          {new Date(month.month).toLocaleDateString('en-GH', { month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-[#2c2c2c]">
+                          {formatCurrency(month.monthly_sales)}
+                        </div>
+                        <div className="text-xs text-[#746354]">
+                          {month.monthly_orders} orders
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FiBarChart2 className="h-12 w-12 text-[#746354]/40 mx-auto mb-4" />
+                  <p className="text-[#746354]">No sales data available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Top Products */}
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <h3 className="text-lg font-semibold text-[#2c2c2c] mb-4">Top Selling Products</h3>
+              {stats.topProducts && stats.topProducts.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.topProducts.slice(0, 5).map((product, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-[#e41e5b]/10 rounded-lg flex items-center justify-center mr-3">
+                          <span className="text-sm font-semibold text-[#e41e5b]">{index + 1}</span>
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-[#2c2c2c]">{product.name}</div>
+                          <div className="text-xs text-[#746354]">{product.total_sold} units sold</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-[#e41e5b]">
+                          {formatCurrency(product.total_revenue)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FiPackage className="h-12 w-12 text-[#746354]/40 mx-auto mb-4" />
+                  <p className="text-[#746354]">No product sales data available</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Sales & Low Stock */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Sales */}
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <h3 className="text-lg font-semibold text-[#2c2c2c] mb-4">Recent Sales</h3>
+              {stats.recentSales && stats.recentSales.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.recentSales.slice(0, 5).map((sale, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-[#a67c00]/10 rounded-lg flex items-center justify-center mr-3">
+                          <FiUsers className="h-4 w-4 text-[#a67c00]" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-[#2c2c2c]">
+                            {sale.first_name && sale.last_name 
+                              ? `${sale.first_name} ${sale.last_name}`
+                              : 'Walk-in Customer'
                             }
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">📊</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No data available</h3>
-            <p className="text-gray-500">
-              No data found for the selected report type and date range.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+                          </div>
+                          <div className="text-xs text-[#746354]">
+                            {formatDate(sale.created_at)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-[#e41e5b]">
+                          {formatCurrency(sale.total_amount)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FiDollarSign className="h-12 w-12 text-[#746354]/40 mx-auto mb-4" />
+                  <p className="text-[#746354]">No recent sales</p>
+                </div>
+              )}
+            </div>
 
-export default ReportsPage
+            {/* Low Stock Alert */}
+            <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+              <h3 className="text-lg font-semibold text-[#2c2c2c] mb-4">Low Stock Alert</h3>
+              {stats.lowStockProducts && stats.lowStockProducts.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.lowStockProducts.slice(0, 5).map((product, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                          <FiPackage className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-[#2c2c2c]">{product.name}</div>
+                          <div className="text-xs text-[#746354]">
+                            {formatCurrency(product.price)} each
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-sm font-semibold ${
+                          product.stock === 0 ? 'text-red-600' : 'text-yellow-600'
+                        }`}>
+                          {product.stock} units
+                        </div>
+                        <div className="text-xs text-[#746354]">
+                          {product.stock === 0 ? 'Out of stock' : 'Low stock'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FiPackage className="h-12 w-12 text-green-500/40 mx-auto mb-4" />
+                  <p className="text-green-600">All products well stocked!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-8 text-center">
+          <FiBarChart2 className="h-16 w-16 text-[#746354]/40 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">No Data Available</h3>
+          <p className="text-[#746354] mb-6">
+            Start making sales to see your reports and analytics
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ReportsPage;
