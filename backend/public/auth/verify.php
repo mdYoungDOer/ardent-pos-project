@@ -20,7 +20,26 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     // Load Composer autoloader
-    require_once __DIR__ . '/../../vendor/autoload.php';
+    $autoloaderPaths = [
+        __DIR__ . '/../../vendor/autoload.php',
+        __DIR__ . '/../vendor/autoload.php',
+        __DIR__ . '/vendor/autoload.php',
+        '/var/www/html/vendor/autoload.php',
+        '/var/www/html/backend/vendor/autoload.php'
+    ];
+    
+    $autoloaderFound = false;
+    foreach ($autoloaderPaths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            $autoloaderFound = true;
+            break;
+        }
+    }
+    
+    if (!$autoloaderFound) {
+        throw new Exception('Autoloader not found in any expected location');
+    }
     
     // Load environment variables
     $envFile = __DIR__ . '/../../.env';

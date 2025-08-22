@@ -14,8 +14,30 @@ $debug = [];
 try {
     // Step 1: Check autoloader
     $debug['step1_autoloader'] = 'checking';
-    require_once __DIR__ . '/../../vendor/autoload.php';
-    $debug['step1_autoloader'] = 'success';
+    
+    // Try different possible autoloader paths
+    $autoloaderPaths = [
+        __DIR__ . '/../../vendor/autoload.php',
+        __DIR__ . '/../vendor/autoload.php',
+        __DIR__ . '/vendor/autoload.php',
+        '/var/www/html/vendor/autoload.php',
+        '/var/www/html/backend/vendor/autoload.php'
+    ];
+    
+    $autoloaderFound = false;
+    foreach ($autoloaderPaths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            $debug['step1_autoloader'] = 'success - found at: ' . $path;
+            $autoloaderFound = true;
+            break;
+        }
+    }
+    
+    if (!$autoloaderFound) {
+        $debug['step1_autoloader'] = 'failed - tried paths: ' . implode(', ', $autoloaderPaths);
+        throw new Exception('Autoloader not found in any expected location');
+    }
     
     // Step 2: Check environment variables
     $debug['step2_env'] = 'checking';
