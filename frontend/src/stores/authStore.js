@@ -1,163 +1,124 @@
-import { create } from 'zustand'
-import { authAPI } from '../services/api'
-import toast from 'react-hot-toast'
+import { create } from 'zustand';
+import { authAPI } from '../services/api';
 
 const useAuthStore = create((set, get) => ({
+  // State
   user: null,
   tenant: null,
+  token: null,
   isLoading: false,
   isAuthenticated: false,
 
   // Initialize auth state from localStorage
-  init: () => {
-    const user = authAPI.getCurrentUser()
-    const tenant = authAPI.getCurrentTenant()
-    const isAuthenticated = authAPI.isAuthenticated()
+  initialize: () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    const tenant = localStorage.getItem('tenant');
 
-    set({
-      user,
-      tenant,
-      isAuthenticated
-    })
-
-    // If authenticated, verify token
-    if (isAuthenticated) {
-      get().verifyToken()
+    if (token && user && tenant) {
+      set({
+        token,
+        user: JSON.parse(user),
+        tenant: JSON.parse(tenant),
+        isAuthenticated: true
+      });
     }
   },
 
   // Login
-  login: async (credentials) => {
-    set({ isLoading: true })
-    
+  login: async (email, password) => {
+    set({ isLoading: true });
     try {
-      const result = await authAPI.login(credentials)
-      
-      if (result.success) {
-        const { user, tenant } = result.data
-        
-        set({
-          user,
-          tenant,
-          isAuthenticated: true,
-          isLoading: false
-        })
-        
-        toast.success('Login successful!')
-        return { success: true }
-      } else {
-        set({ isLoading: false })
-        return { success: false, error: result.error }
-      }
+      const response = await authAPI.login(email, password);
+      set({
+        user: response.user,
+        tenant: response.tenant,
+        token: response.token,
+        isAuthenticated: true,
+        isLoading: false
+      });
+      return { success: true, data: response };
     } catch (error) {
-      set({ isLoading: false })
-      return { success: false, error: error.message }
+      set({ isLoading: false });
+      return { 
+        success: false, 
+        error: error.response?.data?.error || error.message || 'Login failed' 
+      };
     }
   },
 
   // Register
   register: async (userData) => {
-    set({ isLoading: true })
-    
+    set({ isLoading: true });
     try {
-      const result = await authAPI.register(userData)
-      
-      if (result.success) {
-        const { user, tenant } = result.data
-        
-        set({
-          user,
-          tenant,
-          isAuthenticated: true,
-          isLoading: false
-        })
-        
-        toast.success('Registration successful!')
-        return { success: true }
-      } else {
-        set({ isLoading: false })
-        return { success: false, error: result.error }
-      }
+      const response = await authAPI.register(userData);
+      set({
+        user: response.user,
+        tenant: response.tenant,
+        token: response.token,
+        isAuthenticated: true,
+        isLoading: false
+      });
+      return { success: true, data: response };
     } catch (error) {
-      set({ isLoading: false })
-      return { success: false, error: error.message }
+      set({ isLoading: false });
+      return { 
+        success: false, 
+        error: error.response?.data?.error || error.message || 'Registration failed' 
+      };
     }
   },
 
   // Verify token
   verifyToken: async () => {
     try {
-      const result = await authAPI.verifyToken()
-      
-      if (result.success) {
-        const { user, tenant } = result.data
-        
-        set({
-          user,
-          tenant,
-          isAuthenticated: true
-        })
-        
-        return { success: true }
-      } else {
-        set({
-          user: null,
-          tenant: null,
-          isAuthenticated: false
-        })
-        
-        return { success: false, error: result.error }
-      }
+      const response = await authAPI.verifyToken();
+      set({
+        user: response.user,
+        tenant: response.tenant,
+        isAuthenticated: true
+      });
+      return { success: true, data: response };
     } catch (error) {
       set({
         user: null,
         tenant: null,
+        token: null,
         isAuthenticated: false
-      })
-      
-      return { success: false, error: error.message }
+      });
+      return { 
+        success: false, 
+        error: error.response?.data?.error || error.message || 'Token verification failed' 
+      };
     }
   },
 
   // Logout
   logout: () => {
-    authAPI.logout()
+    authAPI.logout();
     set({
       user: null,
       tenant: null,
+      token: null,
       isAuthenticated: false,
       isLoading: false
-    })
+    });
   },
 
-  // Helper methods
-  hasRole: (role) => {
-    const { user } = get()
-    return user?.role === role
+  // Get current user
+  getCurrentUser: () => {
+    return get().user;
   },
 
-  hasAnyRole: (roles) => {
-    const { user } = get()
-    return roles.includes(user?.role)
+  // Get current tenant
+  getCurrentTenant: () => {
+    return get().tenant;
   },
 
-  canAccess: (feature) => {
-    const { user } = get()
-    if (!user) return false
-
-    const permissions = {
-      dashboard: ['admin', 'manager', 'cashier', 'inventory_staff', 'viewer', 'super_admin'],
-      products: ['admin', 'manager', 'super_admin'],
-      inventory: ['admin', 'manager', 'inventory_staff', 'super_admin'],
-      sales: ['admin', 'manager', 'cashier', 'super_admin'],
-      customers: ['admin', 'manager', 'super_admin'],
-      reports: ['admin', 'manager', 'viewer', 'super_admin'],
-      settings: ['admin', 'super_admin'],
-      users: ['admin', 'super_admin']
-    }
-
-    return permissions[feature]?.includes(user.role) || false
+  // Check if authenticated
+  checkAuth: () => {
+    return get().isAuthenticated;
   }
-}))
+}));
 
-export { useAuthStore }
+export default useAuthStore;

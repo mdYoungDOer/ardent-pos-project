@@ -1,4 +1,5 @@
 <?php
+// Simple, bulletproof login endpoint
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -13,24 +14,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+    echo json_encode(['error' => 'Method not allowed', 'method' => $_SERVER['REQUEST_METHOD']]);
     exit;
 }
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-
-use Firebase\JWT\JWT;
-
 try {
+    // Load Composer autoloader
+    require_once __DIR__ . '/../../vendor/autoload.php';
+    
     // Load environment variables
-    if (class_exists('Dotenv\Dotenv')) {
-        $envPath = __DIR__ . '/../../';
-        if (file_exists($envPath . '.env')) {
-            $dotenv = Dotenv\Dotenv::createImmutable($envPath);
-            $dotenv->load();
+    $envFile = __DIR__ . '/../../.env';
+    if (file_exists($envFile)) {
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+                list($key, $value) = explode('=', $line, 2);
+                $_ENV[trim($key)] = trim($value);
+            }
         }
     }
-
+    
     // Get database configuration
     $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
     $dbPort = $_ENV['DB_PORT'] ?? '5432';
@@ -38,50 +41,73 @@ try {
     $dbUser = $_ENV['DB_USERNAME'] ?? '';
     $dbPass = $_ENV['DB_PASSWORD'] ?? '';
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
-
-    // Read request body
-    $input = json_decode(file_get_contents('php://input'), true);
     
-    if (!$input || empty($input['email']) || empty($input['password'])) {
+    // Validate database credentials
+    if (empty($dbUser) || empty($dbPass)) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Database credentials not configured',
+            'message' => 'DB_USERNAME and DB_PASSWORD environment variables are missing',
+            'solution' => 'Set these variables in Digital Ocean App Platform environment settings'
+        ]);
+        exit;
+    }
+    
+    // Get request body
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
+    if (!$data) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid JSON data']);
+        exit;
+    }
+    
+    $email = $data['email'] ?? '';
+    $password = $data['password'] ?? '';
+    
+    if (empty($email) || empty($password)) {
         http_response_code(400);
         echo json_encode(['error' => 'Email and password are required']);
         exit;
     }
-
+    
     // Connect to database
     $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-
+    
     // Find user
     $stmt = $pdo->prepare("
-        SELECT u.*, t.name as tenant_name 
+        SELECT u.*, t.name as tenant_name, t.status as tenant_status
         FROM users u 
         JOIN tenants t ON u.tenant_id = t.id 
-        WHERE u.email = ? AND u.status = 'active' AND t.status = 'active'
+        WHERE u.email = ? AND u.status = 'active'
     ");
-    $stmt->execute([$input['email']]);
+    $stmt->execute([$email]);
     $user = $stmt->fetch();
-
+    
     if (!$user) {
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
         exit;
     }
-
+    
+    if ($user['tenant_status'] !== 'active') {
+        http_response_code(401);
+        echo json_encode(['error' => 'Account is inactive']);
+        exit;
+    }
+    
     // Verify password
-    if (!password_verify($input['password'], $user['password_hash'])) {
+    if (!password_verify($password, $user['password_hash'])) {
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
         exit;
     }
-
-    // Update last login
-    $updateStmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
-    $updateStmt->execute([$user['id']]);
-
+    
     // Generate JWT token
     $payload = [
         'user_id' => $user['id'],
@@ -91,9 +117,9 @@ try {
         'iat' => time(),
         'exp' => time() + (24 * 60 * 60) // 24 hours
     ];
-
-    $token = JWT::encode($payload, $jwtSecret, 'HS256');
-
+    
+    $token = Firebase\JWT\JWT::encode($payload, $jwtSecret, 'HS256');
+    
     // Return success response
     echo json_encode([
         'success' => true,
@@ -111,9 +137,18 @@ try {
             'name' => $user['tenant_name']
         ]
     ]);
-
-} catch (Exception $e) {
-    error_log("Login error: " . $e->getMessage());
+    
+} catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Internal server error']);
+    echo json_encode([
+        'error' => 'Database connection failed',
+        'message' => $e->getMessage()
+    ]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Login failed',
+        'message' => $e->getMessage()
+    ]);
 }
+?>

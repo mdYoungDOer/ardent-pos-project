@@ -1,229 +1,258 @@
-import axios from 'axios'
-import toast from 'react-hot-toast'
+import axios from 'axios';
+
+// Base API configuration
+const API_URL = window.location.origin + '/api';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: window.location.origin,
+  baseURL: API_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
-  }
-})
-
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth-token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
+});
 
-// Response interceptor to handle auth errors
-api.interceptors.response.use(
-  (response) => {
-    return response
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      // Clear invalid token
-      localStorage.removeItem('auth-token')
-      localStorage.removeItem('auth-user')
-      localStorage.removeItem('auth-tenant')
-      window.location.href = '/auth/login'
-    }
-    return Promise.reject(error)
-  }
-)
-
-// Authentication API methods
+// Simple authentication API object
 export const authAPI = {
-  // Login
-  login: async (credentials) => {
+  // Login with email and password
+  async login(email, password) {
     try {
-      const response = await api.post('/auth/login-simple.php', credentials)
-      const { token, user, tenant } = response.data
+      const response = await api.post('/auth/login.php', {
+        email,
+        password
+      });
       
-      // Store auth data
-      localStorage.setItem('auth-token', token)
-      localStorage.setItem('auth-user', JSON.stringify(user))
-      localStorage.setItem('auth-tenant', JSON.stringify(tenant))
-      
-      return { success: true, data: response.data }
+      if (response.data.success) {
+        // Store token and user data in localStorage
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('tenant', JSON.stringify(response.data.tenant));
+        return response.data;
+      } else {
+        throw new Error(response.data.error || 'Login failed');
+      }
     } catch (error) {
-      const message = error.response?.data?.error || error.response?.data?.message || 'Login failed'
-      toast.error(message)
-      return { success: false, error: message }
+      console.error('Login error:', error);
+      throw error;
     }
   },
 
-  // Register
-  register: async (userData) => {
+  // Register new business account
+  async register(userData) {
     try {
-      const response = await api.post('/auth/register.php', userData)
-      const { token, user, tenant } = response.data
+      const response = await api.post('/auth/register.php', userData);
       
-      // Store auth data
-      localStorage.setItem('auth-token', token)
-      localStorage.setItem('auth-user', JSON.stringify(user))
-      localStorage.setItem('auth-tenant', JSON.stringify(tenant))
-      
-      return { success: true, data: response.data }
+      if (response.data.success) {
+        // Store token and user data in localStorage
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('tenant', JSON.stringify(response.data.tenant));
+        return response.data;
+      } else {
+        throw new Error(response.data.error || 'Registration failed');
+      }
     } catch (error) {
-      const message = error.response?.data?.error || 'Registration failed'
-      toast.error(message)
-      return { success: false, error: message }
+      console.error('Registration error:', error);
+      throw error;
     }
   },
 
-  // Verify token
-  verifyToken: async () => {
+  // Verify JWT token
+  async verifyToken() {
     try {
-      const token = localStorage.getItem('auth-token')
+      const token = localStorage.getItem('token');
       if (!token) {
-        return { success: false, error: 'No token found' }
+        throw new Error('No token found');
       }
 
-      const response = await api.post('/auth/verify.php')
-      const { user, tenant } = response.data
+      const response = await api.post('/auth/verify.php', {
+        token
+      });
       
-      // Update stored data
-      localStorage.setItem('auth-user', JSON.stringify(user))
-      localStorage.setItem('auth-tenant', JSON.stringify(tenant))
-      
-      return { success: true, data: response.data }
+      if (response.data.success) {
+        // Update stored user data
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('tenant', JSON.stringify(response.data.tenant));
+        return response.data;
+      } else {
+        throw new Error(response.data.error || 'Token verification failed');
+      }
     } catch (error) {
-      // Clear invalid data
-      localStorage.removeItem('auth-token')
-      localStorage.removeItem('auth-user')
-      localStorage.removeItem('auth-tenant')
-      
-      return { success: false, error: 'Invalid token' }
+      console.error('Token verification error:', error);
+      // Clear invalid token
+      this.logout();
+      throw error;
     }
   },
 
-  // Logout
-  logout: () => {
-    localStorage.removeItem('auth-token')
-    localStorage.removeItem('auth-user')
-    localStorage.removeItem('auth-tenant')
-    window.location.href = '/auth/login'
+  // Logout user
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('tenant');
   },
 
-  // Get current user
-  getCurrentUser: () => {
-    const user = localStorage.getItem('auth-user')
-    return user ? JSON.parse(user) : null
+  // Check if user is authenticated
+  isAuthenticated() {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return !!(token && user);
   },
 
-  // Get current tenant
-  getCurrentTenant: () => {
-    const tenant = localStorage.getItem('auth-tenant')
-    return tenant ? JSON.parse(tenant) : null
+  // Get current user data
+  getCurrentUser() {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
   },
 
-  // Check if authenticated
-  isAuthenticated: () => {
-    return !!localStorage.getItem('auth-token')
+  // Get current tenant data
+  getCurrentTenant() {
+    const tenant = localStorage.getItem('tenant');
+    return tenant ? JSON.parse(tenant) : null;
+  },
+
+  // Get auth token
+  getToken() {
+    return localStorage.getItem('token');
   }
-}
+};
 
-// Dashboard API methods
+// API with authentication interceptor
+const authenticatedApi = axios.create({
+  baseURL: API_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add auth token to requests
+authenticatedApi.interceptors.request.use(
+  (config) => {
+    const token = authAPI.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Handle auth errors
+authenticatedApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      authAPI.logout();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Dashboard API endpoints
 export const dashboardAPI = {
-  getStats: async () => {
-    try {
-      const response = await api.get('/api/dashboard/stats')
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  async getStats() {
+    const response = await authenticatedApi.get('/dashboard/stats');
+    return response.data;
+  },
+  
+  async getRecentSales() {
+    const response = await authenticatedApi.get('/dashboard/recent-sales');
+    return response.data;
+  },
+  
+  async getTopProducts() {
+    const response = await authenticatedApi.get('/dashboard/top-products');
+    return response.data;
   }
-}
+};
 
-// Products API methods
+// Products API endpoints
 export const productsAPI = {
-  getAll: async () => {
-    try {
-      const response = await api.get('/api/products')
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  async getAll() {
+    const response = await authenticatedApi.get('/products');
+    return response.data;
   },
-
-  create: async (productData) => {
-    try {
-      const response = await api.post('/api/products', productData)
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  
+  async getById(id) {
+    const response = await authenticatedApi.get(`/products/${id}`);
+    return response.data;
   },
-
-  update: async (id, productData) => {
-    try {
-      const response = await api.put(`/api/products/${id}`, productData)
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  
+  async create(productData) {
+    const response = await authenticatedApi.post('/products', productData);
+    return response.data;
   },
-
-  delete: async (id) => {
-    try {
-      const response = await api.delete(`/api/products/${id}`)
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  
+  async update(id, productData) {
+    const response = await authenticatedApi.put(`/products/${id}`, productData);
+    return response.data;
+  },
+  
+  async delete(id) {
+    const response = await authenticatedApi.delete(`/products/${id}`);
+    return response.data;
   }
-}
+};
 
-// Sales API methods
+// Sales API endpoints
 export const salesAPI = {
-  getAll: async () => {
-    try {
-      const response = await api.get('/api/sales')
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  async getAll() {
+    const response = await authenticatedApi.get('/sales');
+    return response.data;
   },
-
-  create: async (saleData) => {
-    try {
-      const response = await api.post('/api/sales', saleData)
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  
+  async getById(id) {
+    const response = await authenticatedApi.get(`/sales/${id}`);
+    return response.data;
+  },
+  
+  async create(saleData) {
+    const response = await authenticatedApi.post('/sales', saleData);
+    return response.data;
+  },
+  
+  async update(id, saleData) {
+    const response = await authenticatedApi.put(`/sales/${id}`, saleData);
+    return response.data;
+  },
+  
+  async delete(id) {
+    const response = await authenticatedApi.delete(`/sales/${id}`);
+    return response.data;
   }
-}
+};
 
-// Customers API methods
+// Customers API endpoints
 export const customersAPI = {
-  getAll: async () => {
-    try {
-      const response = await api.get('/api/customers')
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  async getAll() {
+    const response = await authenticatedApi.get('/customers');
+    return response.data;
   },
-
-  create: async (customerData) => {
-    try {
-      const response = await api.post('/api/customers', customerData)
-      return { success: true, data: response.data }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  
+  async getById(id) {
+    const response = await authenticatedApi.get(`/customers/${id}`);
+    return response.data;
+  },
+  
+  async create(customerData) {
+    const response = await authenticatedApi.post('/customers', customerData);
+    return response.data;
+  },
+  
+  async update(id, customerData) {
+    const response = await authenticatedApi.put(`/customers/${id}`, customerData);
+    return response.data;
+  },
+  
+  async delete(id) {
+    const response = await authenticatedApi.delete(`/customers/${id}`);
+    return response.data;
   }
-}
+};
 
-export default api
+// Export the main API instance for backward compatibility
+export default api;
