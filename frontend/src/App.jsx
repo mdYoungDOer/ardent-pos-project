@@ -10,6 +10,7 @@ import PublicLayout from './layouts/PublicLayout'
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
+import SuperAdminLoginPage from './pages/auth/SuperAdminLoginPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 
 // Public Pages
@@ -18,6 +19,7 @@ import AboutPage from './pages/public/AboutPage'
 import ContactPage from './pages/public/ContactPage'
 import FeaturesPage from './pages/public/FeaturesPage'
 import PricingPage from './pages/public/PricingPage'
+import SuperAdminLandingPage from './pages/public/SuperAdminLandingPage'
 
 // App Pages - Regular Users
 import DashboardPage from './pages/app/DashboardPage'
@@ -52,6 +54,7 @@ function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="features" element={<FeaturesPage />} />
         <Route path="pricing" element={<PricingPage />} />
+        <Route path="super-admin" element={<SuperAdminLandingPage />} />
       </Route>
 
       {/* Auth Routes */}
@@ -59,6 +62,7 @@ function App() {
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="super-admin" element={<SuperAdminLoginPage />} />
       </Route>
 
       {/* Protected App Routes - Role-based */}

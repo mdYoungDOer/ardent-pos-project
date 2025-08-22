@@ -18,6 +18,7 @@ const SuperAdminDashboard = () => {
   const [systemHealth, setSystemHealth] = useState({});
   const [viewMode, setViewMode] = useState('grid'); // grid or list
   const [timeRange, setTimeRange] = useState('30'); // days
+  const [error, setError] = useState(null);
 
   // Fetch real data from API
   useEffect(() => {
@@ -96,6 +97,22 @@ const SuperAdminDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <FiAlertCircle className="h-5 w-5 text-red-500 mr-2" />
+            <span className="text-red-800">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">

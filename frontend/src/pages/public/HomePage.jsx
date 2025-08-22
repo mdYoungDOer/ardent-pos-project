@@ -91,6 +91,14 @@ const HomePage = () => {
                       Learn More
                     </Link>
                   </div>
+                  <div className="mt-3 sm:mt-0 sm:ml-3">
+                    <Link
+                      to="/super-admin"
+                      className="btn-secondary btn-lg w-full flex items-center justify-center px-8 py-3 text-base font-medium"
+                    >
+                      Super Admin
+                    </Link>
+                  </div>
                 </div>
                 <div className="mt-6 flex items-center text-sm text-gray-500">
                   <HiCheckCircle className="h-5 w-5 text-green-500 mr-2" />

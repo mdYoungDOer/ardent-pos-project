@@ -157,6 +157,15 @@ const LoginPage = () => {
                 Forgot your password?
               </Link>
             </p>
+            <div className="pt-4 border-t border-[#746354]/10">
+              <Link 
+                to="/auth/super-admin" 
+                className="text-sm text-[#a67c00] hover:text-[#9a0864] font-medium transition-colors flex items-center justify-center"
+              >
+                <FiShield className="h-4 w-4 mr-1" />
+                Super Admin Access
+              </Link>
+            </div>
           </div>
         </form>
       </div>
