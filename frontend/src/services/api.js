@@ -46,7 +46,7 @@ export const authAPI = {
   // Login
   login: async (credentials) => {
     try {
-      const response = await api.post('/auth/login.php', credentials)
+      const response = await api.post('/auth/login-simple.php', credentials)
       const { token, user, tenant } = response.data
       
       // Store auth data
@@ -56,7 +56,7 @@ export const authAPI = {
       
       return { success: true, data: response.data }
     } catch (error) {
-      const message = error.response?.data?.error || 'Login failed'
+      const message = error.response?.data?.error || error.response?.data?.message || 'Login failed'
       toast.error(message)
       return { success: false, error: message }
     }
