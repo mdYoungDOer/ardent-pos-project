@@ -19,7 +19,7 @@ import AboutPage from './pages/public/AboutPage'
 import ContactPage from './pages/public/ContactPage'
 import FeaturesPage from './pages/public/FeaturesPage'
 import PricingPage from './pages/public/PricingPage'
-import SuperAdminLandingPage from './pages/public/SuperAdminLandingPage'
+
 
 // App Pages - Regular Users
 import DashboardPage from './pages/app/DashboardPage'
@@ -54,7 +54,7 @@ function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="features" element={<FeaturesPage />} />
         <Route path="pricing" element={<PricingPage />} />
-        <Route path="super-admin" element={<SuperAdminLandingPage />} />
+
       </Route>
 
       {/* Auth Routes */}

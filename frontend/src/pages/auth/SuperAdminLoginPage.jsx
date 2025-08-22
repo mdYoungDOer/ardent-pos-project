@@ -5,7 +5,7 @@ import useAuthStore from '../../stores/authStore';
 
 const SuperAdminLoginPage = () => {
   const navigate = useNavigate();
-  const { login, error, setError } = useAuthStore();
+  const { error, setError } = useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -37,23 +37,21 @@ const SuperAdminLoginPage = () => {
 
       const data = await response.json();
 
-      if (data.success) {
-        // Store token and user data
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('tenant', JSON.stringify(data.tenant));
-        
-        // Update auth store
-        login(data.user, data.tenant, data.token);
-        
-        // Redirect to super admin dashboard
-        navigate('/app/super-admin');
-      } else {
+             if (data.success) {
+         // Store token and user data
+         localStorage.setItem('token', data.token);
+         localStorage.setItem('user', JSON.stringify(data.user));
+         localStorage.setItem('tenant', JSON.stringify(data.tenant));
+         
+         // Redirect to super admin dashboard
+         navigate('/app/super-admin');
+       } else {
         setError(data.error || 'Super admin login failed');
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
-    } finally {
+         } catch (err) {
+       console.error('Super admin login error:', err);
+       setError('Network error. Please try again.');
+     } finally {
       setLoading(false);
     }
   };
