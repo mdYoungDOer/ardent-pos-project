@@ -18,13 +18,11 @@ A modern, simplified Point of Sale system built with React frontend and PHP back
 - **Simple REST API** without complex routing
 
 ### Color Scheme
-- Primary: `#1e40af` (Blue-600)
-- Secondary: `#64748b` (Slate-500)
-- Success: `#059669` (Emerald-600)
-- Warning: `#d97706` (Amber-600)
-- Danger: `#dc2626` (Red-600)
-- Background: `#f8fafc` (Slate-50)
-- Surface: `#ffffff` (White)
+- **Primary**: `#e41e5b` (buttons, CTAs, headers)
+- **Accent 1**: `#9a0864` (secondary buttons, accents)
+- **Dark**: `#2c2c2c` (text, dark backgrounds)
+- **Neutral**: `#746354` (borders, subtle backgrounds)
+- **Highlight**: `#a67c00` (alerts, success messages)
 
 ## Quick Start
 

@@ -31,17 +31,17 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="mx-auto h-12 w-12 bg-[#e41e5b] rounded-lg flex items-center justify-center">
             <span className="text-white text-xl font-bold">A</span>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+          <h2 className="mt-6 text-3xl font-bold text-[#2c2c2c]">
             Welcome back
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[#746354]">
             Sign in to your Ardent POS account
           </p>
         </div>
@@ -51,12 +51,12 @@ const LoginPage = () => {
           <div className="space-y-4">
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-[#2c2c2c]">
                 Email address
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiMail className="h-5 w-5 text-gray-400" />
+                  <FiMail className="h-5 w-5 text-[#746354]" />
                 </div>
                 <input
                   id="email"
@@ -66,7 +66,7 @@ const LoginPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-[#746354] rounded-md placeholder-[#746354] focus:outline-none focus:ring-[#e41e5b] focus:border-[#e41e5b] sm:text-sm"
                   placeholder="Enter your email"
                 />
               </div>
@@ -74,12 +74,12 @@ const LoginPage = () => {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-[#2c2c2c]">
                 Password
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock className="h-5 w-5 text-gray-400" />
+                  <FiLock className="h-5 w-5 text-[#746354]" />
                 </div>
                 <input
                   id="password"
@@ -89,7 +89,7 @@ const LoginPage = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-[#746354] rounded-md placeholder-[#746354] focus:outline-none focus:ring-[#e41e5b] focus:border-[#e41e5b] sm:text-sm"
                   placeholder="Enter your password"
                 />
                 <button
@@ -98,9 +98,9 @@ const LoginPage = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEyeOff className="h-5 w-5 text-[#746354] hover:text-[#2c2c2c]" />
                   ) : (
-                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEye className="h-5 w-5 text-[#746354] hover:text-[#2c2c2c]" />
                   )}
                 </button>
               </div>
@@ -128,7 +128,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#e41e5b] hover:bg-[#9a0864] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#e41e5b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
                 <div className="flex items-center">
@@ -146,14 +146,14 @@ const LoginPage = () => {
 
           {/* Links */}
           <div className="text-center space-y-2">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#746354]">
               Don't have an account?{' '}
-              <Link to="/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link to="/auth/register" className="font-medium text-[#e41e5b] hover:text-[#9a0864] transition-colors">
                 Sign up
               </Link>
             </p>
-            <p className="text-sm text-gray-600">
-              <Link to="/auth/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+            <p className="text-sm text-[#746354]">
+              <Link to="/auth/forgot-password" className="font-medium text-[#e41e5b] hover:text-[#9a0864] transition-colors">
                 Forgot your password?
               </Link>
             </p>
