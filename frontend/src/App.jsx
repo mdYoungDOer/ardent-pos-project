@@ -19,7 +19,7 @@ import ContactPage from './pages/public/ContactPage'
 import FeaturesPage from './pages/public/FeaturesPage'
 import PricingPage from './pages/public/PricingPage'
 
-// App Pages
+// App Pages - Regular Users
 import DashboardPage from './pages/app/DashboardPage'
 import ProductsPage from './pages/app/ProductsPage'
 import InventoryPage from './pages/app/InventoryPage'
@@ -27,6 +27,10 @@ import SalesPage from './pages/app/SalesPage'
 import CustomersPage from './pages/app/CustomersPage'
 import ReportsPage from './pages/app/ReportsPage'
 import SettingsPage from './pages/app/SettingsPage'
+
+// Super Admin Pages
+import SuperAdminDashboard from './pages/app/SuperAdminDashboard'
+import TenantManagementPage from './pages/app/TenantManagementPage'
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -57,8 +61,13 @@ function App() {
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
       </Route>
 
-      {/* Protected App Routes */}
+      {/* Protected App Routes - Role-based */}
       <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        {/* Super Admin Routes */}
+        <Route path="super-admin" element={<SuperAdminDashboard />} />
+        <Route path="tenants" element={<TenantManagementPage />} />
+        
+        {/* Regular User Routes */}
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="products" element={<ProductsPage />} />

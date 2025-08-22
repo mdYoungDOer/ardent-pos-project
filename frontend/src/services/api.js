@@ -88,6 +88,16 @@ export const dashboardAPI = {
   getStats: () => authenticatedApi.get('/dashboard.php'),
 };
 
+// Super Admin API
+export const superAdminAPI = {
+  getStats: () => authenticatedApi.get('/super-admin.php'),
+  getTenants: (params = {}) => authenticatedApi.get('/super-admin.php/tenants', { params }),
+  getActivity: () => authenticatedApi.get('/super-admin.php/activity'),
+  createTenant: (data) => authenticatedApi.post('/super-admin.php/tenant', data),
+  updateTenant: (id, data) => authenticatedApi.put(`/super-admin.php/${id}`, data),
+  deleteTenant: (id) => authenticatedApi.delete(`/super-admin.php/${id}`)
+};
+
 // Products API
 export const productsAPI = {
   getAll: () => authenticatedApi.get('/products.php'),
