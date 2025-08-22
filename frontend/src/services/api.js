@@ -83,6 +83,11 @@ authenticatedApi.interceptors.response.use(
   }
 );
 
+// Dashboard API
+export const dashboardAPI = {
+  getStats: () => authenticatedApi.get('/dashboard.php'),
+};
+
 // Products API
 export const productsAPI = {
   getAll: () => authenticatedApi.get('/products.php'),
@@ -103,6 +108,7 @@ export const customersAPI = {
   getAll: () => authenticatedApi.get('/customers.php'),
   create: (customer) => authenticatedApi.post('/customers.php', customer),
   update: (customer) => authenticatedApi.put('/customers.php', customer),
+  delete: (id) => authenticatedApi.delete(`/customers.php?id=${id}`),
 };
 
 export default api;
