@@ -76,6 +76,12 @@ try {
         'tenant' => [
             'id' => $user['tenant_id'],
             'name' => $user['tenant_name']
+        ],
+        'debug_info' => [
+            'user_found' => true,
+            'password_valid' => true,
+            'jwt_generated' => true,
+            'token_length' => strlen($token)
         ]
     ]);
 

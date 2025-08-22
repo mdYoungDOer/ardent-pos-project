@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 
 // Test the login endpoint directly
-$url = 'https://ardent-pos-app-sdq3t.ondigitalocean.app/api/auth/login.php';
+$url = 'https://ardent-pos-app-sdq3t.ondigitalocean.app/auth/login.php';
 
 $testData = [
     'email' => 'deyoungdoer@gmail.com',
