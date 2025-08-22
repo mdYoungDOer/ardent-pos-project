@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import useAuthStore from './stores/authStore'
 
 // Layouts
@@ -40,37 +40,35 @@ function App() {
   }, [initialize])
 
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<PublicLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="about" element={<AboutPage />} />
-          <Route path="contact" element={<ContactPage />} />
-          <Route path="features" element={<FeaturesPage />} />
-          <Route path="pricing" element={<PricingPage />} />
-        </Route>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<PublicLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="about" element={<AboutPage />} />
+        <Route path="contact" element={<ContactPage />} />
+        <Route path="features" element={<FeaturesPage />} />
+        <Route path="pricing" element={<PricingPage />} />
+      </Route>
 
-        {/* Auth Routes */}
-        <Route path="/" element={<AuthLayout />}>
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
-          <Route path="forgot-password" element={<ForgotPasswordPage />} />
-        </Route>
+      {/* Auth Routes */}
+      <Route path="/" element={<AuthLayout />}>
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+      </Route>
 
-        {/* Protected App Routes */}
-        <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-          <Route index element={<DashboardPage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="inventory" element={<InventoryPage />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="customers" element={<CustomersPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
-      </Routes>
-    </Router>
+      {/* Protected App Routes */}
+      <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        <Route index element={<DashboardPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="products" element={<ProductsPage />} />
+        <Route path="inventory" element={<InventoryPage />} />
+        <Route path="sales" element={<SalesPage />} />
+        <Route path="customers" element={<CustomersPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+    </Routes>
   )
 }
 

@@ -11,17 +11,39 @@ const useAuthStore = create((set, get) => ({
 
   // Initialize auth state from localStorage
   initialize: () => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    const tenant = localStorage.getItem('tenant');
+    try {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      const tenant = localStorage.getItem('tenant');
 
-    if (token && user && tenant) {
-      set({
-        token,
-        user: JSON.parse(user),
-        tenant: JSON.parse(tenant),
-        isAuthenticated: true
-      });
+      if (token && user && tenant) {
+        // Parse JSON with error handling
+        let parsedUser, parsedTenant;
+        try {
+          parsedUser = JSON.parse(user);
+          parsedTenant = JSON.parse(tenant);
+        } catch (parseError) {
+          console.error('Error parsing stored user/tenant data:', parseError);
+          // Clear corrupted data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('tenant');
+          return;
+        }
+
+        set({
+          token,
+          user: parsedUser,
+          tenant: parsedTenant,
+          isAuthenticated: true
+        });
+      }
+    } catch (error) {
+      console.error('Error initializing auth store:', error);
+      // Clear any corrupted data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('tenant');
     }
   },
 
