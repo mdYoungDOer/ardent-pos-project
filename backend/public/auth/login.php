@@ -79,8 +79,26 @@ try {
         exit;
     }
 
-    // Load JWT library
-    require_once __DIR__ . '/../vendor/autoload.php';
+    // Load JWT library - try multiple paths
+    $autoloaderPaths = [
+        __DIR__ . '/../../vendor/autoload.php',
+        __DIR__ . '/../vendor/autoload.php',
+        '/var/www/html/vendor/autoload.php',
+        '/var/www/html/backend/vendor/autoload.php'
+    ];
+    
+    $autoloaderFound = false;
+    foreach ($autoloaderPaths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            $autoloaderFound = true;
+            break;
+        }
+    }
+    
+    if (!$autoloaderFound) {
+        throw new Exception('JWT library not found');
+    }
 
     // Generate token
     $payload = [
