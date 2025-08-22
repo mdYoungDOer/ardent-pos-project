@@ -1,158 +1,86 @@
 <?php
-// Simple, bulletproof registration endpoint
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed', 'method' => $_SERVER['REQUEST_METHOD']]);
+    echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
 try {
-    // Load Composer autoloader
-    $autoloaderPaths = [
-        __DIR__ . '/../../vendor/autoload.php',
-        __DIR__ . '/../vendor/autoload.php',
-        __DIR__ . '/vendor/autoload.php',
-        '/var/www/html/vendor/autoload.php',
-        '/var/www/html/backend/vendor/autoload.php'
-    ];
-    
-    $autoloaderFound = false;
-    foreach ($autoloaderPaths as $path) {
-        if (file_exists($path)) {
-            require_once $path;
-            $autoloaderFound = true;
-            break;
-        }
-    }
-    
-    if (!$autoloaderFound) {
-        throw new Exception('Autoloader not found in any expected location');
-    }
-    
     // Load environment variables
-    $envFile = __DIR__ . '/../../.env';
-    if (file_exists($envFile)) {
-        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
-                list($key, $value) = explode('=', $line, 2);
-                $_ENV[trim($key)] = trim($value);
-            }
-        }
-    }
-    
-    // Get database configuration
     $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
     $dbPort = $_ENV['DB_PORT'] ?? '5432';
     $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
     $dbUser = $_ENV['DB_USERNAME'] ?? '';
     $dbPass = $_ENV['DB_PASSWORD'] ?? '';
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
-    
+
     // Validate database credentials
     if (empty($dbUser) || empty($dbPass)) {
-        http_response_code(500);
-        echo json_encode([
-            'error' => 'Database credentials not configured',
-            'message' => 'DB_USERNAME and DB_PASSWORD environment variables are missing',
-            'solution' => 'Set these variables in Digital Ocean App Platform environment settings'
-        ]);
-        exit;
+        throw new Exception('Database credentials not configured');
     }
-    
-    // Get request body
-    $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
-    
-    if (!$data) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid JSON data']);
-        exit;
-    }
-    
-    $email = $data['email'] ?? '';
-    $password = $data['password'] ?? '';
-    $firstName = $data['first_name'] ?? '';
-    $lastName = $data['last_name'] ?? '';
-    $businessName = $data['business_name'] ?? '';
-    
-    // Validate required fields
-    if (empty($email) || empty($password) || empty($firstName) || empty($lastName) || empty($businessName)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'All fields are required: email, password, first_name, last_name, business_name']);
-        exit;
-    }
-    
-    // Validate email format
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid email format']);
-        exit;
-    }
-    
-    // Validate password strength
-    if (strlen($password) < 8) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Password must be at least 8 characters long']);
-        exit;
-    }
-    
+
     // Connect to database
     $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-    
+
+    // Get request data
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    if (!$data) {
+        throw new Exception('Invalid JSON data');
+    }
+
+    $email = trim($data['email'] ?? '');
+    $password = $data['password'] ?? '';
+    $firstName = trim($data['first_name'] ?? '');
+    $lastName = trim($data['last_name'] ?? '');
+    $businessName = trim($data['business_name'] ?? '');
+
+    if (empty($email) || empty($password) || empty($firstName) || empty($lastName) || empty($businessName)) {
+        throw new Exception('All fields are required');
+    }
+
+    if (strlen($password) < 6) {
+        throw new Exception('Password must be at least 6 characters');
+    }
+
     // Check if email already exists
     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
-        http_response_code(409);
+        http_response_code(400);
         echo json_encode(['error' => 'Email already registered']);
         exit;
     }
-    
+
     // Start transaction
     $pdo->beginTransaction();
-    
+
     try {
         // Create tenant
-        $tenantId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
-        
+        $tenantId = uniqid('tenant_', true);
         $stmt = $pdo->prepare("
             INSERT INTO tenants (id, name, status, created_at, updated_at)
             VALUES (?, ?, 'active', NOW(), NOW())
         ");
         $stmt->execute([$tenantId, $businessName]);
-        
+
         // Create user
-        $userId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
-        
+        $userId = uniqid('user_', true);
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         
         $stmt = $pdo->prepare("
@@ -160,23 +88,25 @@ try {
             VALUES (?, ?, ?, ?, ?, ?, 'admin', 'active', NOW(), NOW())
         ");
         $stmt->execute([$userId, $tenantId, $email, $passwordHash, $firstName, $lastName]);
-        
-        // Commit transaction
+
         $pdo->commit();
-        
-        // Generate JWT token
+
+        // Load JWT library
+        require_once __DIR__ . '/../vendor/autoload.php';
+
+        // Generate token
         $payload = [
             'user_id' => $userId,
             'tenant_id' => $tenantId,
             'email' => $email,
             'role' => 'admin',
             'iat' => time(),
-            'exp' => time() + (24 * 60 * 60) // 24 hours
+            'exp' => time() + (24 * 60 * 60)
         ];
-        
+
         $token = Firebase\JWT\JWT::encode($payload, $jwtSecret, 'HS256');
-        
-        // Return success response
+
+        // Return success
         echo json_encode([
             'success' => true,
             'message' => 'Registration successful',
@@ -193,23 +123,17 @@ try {
                 'name' => $businessName
             ]
         ]);
-        
+
     } catch (Exception $e) {
         $pdo->rollBack();
         throw $e;
     }
-    
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Database error',
-        'message' => $e->getMessage()
-    ]);
+
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
-        'error' => 'Registration failed',
-        'message' => $e->getMessage()
+        'success' => false,
+        'error' => $e->getMessage()
     ]);
 }
 ?>

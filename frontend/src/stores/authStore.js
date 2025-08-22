@@ -6,116 +6,63 @@ const useAuthStore = create((set, get) => ({
   user: null,
   tenant: null,
   token: null,
-  isLoading: false,
   isAuthenticated: false,
+  isLoading: false,
+  error: null,
 
-  // Initialize auth state from localStorage
-  initialize: () => {
-    try {
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
-      const tenant = localStorage.getItem('tenant');
-
-      if (token && user && tenant) {
-        // Parse JSON with error handling
-        let parsedUser, parsedTenant;
-        try {
-          parsedUser = JSON.parse(user);
-          parsedTenant = JSON.parse(tenant);
-        } catch (parseError) {
-          console.error('Error parsing stored user/tenant data:', parseError);
-          // Clear corrupted data
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('tenant');
-          return;
-        }
-
-        set({
-          token,
-          user: parsedUser,
-          tenant: parsedTenant,
-          isAuthenticated: true
-        });
-      }
-    } catch (error) {
-      console.error('Error initializing auth store:', error);
-      // Clear any corrupted data
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('tenant');
-    }
-  },
-
-  // Login
+  // Actions
   login: async (email, password) => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const response = await authAPI.login(email, password);
-      set({
-        user: response.user,
-        tenant: response.tenant,
-        token: response.token,
-        isAuthenticated: true,
-        isLoading: false
-      });
-      return { success: true, data: response };
+      if (response.success) {
+        set({
+          user: response.user,
+          tenant: response.tenant,
+          token: response.token,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        });
+        return response;
+      } else {
+        throw new Error(response.error || 'Login failed');
+      }
     } catch (error) {
-      set({ isLoading: false });
-      return { 
-        success: false, 
-        error: error.response?.data?.error || error.message || 'Login failed' 
-      };
+      set({
+        isLoading: false,
+        error: error.message || 'Login failed'
+      });
+      throw error;
     }
   },
 
-  // Register
   register: async (userData) => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const response = await authAPI.register(userData);
-      set({
-        user: response.user,
-        tenant: response.tenant,
-        token: response.token,
-        isAuthenticated: true,
-        isLoading: false
-      });
-      return { success: true, data: response };
+      if (response.success) {
+        set({
+          user: response.user,
+          tenant: response.tenant,
+          token: response.token,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        });
+        return response;
+      } else {
+        throw new Error(response.error || 'Registration failed');
+      }
     } catch (error) {
-      set({ isLoading: false });
-      return { 
-        success: false, 
-        error: error.response?.data?.error || error.message || 'Registration failed' 
-      };
+      set({
+        isLoading: false,
+        error: error.message || 'Registration failed'
+      });
+      throw error;
     }
   },
 
-  // Verify token
-  verifyToken: async () => {
-    try {
-      const response = await authAPI.verifyToken();
-      set({
-        user: response.user,
-        tenant: response.tenant,
-        isAuthenticated: true
-      });
-      return { success: true, data: response };
-    } catch (error) {
-      set({
-        user: null,
-        tenant: null,
-        token: null,
-        isAuthenticated: false
-      });
-      return { 
-        success: false, 
-        error: error.response?.data?.error || error.message || 'Token verification failed' 
-      };
-    }
-  },
-
-  // Logout
   logout: () => {
     authAPI.logout();
     set({
@@ -123,24 +70,34 @@ const useAuthStore = create((set, get) => ({
       tenant: null,
       token: null,
       isAuthenticated: false,
-      isLoading: false
+      isLoading: false,
+      error: null
     });
   },
 
-  // Get current user
-  getCurrentUser: () => {
-    return get().user;
+  initialize: () => {
+    try {
+      const token = authAPI.getToken();
+      const user = authAPI.getUser();
+      const tenant = authAPI.getTenant();
+
+      if (token && user && tenant) {
+        set({
+          user,
+          tenant,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        });
+      }
+    } catch (error) {
+      console.error('Error initializing auth store:', error);
+      authAPI.logout();
+    }
   },
 
-  // Get current tenant
-  getCurrentTenant: () => {
-    return get().tenant;
-  },
-
-  // Check if authenticated
-  checkAuth: () => {
-    return get().isAuthenticated;
-  }
+  clearError: () => set({ error: null })
 }));
 
 export default useAuthStore;

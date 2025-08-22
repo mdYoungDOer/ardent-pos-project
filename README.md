@@ -1,177 +1,118 @@
-# Ardent POS
+# Ardent POS - Complete Rewrite
 
-A robust, mobile-first SaaS Point of Sale platform for small to medium businesses.
+A modern, simplified Point of Sale system built with React frontend and PHP backend.
 
-## Features
+## Architecture
 
-- **Multi-tenant Architecture**: Isolated business accounts with role-based access
-- **Mobile-First Design**: Optimized for touch interfaces and mobile devices
-- **Real-time Inventory**: Track stock levels with automated alerts
-- **Payment Processing**: Integrated with Paystack for secure transactions
-- **Subscription Management**: Flexible pricing tiers with automated billing
-- **Comprehensive Reporting**: Sales analytics and business insights
+### Frontend
+- **React 18** with Vite for fast development
+- **Tailwind CSS** for styling with custom color scheme
+- **React Router** for navigation
+- **Zustand** for state management
+- **Axios** for API calls
 
-## Tech Stack
+### Backend
+- **PHP 8.2** with Apache
+- **PostgreSQL** database
+- **JWT** for authentication
+- **Simple REST API** without complex routing
 
-- **Frontend**: React.js with Vite, Tailwind CSS
-- **Backend**: PHP with Composer, RESTful API
-- **Database**: PostgreSQL with tenant isolation
-- **Payments**: Paystack integration
-- **Email**: SendGrid for notifications
-- **Deployment**: Docker on Digital Ocean App Platform
-
-## Project Structure
-
-```
-/
-├── frontend/          # React.js application
-├── backend/           # PHP API server
-├── db/               # Database migrations and documentation
-├── docker-compose.yml # Development environment
-├── Dockerfile        # Production container
-├── .do/              # Digital Ocean App Platform config
-└── README.md         # This file
-```
+### Color Scheme
+- Primary: `#1e40af` (Blue-600)
+- Secondary: `#64748b` (Slate-500)
+- Success: `#059669` (Emerald-600)
+- Warning: `#d97706` (Amber-600)
+- Danger: `#dc2626` (Red-600)
+- Background: `#f8fafc` (Slate-50)
+- Surface: `#ffffff` (White)
 
 ## Quick Start
 
-### Development Setup
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/mdYoungDOer/ardent-pos-project.git
+   cd ardent-pos-project
+   ```
 
-1. Clone the repository:
-```bash
-git clone https://github.com/mdYoungDOer/ardent-pos-project.git
-cd ardent-pos-project
-```
+2. **Set up environment variables in Digital Ocean**
+   ```
+   APP_URL=https://your-app-url.ondigitalocean.app
+   DB_HOST=your-db-host
+   DB_PORT=25060
+   DB_NAME=defaultdb
+   DB_USERNAME=doadmin
+   DB_PASSWORD=your-db-password
+   JWT_SECRET=your-secret-key
+   CORS_ALLOWED_ORIGINS=https://your-app-url.ondigitalocean.app
+   ```
 
-2. Start development environment:
-```bash
-docker-compose up -d
-```
+3. **Deploy to Digital Ocean App Platform**
+   - Connect your GitHub repository
+   - Set environment variables
+   - Deploy
 
-3. Install dependencies:
+4. **Create Super Admin**
+   - Visit: `https://your-app-url.ondigitalocean.app/setup-admin.php`
+   - Use secret key: `ardent-pos-2024`
+   - Create admin account
+
+## Features
+
+- ✅ **Authentication**: Login/Register with JWT
+- ✅ **Dashboard**: Sales overview and analytics
+- ✅ **Products**: Add, edit, delete products
+- ✅ **Sales**: Process transactions
+- ✅ **Customers**: Manage customer database
+- ✅ **Reports**: Sales and inventory reports
+- ✅ **Settings**: App configuration
+
+## API Endpoints
+
+### Authentication
+- `POST /auth/login.php` - User login
+- `POST /auth/register.php` - User registration
+- `POST /auth/verify.php` - Verify JWT token
+
+### Products
+- `GET /api/products.php` - List products
+- `POST /api/products.php` - Create product
+- `PUT /api/products.php` - Update product
+- `DELETE /api/products.php` - Delete product
+
+### Sales
+- `GET /api/sales.php` - List sales
+- `POST /api/sales.php` - Create sale
+- `GET /api/sales/reports.php` - Sales reports
+
+### Customers
+- `GET /api/customers.php` - List customers
+- `POST /api/customers.php` - Create customer
+- `PUT /api/customers.php` - Update customer
+
+## Development
+
+### Frontend Development
 ```bash
-# Frontend
 cd frontend
 npm install
 npm run dev
-
-# Backend
-cd ../backend
-composer install
 ```
 
-4. Set up environment variables:
+### Backend Development
 ```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-### Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=ardent_pos
-DB_USER=postgres
-DB_PASS=password
-
-# JWT
-JWT_SECRET=your-secret-key
-
-# SendGrid
-SENDGRID_API_KEY=your-sendgrid-key
-SENDGRID_FROM_EMAIL=noreply@ardentpos.com
-
-# Paystack
-PAYSTACK_PUBLIC_KEY=pk_test_xxx
-PAYSTACK_SECRET_KEY=sk_test_xxx
-
-# App
-APP_URL=http://localhost:3000
-API_URL=http://localhost:8000
-```
-
-## Deployment to Digital Ocean App Platform
-
-### Prerequisites
-
-1. Digital Ocean account with App Platform access
-2. Managed PostgreSQL database
-3. Environment variables configured
-
-### Deployment Steps
-
-1. **Push to GitHub**: Ensure your code is pushed to the main branch
-
-2. **Configure Environment Variables** in Digital Ocean App Platform:
-   ```
-   APP_URL=https://ardent-pos-app-sdq3t.ondigitalocean.app
-   DB_HOST=db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com
-   DB_PORT=25060
-   DB_NAME=defaultdb
-   DB_USER=doadmin
-   DB_PASS=[your-secret-password]
-   JWT_SECRET=[your-secret-jwt-key]
-   CORS_ALLOWED_ORIGINS=https://ardent-pos-app-sdq3t.ondigitalocean.app
-   PAYSTACK_PUBLIC_KEY=pk_test_af9bf6a2a8cf6ac7693e03ce00aeb5fdd48c25f3
-   PAYSTACK_SECRET_KEY=[your-paystack-secret]
-   SENDGRID_API_KEY=[your-sendgrid-key]
-   SENDGRID_FROM_EMAIL=notify@ardentwebservices.com
-   JWT_EXPIRY=3600
-   API_URL=https://ardent-pos-app-sdq3t.ondigitalocean.app/api
-   APP_DEBUG=false
-   DEFAULT_CURRENCY=GHS
-   DEFAULT_LOCALE=en-GH
-   ```
-
-3. **Deploy**: Digital Ocean will automatically build and deploy from your GitHub repository
-
-4. **Verify Deployment**: Check the health endpoint at `/health.php`
-
-### Troubleshooting
-
-- **Database Connection Issues**: Verify PostgreSQL connection string and credentials
-- **CORS Errors**: Check CORS_ALLOWED_ORIGINS environment variable
-- **Build Failures**: Check Docker build logs in Digital Ocean dashboard
-- **Environment Variables**: Ensure all required variables are set in App Platform
-
-## User Roles
-
-- **Super Admin**: Platform management
-- **Admin**: Full tenant access
-- **Manager**: Sales, inventory, customers, reports
-- **Cashier**: Sales and checkout only
-- **Inventory Staff**: Inventory management only
-- **Viewer**: Reports access only
-
-## API Documentation
-
-API documentation is available at `/api/docs` when running the development server.
-
-## Testing
-
-```bash
-# Frontend tests
-cd frontend
-npm test
-
-# Backend tests
 cd backend
-composer test
-
-# E2E tests
-npm run test:e2e
+composer install
+php -S localhost:8000 -t public
 ```
 
-## Health Checks
+## Deployment
 
-The application provides health check endpoints:
-- `/health.php` - Basic health check
-- `/api/health` - Detailed API health check
+The app is configured for Digital Ocean App Platform deployment with:
+- Multi-stage Docker build
+- Apache web server
+- PostgreSQL database
+- Environment-based configuration
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License
