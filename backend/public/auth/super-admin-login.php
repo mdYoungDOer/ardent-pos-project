@@ -15,26 +15,61 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// Load environment variables
-$envFile = __DIR__ . '/../.env';
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
-            list($key, $value) = explode('=', $line, 2);
-            $_ENV[trim($key)] = trim($value);
-            putenv(trim($key) . '=' . trim($value));
+// Load environment variables - try multiple paths
+$envPaths = [
+    __DIR__ . '/../.env',
+    __DIR__ . '/../../.env',
+    '/var/www/html/.env',
+    '/var/www/html/backend/.env'
+];
+
+foreach ($envPaths as $envPath) {
+    if (file_exists($envPath)) {
+        $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+                list($key, $value) = explode('=', $line, 2);
+                $_ENV[trim($key)] = trim($value);
+                putenv(trim($key) . '=' . trim($value));
+            }
         }
+        break;
     }
 }
 
-// Database configuration
-$dbHost = $_ENV['DB_HOST'] ?? getenv('DB_HOST');
-$dbPort = $_ENV['DB_PORT'] ?? getenv('DB_PORT');
-$dbName = $_ENV['DB_NAME'] ?? getenv('DB_NAME');
-$dbUser = $_ENV['DB_USER'] ?? getenv('DB_USER');
-$dbPass = $_ENV['DB_PASS'] ?? getenv('DB_PASS');
-$jwtSecret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET');
+// Database configuration - try multiple environment variable names
+$dbHost = $_ENV['DB_HOST'] ?? $_ENV['DATABASE_HOST'] ?? getenv('DB_HOST') ?? getenv('DATABASE_HOST') ?? 'localhost';
+$dbPort = $_ENV['DB_PORT'] ?? $_ENV['DATABASE_PORT'] ?? getenv('DB_PORT') ?? getenv('DATABASE_PORT') ?? '5432';
+$dbName = $_ENV['DB_NAME'] ?? $_ENV['DATABASE_NAME'] ?? getenv('DB_NAME') ?? getenv('DATABASE_NAME') ?? 'defaultdb';
+$dbUser = $_ENV['DB_USER'] ?? $_ENV['DATABASE_USER'] ?? $_ENV['DB_USERNAME'] ?? $_ENV['DATABASE_USERNAME'] ?? getenv('DB_USER') ?? getenv('DATABASE_USER') ?? getenv('DB_USERNAME') ?? getenv('DATABASE_USERNAME') ?? '';
+$dbPass = $_ENV['DB_PASS'] ?? $_ENV['DATABASE_PASS'] ?? $_ENV['DB_PASSWORD'] ?? $_ENV['DATABASE_PASSWORD'] ?? getenv('DB_PASS') ?? getenv('DATABASE_PASS') ?? getenv('DB_PASSWORD') ?? getenv('DATABASE_PASSWORD') ?? '';
+$jwtSecret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?? 'your-secret-key';
+
+// Debug: Log the database configuration (without password)
+error_log("DB Host: " . $dbHost);
+error_log("DB Port: " . $dbPort);
+error_log("DB Name: " . $dbName);
+error_log("DB User: " . $dbUser);
+error_log("DB Pass: " . (empty($dbPass) ? 'EMPTY' : 'SET'));
+error_log("JWT Secret: " . (empty($jwtSecret) ? 'EMPTY' : 'SET'));
+
+// Validate database credentials
+if (empty($dbUser) || empty($dbPass)) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Database credentials not configured. Please check environment variables.',
+        'debug' => [
+            'dbHost' => $dbHost,
+            'dbPort' => $dbPort,
+            'dbName' => $dbName,
+            'dbUser' => $dbUser,
+            'dbPass' => empty($dbPass) ? 'EMPTY' : 'SET',
+            'envVars' => array_keys($_ENV)
+        ]
+    ]);
+    exit();
+}
 
 // Get request data
 $input = json_decode(file_get_contents('php://input'), true);
@@ -153,7 +188,14 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Login failed: ' . $e->getMessage()
+        'error' => 'Login failed: ' . $e->getMessage(),
+        'debug' => [
+            'dbHost' => $dbHost,
+            'dbPort' => $dbPort,
+            'dbName' => $dbName,
+            'dbUser' => $dbUser,
+            'dbPass' => empty($dbPass) ? 'EMPTY' : 'SET'
+        ]
     ]);
 }
 ?>
