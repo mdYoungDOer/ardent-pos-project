@@ -1,30 +1,26 @@
 <?php
-// Simple, bulletproof login endpoint
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([
         'error' => 'Method not allowed', 
         'method' => $_SERVER['REQUEST_METHOD'],
-        'expected' => 'POST',
-        'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
+        'expected' => 'POST'
     ]);
     exit;
 }
 
 try {
-    // Load Composer autoloader
+    // Load autoloader
     $autoloaderPaths = [
         __DIR__ . '/../../vendor/autoload.php',
         __DIR__ . '/../vendor/autoload.php',
@@ -43,22 +39,10 @@ try {
     }
     
     if (!$autoloaderFound) {
-        throw new Exception('Autoloader not found in any expected location');
+        throw new Exception('Autoloader not found');
     }
     
-    // Load environment variables
-    $envFile = __DIR__ . '/../../.env';
-    if (file_exists($envFile)) {
-        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
-                list($key, $value) = explode('=', $line, 2);
-                $_ENV[trim($key)] = trim($value);
-            }
-        }
-    }
-    
-    // Get database configuration
+    // Get environment variables
     $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
     $dbPort = $_ENV['DB_PORT'] ?? '5432';
     $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
@@ -66,18 +50,14 @@ try {
     $dbPass = $_ENV['DB_PASSWORD'] ?? '';
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
     
-    // Validate database credentials
-    if (empty($dbUser) || empty($dbPass)) {
-        http_response_code(500);
-        echo json_encode([
-            'error' => 'Database credentials not configured',
-            'message' => 'DB_USERNAME and DB_PASSWORD environment variables are missing',
-            'solution' => 'Set these variables in Digital Ocean App Platform environment settings'
-        ]);
-        exit;
-    }
+    // Connect to database
+    $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
+    $pdo = new PDO($dsn, $dbUser, $dbPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
     
-    // Get request body with multiple fallbacks
+    // Get request data - try multiple sources
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     
@@ -97,8 +77,7 @@ try {
             'error' => 'No request data received',
             'raw_input' => $input,
             'post_data' => $_POST,
-            'request_data' => $_REQUEST,
-            'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
+            'request_data' => $_REQUEST
         ]);
         exit;
     }
@@ -114,13 +93,6 @@ try {
         ]);
         exit;
     }
-    
-    // Connect to database
-    $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
-    $pdo = new PDO($dsn, $dbUser, $dbPass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
     
     // Find user
     $stmt = $pdo->prepare("
@@ -158,7 +130,7 @@ try {
         'email' => $user['email'],
         'role' => $user['role'],
         'iat' => time(),
-        'exp' => time() + (24 * 60 * 60) // 24 hours
+        'exp' => time() + (24 * 60 * 60)
     ];
     
     $token = Firebase\JWT\JWT::encode($payload, $jwtSecret, 'HS256');
@@ -181,17 +153,11 @@ try {
         ]
     ]);
     
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Database connection failed',
-        'message' => $e->getMessage()
-    ]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
-        'error' => 'Login failed',
-        'message' => $e->getMessage(),
+        'success' => false,
+        'error' => $e->getMessage(),
         'file' => $e->getFile(),
         'line' => $e->getLine()
     ]);
