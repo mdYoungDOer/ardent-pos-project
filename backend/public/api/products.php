@@ -29,11 +29,13 @@ try {
 
     switch ($method) {
         case 'GET':
-            // List products
+            // List products with inventory
             $stmt = $pdo->prepare("
-                SELECT * FROM products 
-                WHERE tenant_id = ? 
-                ORDER BY created_at DESC
+                SELECT p.*, COALESCE(i.quantity, 0) as stock
+                FROM products p
+                LEFT JOIN inventory i ON p.id = i.product_id AND i.tenant_id = p.tenant_id
+                WHERE p.tenant_id = ? 
+                ORDER BY p.created_at DESC
             ");
             $stmt->execute([$tenantId]);
             $products = $stmt->fetchAll();
@@ -62,12 +64,31 @@ try {
                 throw new Exception('Name and price are required');
             }
 
-            $productId = uniqid('product_', true);
-            $stmt = $pdo->prepare("
-                INSERT INTO products (id, tenant_id, name, description, price, stock, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-            ");
-            $stmt->execute([$productId, $tenantId, $name, $description, $price, $stock]);
+            // Start transaction
+            $pdo->beginTransaction();
+
+            try {
+                // Create product
+                $productId = uniqid('product_', true);
+                $stmt = $pdo->prepare("
+                    INSERT INTO products (id, tenant_id, name, description, price, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                ");
+                $stmt->execute([$productId, $tenantId, $name, $description, $price]);
+
+                // Create inventory record
+                $inventoryId = uniqid('inventory_', true);
+                $stmt = $pdo->prepare("
+                    INSERT INTO inventory (id, tenant_id, product_id, quantity, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, NOW(), NOW())
+                ");
+                $stmt->execute([$inventoryId, $tenantId, $productId, $stock]);
+
+                $pdo->commit();
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
 
             echo json_encode([
                 'success' => true,
@@ -94,12 +115,41 @@ try {
                 throw new Exception('Name and price are required');
             }
 
-            $stmt = $pdo->prepare("
-                UPDATE products 
-                SET name = ?, description = ?, price = ?, stock = ?, updated_at = NOW()
-                WHERE id = ? AND tenant_id = ?
-            ");
-            $stmt->execute([$name, $description, $price, $stock, $data['id'], $tenantId]);
+            // Start transaction
+            $pdo->beginTransaction();
+
+            try {
+                // Update product
+                $stmt = $pdo->prepare("
+                    UPDATE products 
+                    SET name = ?, description = ?, price = ?, updated_at = NOW()
+                    WHERE id = ? AND tenant_id = ?
+                ");
+                $stmt->execute([$name, $description, $price, $data['id'], $tenantId]);
+
+                // Update inventory
+                $stmt = $pdo->prepare("
+                    UPDATE inventory 
+                    SET quantity = ?, updated_at = NOW()
+                    WHERE product_id = ? AND tenant_id = ?
+                ");
+                $stmt->execute([$stock, $data['id'], $tenantId]);
+
+                // If no inventory record exists, create one
+                if ($stmt->rowCount() === 0) {
+                    $inventoryId = uniqid('inventory_', true);
+                    $stmt = $pdo->prepare("
+                        INSERT INTO inventory (id, tenant_id, product_id, quantity, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, NOW(), NOW())
+                    ");
+                    $stmt->execute([$inventoryId, $tenantId, $data['id'], $stock]);
+                }
+
+                $pdo->commit();
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
 
             if ($stmt->rowCount() === 0) {
                 throw new Exception('Product not found');
@@ -119,11 +169,23 @@ try {
                 throw new Exception('Product ID is required');
             }
 
-            $stmt = $pdo->prepare("
-                DELETE FROM products 
-                WHERE id = ? AND tenant_id = ?
-            ");
-            $stmt->execute([$productId, $tenantId]);
+            // Start transaction
+            $pdo->beginTransaction();
+
+            try {
+                // Delete inventory first (due to foreign key constraint)
+                $stmt = $pdo->prepare("DELETE FROM inventory WHERE product_id = ? AND tenant_id = ?");
+                $stmt->execute([$productId, $tenantId]);
+
+                // Delete product
+                $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND tenant_id = ?");
+                $stmt->execute([$productId, $tenantId]);
+
+                $pdo->commit();
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
 
             if ($stmt->rowCount() === 0) {
                 throw new Exception('Product not found');

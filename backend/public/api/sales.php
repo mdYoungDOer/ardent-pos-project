@@ -97,9 +97,9 @@ try {
 
                     // Update product stock
                     $stmt = $pdo->prepare("
-                        UPDATE products 
-                        SET stock = stock - ?, updated_at = NOW()
-                        WHERE id = ? AND tenant_id = ?
+                        UPDATE inventory 
+                        SET quantity = quantity - ?, updated_at = NOW()
+                        WHERE product_id = ? AND tenant_id = ?
                     ");
                     $stmt->execute([$item['quantity'], $item['product_id'], $tenantId]);
                 }

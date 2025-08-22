@@ -112,10 +112,11 @@ try {
 
         // Low Stock Products (products with stock < 10)
         $stmt = $pdo->prepare("
-            SELECT id, name, stock, price
-            FROM products 
-            WHERE tenant_id = ? AND stock < 10
-            ORDER BY stock ASC
+            SELECT p.id, p.name, COALESCE(i.quantity, 0) as stock, p.price
+            FROM products p
+            LEFT JOIN inventory i ON p.id = i.product_id AND i.tenant_id = p.tenant_id
+            WHERE p.tenant_id = ? AND COALESCE(i.quantity, 0) < 10
+            ORDER BY COALESCE(i.quantity, 0) ASC
             LIMIT 5
         ");
         $stmt->execute([$tenantId]);
