@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
-  FiBarChart3, 
+  FiBarChart2, 
   FiShoppingCart, 
   FiUsers, 
   FiDollarSign,
@@ -186,7 +186,7 @@ const DashboardPage = () => {
               to="/app/reports"
               className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <FiBarChart3 className="h-5 w-5 mr-3 text-indigo-600" />
+              <FiBarChart2 className="h-5 w-5 mr-3 text-indigo-600" />
               View Reports
             </Link>
           </div>

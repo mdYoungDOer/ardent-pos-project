@@ -5,7 +5,7 @@ import {
   FiPackage,
   FiShoppingCart,
   FiUsers,
-  FiBarChart3,
+  FiBarChart2,
   FiSettings,
   FiClipboard
 } from 'react-icons/fi'
@@ -20,7 +20,7 @@ const Sidebar = () => {
     { name: 'Sales', href: '/app/sales', icon: FiShoppingCart },
     { name: 'Inventory', href: '/app/inventory', icon: FiClipboard },
     { name: 'Customers', href: '/app/customers', icon: FiUsers },
-    { name: 'Reports', href: '/app/reports', icon: FiBarChart3 },
+    { name: 'Reports', href: '/app/reports', icon: FiBarChart2 },
     { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 
