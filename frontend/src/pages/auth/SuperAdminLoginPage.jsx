@@ -29,43 +29,40 @@ const SuperAdminLoginPage = () => {
     try {
       console.log('Attempting super admin login with:', formData.email);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/auth/super-admin-login.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      console.log('Response status:', response.status);
       
-      // Mock authentication - accept any email/password for testing
-      if (formData.email && formData.password) {
-        // Create mock data
-        const mockUser = {
-          id: 'test-super-admin-id-' + Date.now(),
-          email: formData.email,
-          first_name: 'Super',
-          last_name: 'Admin',
-          role: 'super_admin',
-          status: 'active'
-        };
-        
-        const mockTenant = {
-          id: 'test-tenant-id-' + Date.now(),
-          name: 'Super Admin'
-        };
-        
-        const mockToken = 'test-jwt-token-' + Date.now();
-        
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Login response:', data);
+
+      if (data.success) {
         // Store token and user data
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        localStorage.setItem('tenant', JSON.stringify(mockTenant));
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('tenant', JSON.stringify(data.tenant));
         
-        console.log('Mock login successful, redirecting...');
+        console.log('Super admin login successful, redirecting...');
         
         // Redirect to super admin dashboard
         navigate('/app/super-admin');
       } else {
-        setError('Email and password are required');
+        setError(data.error || 'Super admin login failed');
       }
     } catch (err) {
       console.error('Super admin login error:', err);
-      setError('Login failed. Please try again.');
+      setError(err.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -113,7 +110,7 @@ const SuperAdminLoginPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b] transition-colors"
-                placeholder="admin@company.com"
+                placeholder="deyoungdoer@gmail.com"
                 disabled={loading}
               />
             </div>
@@ -174,6 +171,15 @@ const SuperAdminLoginPage = () => {
                   All activities are logged and monitored for security purposes.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Login Credentials Hint */}
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="text-sm">
+              <p className="font-semibold text-blue-800 mb-1">Default Super Admin Credentials:</p>
+              <p className="text-blue-700">Email: deyoungdoer@gmail.com</p>
+              <p className="text-blue-700">Password: @am171293GH!!</p>
             </div>
           </div>
         </div>

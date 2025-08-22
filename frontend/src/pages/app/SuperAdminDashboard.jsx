@@ -7,6 +7,7 @@ import {
   FiGrid, FiList, FiRefreshCw, FiDownload, FiFilter, FiSearch
 } from 'react-icons/fi';
 import useAuthStore from '../../stores/authStore';
+import { superAdminAPI } from '../../services/api';
 
 const SuperAdminDashboard = () => {
   const { user } = useAuthStore();
@@ -19,100 +20,45 @@ const SuperAdminDashboard = () => {
   const [timeRange, setTimeRange] = useState('30'); // days
   const [error, setError] = useState(null);
 
-  // Mock data for testing
-  const mockStats = {
-    totalTenants: 15,
-    totalRevenue: 1250000,
-    systemUptime: 99.8,
-    pendingApprovals: 3,
-    monthlyGrowth: 12.5,
-    criticalIssues: 1
-  };
-
-  const mockSystemHealth = {
-    cpu: 45,
-    memory: 62,
-    disk: 78,
-    network: 95,
-    database: 99.9,
-    api: 99.7
-  };
-
-  const mockTopTenants = [
-    {
-      id: '1',
-      name: 'TechCorp Solutions',
-      users: 25,
-      revenue: 250000,
-      status: 'active',
-      growth: 15.2
-    },
-    {
-      id: '2',
-      name: 'Global Retail Inc',
-      users: 18,
-      revenue: 180000,
-      status: 'active',
-      growth: 8.7
-    },
-    {
-      id: '3',
-      name: 'StartupXYZ',
-      users: 12,
-      revenue: 95000,
-      status: 'active',
-      growth: 22.1
-    }
-  ];
-
-  const mockRecentActivity = [
-    {
-      id: '1',
-      type: 'tenant_created',
-      message: 'New tenant "StartupXYZ" registered',
-      status: 'success',
-      time: '2 hours ago'
-    },
-    {
-      id: '2',
-      type: 'payment_received',
-      message: 'Payment received from TechCorp Solutions',
-      status: 'success',
-      time: '4 hours ago'
-    },
-    {
-      id: '3',
-      type: 'system_alert',
-      message: 'Database backup completed successfully',
-      status: 'success',
-      time: '6 hours ago'
-    }
-  ];
-
-  // Load mock data
-  const loadMockData = async () => {
+  // Fetch real data from API
+  const fetchSuperAdminData = React.useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setStats(mockStats);
-      setSystemHealth(mockSystemHealth);
-      setTopTenants(mockTopTenants);
-      setRecentActivity(mockRecentActivity);
+      // Fetch system stats
+      const statsResponse = await superAdminAPI.getStats();
+      if (statsResponse.data.success) {
+        setStats(statsResponse.data.data);
+      }
+
+      // Fetch recent activity
+      const activityResponse = await superAdminAPI.getActivity();
+      if (activityResponse.data.success) {
+        setRecentActivity(activityResponse.data.data);
+      }
+
+      // Fetch top tenants
+      const tenantsResponse = await superAdminAPI.getTenants({ limit: 5 });
+      if (tenantsResponse.data.success) {
+        setTopTenants(tenantsResponse.data.data.tenants);
+      }
+
+      // System health is included in stats response
+      if (statsResponse.data.success && statsResponse.data.data.systemHealth) {
+        setSystemHealth(statsResponse.data.data.systemHealth);
+      }
+
     } catch (error) {
-      console.error('Error loading mock data:', error);
+      console.error('Error fetching super admin data:', error);
       setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadMockData();
-  }, [timeRange]);
+    fetchSuperAdminData();
+  }, [fetchSuperAdminData, timeRange]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GH', {
@@ -162,7 +108,7 @@ const SuperAdminDashboard = () => {
             <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">Dashboard Error</h3>
             <p className="text-[#746354] mb-4">Failed to load dashboard data</p>
             <button 
-              onClick={loadMockData}
+              onClick={fetchSuperAdminData}
               className="px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
             >
               Retry
@@ -214,7 +160,7 @@ const SuperAdminDashboard = () => {
             <button 
               onClick={() => {
                 setTimeRange('30');
-                loadMockData();
+                fetchSuperAdminData();
               }}
               className="flex items-center px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
             >

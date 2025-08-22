@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Load environment variables
-$envFile = __DIR__ . '/../../.env';
+$envFile = __DIR__ . '/../.env';
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -35,30 +35,6 @@ $dbName = $_ENV['DB_NAME'] ?? getenv('DB_NAME');
 $dbUser = $_ENV['DB_USER'] ?? getenv('DB_USER');
 $dbPass = $_ENV['DB_PASS'] ?? getenv('DB_PASS');
 $jwtSecret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET');
-
-// Validate required environment variables
-if (!$dbHost || !$dbName || !$dbUser || !$dbPass || !$jwtSecret) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Server configuration incomplete'
-    ]);
-    exit();
-}
-
-try {
-    // Database connection
-    $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
-    $pdo = new PDO($dsn, $dbUser, $dbPass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Database connection failed'
-    ]);
-    exit();
-}
 
 // Get request data
 $input = json_decode(file_get_contents('php://input'), true);
@@ -86,12 +62,17 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 try {
+    // Database connection
+    $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
+    $pdo = new PDO($dsn, $dbUser, $dbPass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
     // Check if user exists and is a super admin
     $stmt = $pdo->prepare("
         SELECT u.*, t.name as tenant_name 
         FROM users u 
         LEFT JOIN tenants t ON u.tenant_id = t.id 
-        WHERE u.email = ? AND u.role = 'super_admin'
+        WHERE u.email = ? AND u.role = 'super_admin' AND u.status = 'active'
     ");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -100,13 +81,13 @@ try {
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'error' => 'Super admin access denied'
+            'error' => 'Super admin access denied - user not found or not super admin'
         ]);
         exit();
     }
 
     // Verify password
-    if (!password_verify($password, $user['password'])) {
+    if (!password_verify($password, $user['password_hash'])) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -172,7 +153,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Login failed'
+        'error' => 'Login failed: ' . $e->getMessage()
     ]);
 }
 ?>
