@@ -1,5 +1,5 @@
 import useAuthStore from '../../stores/authStore'
-import { Menu, Bell, User } from 'lucide-react'
+import { FiMenu, FiBell, FiUser } from 'react-icons/fi'
 
 const AppHeader = ({ onMenuClick }) => {
   const { user, logout } = useAuthStore()
@@ -17,7 +17,7 @@ const AppHeader = ({ onMenuClick }) => {
             onClick={onMenuClick}
             className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
           >
-            <Menu className="h-6 w-6" />
+            <FiMenu className="h-6 w-6" />
           </button>
           <h1 className="ml-3 text-lg font-semibold text-gray-900">Ardent POS</h1>
         </div>
@@ -26,13 +26,13 @@ const AppHeader = ({ onMenuClick }) => {
         <div className="flex items-center space-x-4">
           {/* Notifications */}
           <button className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
-            <Bell className="h-6 w-6" />
+            <FiBell className="h-6 w-6" />
           </button>
 
           {/* User menu */}
           <div className="relative">
             <button className="flex items-center space-x-2 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
-              <User className="h-6 w-6" />
+              <FiUser className="h-6 w-6" />
               <span className="text-sm font-medium text-gray-700">
                 {user?.first_name} {user?.last_name}
               </span>

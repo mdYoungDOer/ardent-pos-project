@@ -1,5 +1,5 @@
 import useAuthStore from '../../stores/authStore'
-import { X } from 'lucide-react'
+import { FiX } from 'react-icons/fi'
 
 const MobileNav = ({ isOpen, onClose, navigation }) => {
   const { user } = useAuthStore()
@@ -19,7 +19,7 @@ const MobileNav = ({ isOpen, onClose, navigation }) => {
             onClick={onClose}
             className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
           >
-            <X className="h-6 w-6" />
+            <FiX className="h-6 w-6" />
           </button>
         </div>
 

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
-  ChartBarIcon, 
-  ShoppingCartIcon, 
-  UsersIcon, 
-  CurrencyDollarIcon,
-  TrendingUpIcon,
-  CubeIcon
-} from '@heroicons/react/24/outline'
+  FiBarChart3, 
+  FiShoppingCart, 
+  FiUsers, 
+  FiDollarSign,
+  FiTrendingUp,
+  FiPackage
+} from 'react-icons/fi'
 import useAuthStore from '../../stores/authStore'
 
 const DashboardPage = () => {
@@ -79,7 +79,7 @@ const DashboardPage = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
-              <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
+              <FiDollarSign className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Sales</p>
@@ -91,7 +91,7 @@ const DashboardPage = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <ShoppingCartIcon className="h-6 w-6 text-blue-600" />
+              <FiShoppingCart className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Orders</p>
@@ -103,7 +103,7 @@ const DashboardPage = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
-              <UsersIcon className="h-6 w-6 text-purple-600" />
+              <FiUsers className="h-6 w-6 text-purple-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Customers</p>
@@ -115,7 +115,7 @@ const DashboardPage = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center">
             <div className="p-2 bg-orange-100 rounded-lg">
-              <CubeIcon className="h-6 w-6 text-orange-600" />
+              <FiPackage className="h-6 w-6 text-orange-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Products</p>
@@ -165,28 +165,28 @@ const DashboardPage = () => {
               to="/app/sales"
               className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <ShoppingCartIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              <FiShoppingCart className="h-5 w-5 mr-3 text-indigo-600" />
               Create New Sale
             </Link>
             <Link
               to="/app/products"
               className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <CubeIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              <FiPackage className="h-5 w-5 mr-3 text-indigo-600" />
               Add New Product
             </Link>
             <Link
               to="/app/customers"
               className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <UsersIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              <FiUsers className="h-5 w-5 mr-3 text-indigo-600" />
               Add New Customer
             </Link>
             <Link
               to="/app/reports"
               className="flex items-center p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <ChartBarIcon className="h-5 w-5 mr-3 text-indigo-600" />
+              <FiBarChart3 className="h-5 w-5 mr-3 text-indigo-600" />
               View Reports
             </Link>
           </div>

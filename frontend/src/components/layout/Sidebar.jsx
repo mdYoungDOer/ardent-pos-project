@@ -1,27 +1,27 @@
 import { Link, useLocation } from 'react-router-dom'
 import useAuthStore from '../../stores/authStore'
 import {
-  HomeIcon,
-  CubeIcon,
-  ShoppingCartIcon,
-  UsersIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
-  ClipboardDocumentListIcon
-} from '@heroicons/react/24/outline'
+  FiHome,
+  FiPackage,
+  FiShoppingCart,
+  FiUsers,
+  FiBarChart3,
+  FiSettings,
+  FiClipboard
+} from 'react-icons/fi'
 
 const Sidebar = () => {
   const location = useLocation()
   const { user } = useAuthStore()
 
   const navigation = [
-    { name: 'Dashboard', href: '/app/dashboard', icon: HomeIcon },
-    { name: 'Products', href: '/app/products', icon: CubeIcon },
-    { name: 'Sales', href: '/app/sales', icon: ShoppingCartIcon },
-    { name: 'Inventory', href: '/app/inventory', icon: ClipboardDocumentListIcon },
-    { name: 'Customers', href: '/app/customers', icon: UsersIcon },
-    { name: 'Reports', href: '/app/reports', icon: ChartBarIcon },
-    { name: 'Settings', href: '/app/settings', icon: Cog6ToothIcon },
+    { name: 'Dashboard', href: '/app/dashboard', icon: FiHome },
+    { name: 'Products', href: '/app/products', icon: FiPackage },
+    { name: 'Sales', href: '/app/sales', icon: FiShoppingCart },
+    { name: 'Inventory', href: '/app/inventory', icon: FiClipboard },
+    { name: 'Customers', href: '/app/customers', icon: FiUsers },
+    { name: 'Reports', href: '/app/reports', icon: FiBarChart3 },
+    { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 
   return (
