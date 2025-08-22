@@ -21,7 +21,7 @@ const SuperAdminDashboard = () => {
   const [error, setError] = useState(null);
 
   // Fetch real data from API
-  const fetchSuperAdminData = async () => {
+  const fetchSuperAdminData = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -54,11 +54,11 @@ const SuperAdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSuperAdminData();
-  }, [timeRange]);
+  }, [fetchSuperAdminData, timeRange]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GH', {
@@ -107,12 +107,12 @@ const SuperAdminDashboard = () => {
             </div>
             <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">Dashboard Error</h3>
             <p className="text-[#746354] mb-4">Failed to load dashboard data</p>
-            <button 
-              onClick={fetchSuperAdminData}
-              className="px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
-            >
-              Retry
-            </button>
+                         <button 
+               onClick={() => fetchSuperAdminData()}
+               className="px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
+             >
+               Retry
+             </button>
           </div>
         </div>
       </div>

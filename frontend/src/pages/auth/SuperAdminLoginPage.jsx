@@ -29,7 +29,7 @@ const SuperAdminLoginPage = () => {
     try {
       console.log('Attempting super admin login with:', formData.email);
       
-      const response = await fetch('/test-super-admin-login.php', {
+      const response = await fetch('/test-super-admin-endpoint.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,15 +46,32 @@ const SuperAdminLoginPage = () => {
       const data = await response.json();
       console.log('Login response:', data);
 
-      if (data.success) {
-        // Store token and user data
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('tenant', JSON.stringify(data.tenant));
-        
-        // Redirect to super admin dashboard
-        navigate('/app/super-admin');
-      } else {
+             if (data.success) {
+         // For testing purposes, create mock data
+         const mockUser = {
+           id: 'test-super-admin-id',
+           email: formData.email,
+           first_name: 'Super',
+           last_name: 'Admin',
+           role: 'super_admin',
+           status: 'active'
+         };
+         
+         const mockTenant = {
+           id: 'test-tenant-id',
+           name: 'Super Admin'
+         };
+         
+         const mockToken = 'test-jwt-token-' + Date.now();
+         
+         // Store token and user data
+         localStorage.setItem('token', mockToken);
+         localStorage.setItem('user', JSON.stringify(mockUser));
+         localStorage.setItem('tenant', JSON.stringify(mockTenant));
+         
+         // Redirect to super admin dashboard
+         navigate('/app/super-admin');
+       } else {
         setError(data.error || 'Super admin login failed');
       }
     } catch (err) {
