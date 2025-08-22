@@ -7,7 +7,6 @@ import {
   FiGrid, FiList, FiRefreshCw, FiDownload, FiFilter, FiSearch
 } from 'react-icons/fi';
 import useAuthStore from '../../stores/authStore';
-import { superAdminAPI } from '../../services/api';
 
 const SuperAdminDashboard = () => {
   const { user } = useAuthStore();
@@ -20,45 +19,100 @@ const SuperAdminDashboard = () => {
   const [timeRange, setTimeRange] = useState('30'); // days
   const [error, setError] = useState(null);
 
-  // Fetch real data from API
-  const fetchSuperAdminData = React.useCallback(async () => {
+  // Mock data for testing
+  const mockStats = {
+    totalTenants: 15,
+    totalRevenue: 1250000,
+    systemUptime: 99.8,
+    pendingApprovals: 3,
+    monthlyGrowth: 12.5,
+    criticalIssues: 1
+  };
+
+  const mockSystemHealth = {
+    cpu: 45,
+    memory: 62,
+    disk: 78,
+    network: 95,
+    database: 99.9,
+    api: 99.7
+  };
+
+  const mockTopTenants = [
+    {
+      id: '1',
+      name: 'TechCorp Solutions',
+      users: 25,
+      revenue: 250000,
+      status: 'active',
+      growth: 15.2
+    },
+    {
+      id: '2',
+      name: 'Global Retail Inc',
+      users: 18,
+      revenue: 180000,
+      status: 'active',
+      growth: 8.7
+    },
+    {
+      id: '3',
+      name: 'StartupXYZ',
+      users: 12,
+      revenue: 95000,
+      status: 'active',
+      growth: 22.1
+    }
+  ];
+
+  const mockRecentActivity = [
+    {
+      id: '1',
+      type: 'tenant_created',
+      message: 'New tenant "StartupXYZ" registered',
+      status: 'success',
+      time: '2 hours ago'
+    },
+    {
+      id: '2',
+      type: 'payment_received',
+      message: 'Payment received from TechCorp Solutions',
+      status: 'success',
+      time: '4 hours ago'
+    },
+    {
+      id: '3',
+      type: 'system_alert',
+      message: 'Database backup completed successfully',
+      status: 'success',
+      time: '6 hours ago'
+    }
+  ];
+
+  // Load mock data
+  const loadMockData = async () => {
     setLoading(true);
     setError(null);
+    
     try {
-      // Fetch system stats
-      const statsResponse = await superAdminAPI.getStats();
-      if (statsResponse.data.success) {
-        setStats(statsResponse.data.data);
-      }
-
-      // Fetch recent activity
-      const activityResponse = await superAdminAPI.getActivity();
-      if (activityResponse.data.success) {
-        setRecentActivity(activityResponse.data.data);
-      }
-
-      // Fetch top tenants
-      const tenantsResponse = await superAdminAPI.getTenants({ limit: 5 });
-      if (tenantsResponse.data.success) {
-        setTopTenants(tenantsResponse.data.data.tenants);
-      }
-
-      // System health is included in stats response
-      if (statsResponse.data.success && statsResponse.data.data.systemHealth) {
-        setSystemHealth(statsResponse.data.data.systemHealth);
-      }
-
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setStats(mockStats);
+      setSystemHealth(mockSystemHealth);
+      setTopTenants(mockTopTenants);
+      setRecentActivity(mockRecentActivity);
     } catch (error) {
-      console.error('Error fetching super admin data:', error);
+      console.error('Error loading mock data:', error);
       setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    fetchSuperAdminData();
-  }, [fetchSuperAdminData, timeRange]);
+    loadMockData();
+  }, [timeRange]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GH', {
@@ -107,12 +161,12 @@ const SuperAdminDashboard = () => {
             </div>
             <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">Dashboard Error</h3>
             <p className="text-[#746354] mb-4">Failed to load dashboard data</p>
-                         <button 
-               onClick={() => fetchSuperAdminData()}
-               className="px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
-             >
-               Retry
-             </button>
+            <button 
+              onClick={loadMockData}
+              className="px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
+            >
+              Retry
+            </button>
           </div>
         </div>
       </div>
@@ -157,16 +211,16 @@ const SuperAdminDashboard = () => {
               <option value="90">Last 90 days</option>
               <option value="365">Last year</option>
             </select>
-                         <button 
-               onClick={() => {
-                 setTimeRange('30');
-                 fetchSuperAdminData();
-               }}
-               className="flex items-center px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
-             >
-               <FiRefreshCw className="h-4 w-4 mr-2" />
-               Refresh
-             </button>
+            <button 
+              onClick={() => {
+                setTimeRange('30');
+                loadMockData();
+              }}
+              className="flex items-center px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
+            >
+              <FiRefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </button>
           </div>
         </div>
       </div>
@@ -177,10 +231,10 @@ const SuperAdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[#746354]">Total Tenants</p>
-                             <p className="text-2xl font-bold text-[#2c2c2c]">{stats?.totalTenants || 0}</p>
+              <p className="text-2xl font-bold text-[#2c2c2c]">{stats?.totalTenants || 0}</p>
               <p className="text-xs text-green-600 mt-1">
                 <FiTrendingUp className="inline h-3 w-3 mr-1" />
-                                 +{stats?.monthlyGrowth || 0}% this month
+                +{stats?.monthlyGrowth || 0}% this month
               </p>
             </div>
             <div className="w-12 h-12 bg-[#e41e5b]/10 rounded-xl flex items-center justify-center">
@@ -193,7 +247,7 @@ const SuperAdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[#746354]">Total Revenue</p>
-                             <p className="text-2xl font-bold text-[#2c2c2c]">{formatCurrency(stats?.totalRevenue || 0)}</p>
+              <p className="text-2xl font-bold text-[#2c2c2c]">{formatCurrency(stats?.totalRevenue || 0)}</p>
               <p className="text-xs text-green-600 mt-1">
                 <FiTrendingUp className="inline h-3 w-3 mr-1" />
                 +8.2% vs last month
@@ -209,7 +263,7 @@ const SuperAdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[#746354]">System Uptime</p>
-                             <p className="text-2xl font-bold text-[#2c2c2c]">{stats?.systemUptime || 99.8}%</p>
+              <p className="text-2xl font-bold text-[#2c2c2c]">{stats?.systemUptime || 99.8}%</p>
               <p className="text-xs text-green-600 mt-1">
                 <FiActivity className="inline h-3 w-3 mr-1" />
                 All systems operational
@@ -225,10 +279,10 @@ const SuperAdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-[#746354]">Pending Actions</p>
-                             <p className="text-2xl font-bold text-[#2c2c2c]">{stats?.pendingApprovals || 0}</p>
+              <p className="text-2xl font-bold text-[#2c2c2c]">{stats?.pendingApprovals || 0}</p>
               <p className="text-xs text-yellow-600 mt-1">
                 <FiAlertCircle className="inline h-3 w-3 mr-1" />
-                                 {stats?.criticalIssues || 0} critical issues
+                {stats?.criticalIssues || 0} critical issues
               </p>
             </div>
             <div className="w-12 h-12 bg-[#746354]/10 rounded-xl flex items-center justify-center">
@@ -249,42 +303,42 @@ const SuperAdminDashboard = () => {
                 <FiActivity className="h-6 w-6 text-[#e41e5b]" />
               </div>
               <p className="text-sm font-medium text-[#2c2c2c]">CPU</p>
-                             <p className="text-lg font-bold text-[#e41e5b]">{systemHealth?.cpu || 0}%</p>
+              <p className="text-lg font-bold text-[#e41e5b]">{systemHealth?.cpu || 0}%</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-2 bg-[#9a0864]/10 rounded-full flex items-center justify-center">
                 <FiDatabase className="h-6 w-6 text-[#9a0864]" />
               </div>
               <p className="text-sm font-medium text-[#2c2c2c]">Memory</p>
-                             <p className="text-lg font-bold text-[#9a0864]">{systemHealth?.memory || 0}%</p>
+              <p className="text-lg font-bold text-[#9a0864]">{systemHealth?.memory || 0}%</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-2 bg-[#a67c00]/10 rounded-full flex items-center justify-center">
                 <FiBarChart2 className="h-6 w-6 text-[#a67c00]" />
               </div>
               <p className="text-sm font-medium text-[#2c2c2c]">Disk</p>
-                             <p className="text-lg font-bold text-[#a67c00]">{systemHealth?.disk || 0}%</p>
+              <p className="text-lg font-bold text-[#a67c00]">{systemHealth?.disk || 0}%</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-2 bg-[#746354]/10 rounded-full flex items-center justify-center">
                 <FiTarget className="h-6 w-6 text-[#746354]" />
               </div>
               <p className="text-sm font-medium text-[#2c2c2c]">Network</p>
-                             <p className="text-lg font-bold text-[#746354]">{systemHealth?.network || 0}%</p>
+              <p className="text-lg font-bold text-[#746354]">{systemHealth?.network || 0}%</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
                 <FiDatabase className="h-6 w-6 text-green-600" />
               </div>
               <p className="text-sm font-medium text-[#2c2c2c]">Database</p>
-                             <p className="text-lg font-bold text-green-600">{systemHealth?.database || 99.9}%</p>
+              <p className="text-lg font-bold text-green-600">{systemHealth?.database || 99.9}%</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
                 <FiBarChart2 className="h-6 w-6 text-blue-600" />
               </div>
               <p className="text-sm font-medium text-[#2c2c2c]">API</p>
-                             <p className="text-lg font-bold text-blue-600">{systemHealth?.api || 99.7}%</p>
+              <p className="text-lg font-bold text-blue-600">{systemHealth?.api || 99.7}%</p>
             </div>
           </div>
         </div>
@@ -335,7 +389,7 @@ const SuperAdminDashboard = () => {
             </div>
           </div>
           <div className="space-y-4">
-                         {topTenants?.map((tenant) => (
+            {topTenants?.map((tenant) => (
               <div key={tenant.id} className="flex items-center justify-between p-4 border border-[#746354]/10 rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-[#e41e5b]/10 rounded-lg flex items-center justify-center mr-3">
@@ -364,7 +418,7 @@ const SuperAdminDashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
           <h3 className="text-lg font-semibold text-[#2c2c2c] mb-4">Recent Activity</h3>
           <div className="space-y-4">
-                         {recentActivity?.map((activity) => (
+            {recentActivity?.map((activity) => (
               <div key={activity.id} className="flex items-start space-x-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   activity.status === 'success' ? 'bg-green-100' :

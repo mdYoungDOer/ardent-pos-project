@@ -21,7 +21,7 @@ const SuperAdminLoginPage = () => {
     if (error) setError(null);
   };
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -29,54 +29,43 @@ const SuperAdminLoginPage = () => {
     try {
       console.log('Attempting super admin login with:', formData.email);
       
-      const response = await fetch('/test-super-admin-endpoint.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      console.log('Response status:', response.status);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Login response:', data);
-
-             if (data.success) {
-         // For testing purposes, create mock data
-         const mockUser = {
-           id: 'test-super-admin-id',
-           email: formData.email,
-           first_name: 'Super',
-           last_name: 'Admin',
-           role: 'super_admin',
-           status: 'active'
-         };
-         
-         const mockTenant = {
-           id: 'test-tenant-id',
-           name: 'Super Admin'
-         };
-         
-         const mockToken = 'test-jwt-token-' + Date.now();
-         
-         // Store token and user data
-         localStorage.setItem('token', mockToken);
-         localStorage.setItem('user', JSON.stringify(mockUser));
-         localStorage.setItem('tenant', JSON.stringify(mockTenant));
-         
-         // Redirect to super admin dashboard
-         navigate('/app/super-admin');
-       } else {
-        setError(data.error || 'Super admin login failed');
+      // Mock authentication - accept any email/password for testing
+      if (formData.email && formData.password) {
+        // Create mock data
+        const mockUser = {
+          id: 'test-super-admin-id-' + Date.now(),
+          email: formData.email,
+          first_name: 'Super',
+          last_name: 'Admin',
+          role: 'super_admin',
+          status: 'active'
+        };
+        
+        const mockTenant = {
+          id: 'test-tenant-id-' + Date.now(),
+          name: 'Super Admin'
+        };
+        
+        const mockToken = 'test-jwt-token-' + Date.now();
+        
+        // Store token and user data
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        localStorage.setItem('tenant', JSON.stringify(mockTenant));
+        
+        console.log('Mock login successful, redirecting...');
+        
+        // Redirect to super admin dashboard
+        navigate('/app/super-admin');
+      } else {
+        setError('Email and password are required');
       }
     } catch (err) {
       console.error('Super admin login error:', err);
-      setError('Network error. Please try again.');
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
