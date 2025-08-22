@@ -23,6 +23,7 @@ const SuperAdminDashboard = () => {
   // Fetch real data from API
   const fetchSuperAdminData = async () => {
     setLoading(true);
+    setError(null);
     try {
       // Fetch system stats
       const statsResponse = await superAdminAPI.getStats();
@@ -91,6 +92,29 @@ const SuperAdminDashboard = () => {
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e41e5b]"></div>
         <span className="ml-3 text-[#746354]">Loading Super Admin Dashboard...</span>
+      </div>
+    );
+  }
+
+  // Show error state if no stats loaded
+  if (!stats) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <FiAlertCircle className="h-12 w-12 mx-auto" />
+            </div>
+            <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">Dashboard Error</h3>
+            <p className="text-[#746354] mb-4">Failed to load dashboard data</p>
+            <button 
+              onClick={fetchSuperAdminData}
+              className="px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

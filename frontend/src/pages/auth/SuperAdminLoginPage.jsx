@@ -21,13 +21,15 @@ const SuperAdminLoginPage = () => {
     if (error) setError(null);
   };
 
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/auth/super-admin-login.php', {
+      console.log('Attempting super admin login with:', formData.email);
+      
+      const response = await fetch('/test-super-admin-login.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,23 +37,30 @@ const SuperAdminLoginPage = () => {
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-             if (data.success) {
-         // Store token and user data
-         localStorage.setItem('token', data.token);
-         localStorage.setItem('user', JSON.stringify(data.user));
-         localStorage.setItem('tenant', JSON.stringify(data.tenant));
-         
-         // Redirect to super admin dashboard
-         navigate('/app/super-admin');
-       } else {
+      const data = await response.json();
+      console.log('Login response:', data);
+
+      if (data.success) {
+        // Store token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('tenant', JSON.stringify(data.tenant));
+        
+        // Redirect to super admin dashboard
+        navigate('/app/super-admin');
+      } else {
         setError(data.error || 'Super admin login failed');
       }
-         } catch (err) {
-       console.error('Super admin login error:', err);
-       setError('Network error. Please try again.');
-     } finally {
+    } catch (err) {
+      console.error('Super admin login error:', err);
+      setError('Network error. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
