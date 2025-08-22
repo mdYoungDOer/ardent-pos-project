@@ -17,7 +17,7 @@ export const authAPI = {
   // Login with email and password
   async login(email, password) {
     try {
-      const response = await api.post('/auth/login-simple.php', {
+      const response = await api.post('/auth/login-new.php', {
         email,
         password
       });
