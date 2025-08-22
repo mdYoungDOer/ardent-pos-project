@@ -75,6 +75,8 @@ try {
     $superAdminPassword = '@am171293GH!!';
     $superAdminTenantId = '00000000-0000-0000-0000-000000000000';
     
+    $messages = [];
+    
     // Check if super admin tenant exists
     $stmt = $pdo->prepare("SELECT id FROM tenants WHERE id = ?");
     $stmt->execute([$superAdminTenantId]);
@@ -87,9 +89,9 @@ try {
             VALUES (?, 'Super Admin', 'admin', 'enterprise', 'active', NOW(), NOW())
         ");
         $stmt->execute([$superAdminTenantId]);
-        echo "✅ Super admin tenant created\n";
+        $messages[] = "Super admin tenant created";
     } else {
-        echo "✅ Super admin tenant already exists\n";
+        $messages[] = "Super admin tenant already exists";
     }
     
     // Check if super admin user exists
@@ -111,6 +113,7 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'Super admin user created successfully!',
+            'messages' => $messages,
             'user' => [
                 'id' => $userId,
                 'email' => $superAdminEmail,
@@ -132,6 +135,7 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'Super admin user updated successfully!',
+            'messages' => $messages,
             'user' => [
                 'id' => $user['id'],
                 'email' => $superAdminEmail,
