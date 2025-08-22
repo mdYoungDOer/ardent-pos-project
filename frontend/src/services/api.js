@@ -9,10 +9,10 @@ const api = axios.create({
   },
 });
 
-// Auth API - direct PHP endpoints
+// Auth API - direct PHP endpoints (no /api prefix)
 export const authAPI = {
   login: async (email, password) => {
-    const response = await api.post('/auth/login.php', { email, password });
+    const response = await axios.post('/auth/login.php', { email, password });
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -22,7 +22,7 @@ export const authAPI = {
   },
 
   register: async (userData) => {
-    const response = await api.post('/auth/register.php', userData);
+    const response = await axios.post('/auth/register.php', userData);
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -32,7 +32,7 @@ export const authAPI = {
   },
 
   verify: async (token) => {
-    const response = await api.post('/auth/verify.php', { token });
+    const response = await axios.post('/auth/verify.php', { token });
     return response.data;
   },
 
