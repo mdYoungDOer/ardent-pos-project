@@ -14,7 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed', 'method' => $_SERVER['REQUEST_METHOD']]);
+    echo json_encode([
+        'error' => 'Method not allowed', 
+        'method' => $_SERVER['REQUEST_METHOD'],
+        'expected' => 'POST',
+        'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
+    ]);
     exit;
 }
 
@@ -72,13 +77,29 @@ try {
         exit;
     }
     
-    // Get request body
+    // Get request body with multiple fallbacks
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     
+    // If JSON parsing failed, try $_POST
+    if (!$data && !empty($_POST)) {
+        $data = $_POST;
+    }
+    
+    // If still no data, try $_REQUEST
+    if (!$data && !empty($_REQUEST)) {
+        $data = $_REQUEST;
+    }
+    
     if (!$data) {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid JSON data']);
+        echo json_encode([
+            'error' => 'No request data received',
+            'raw_input' => $input,
+            'post_data' => $_POST,
+            'request_data' => $_REQUEST,
+            'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
+        ]);
         exit;
     }
     
@@ -87,7 +108,10 @@ try {
     
     if (empty($email) || empty($password)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Email and password are required']);
+        echo json_encode([
+            'error' => 'Email and password are required',
+            'received_data' => $data
+        ]);
         exit;
     }
     
@@ -167,7 +191,9 @@ try {
     http_response_code(500);
     echo json_encode([
         'error' => 'Login failed',
-        'message' => $e->getMessage()
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
     ]);
 }
 ?>
