@@ -22,10 +22,17 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      await login(email, password);
+      console.log('Attempting login with:', { email, password: '***' });
+      const result = await login(email, password);
+      console.log('Login result:', result);
       navigate('/app/dashboard');
     } catch (error) {
       console.error('Login failed:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
     } finally {
       setIsLoading(false);
     }

@@ -12,13 +12,24 @@ const api = axios.create({
 // Auth API - direct PHP endpoints (no /api prefix)
 export const authAPI = {
   login: async (email, password) => {
-    const response = await axios.post('/auth/login.php', { email, password });
-    if (response.data.success) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      localStorage.setItem('tenant', JSON.stringify(response.data.tenant));
+    console.log('Making login request to /auth/login.php');
+    console.log('Request data:', { email, password: '***' });
+    
+    try {
+      const response = await axios.post('/auth/login.php', { email, password });
+      console.log('Login response:', response.data);
+      
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('tenant', JSON.stringify(response.data.tenant));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Login API error:', error);
+      console.error('Error response:', error.response?.data);
+      throw error;
     }
-    return response.data;
   },
 
   register: async (userData) => {
