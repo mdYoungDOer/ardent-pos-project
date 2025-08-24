@@ -7,6 +7,7 @@ import {
   HiShieldCheck,
   HiLightningBolt
 } from 'react-icons/hi'
+import Logo from '../../components/ui/Logo'
 
 const HomePage = () => {
   const features = [
@@ -66,6 +67,11 @@ const HomePage = () => {
           <div className="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
             <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
               <div className="sm:text-center lg:text-left">
+                {/* Logo */}
+                <div className="flex justify-center lg:justify-start mb-8">
+                  <Logo size="large" />
+                </div>
+                
                 <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
                   <span className="block xl:inline">Smart Point of Sale</span>{' '}
                   <span className="block text-primary xl:inline">for Modern Businesses</span>
@@ -102,12 +108,11 @@ const HomePage = () => {
           </div>
         </div>
         <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-          <div className="h-56 w-full bg-gradient-to-r from-primary-400 to-accent-400 sm:h-72 md:h-96 lg:w-full lg:h-full flex items-center justify-center">
-            <div className="text-white text-center">
-              <div className="text-6xl mb-4">📱</div>
-              <p className="text-xl font-semibold">Mobile POS Interface</p>
-            </div>
-          </div>
+          <img
+            className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
+            src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2850&q=80"
+            alt=""
+          />
         </div>
       </section>
 
