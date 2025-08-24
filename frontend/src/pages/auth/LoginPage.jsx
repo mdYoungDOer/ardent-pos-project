@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
 import useAuthStore from '../../stores/authStore';
 import Logo from '../../components/ui/Logo';
+import { authAPI } from '../../services/api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -35,6 +36,24 @@ const LoginPage = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Debug function to test credentials
+  const testCredentials = async () => {
+    if (!email || !password) {
+      alert('Please enter both email and password first');
+      return;
+    }
+    
+    try {
+      console.log('Testing credentials...');
+      const result = await authAPI.testCredentials(email, password);
+      console.log('Credentials test result:', result);
+      alert(`Credentials test: ${JSON.stringify(result, null, 2)}`);
+    } catch (error) {
+      console.error('Credentials test failed:', error);
+      alert(`Credentials test failed: ${error.message}`);
     }
   };
 
@@ -153,6 +172,17 @@ const LoginPage = () => {
                       <FiArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                     </div>
                   )}
+                </button>
+              </div>
+
+              {/* Debug Test Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={testCredentials}
+                  className="w-full flex justify-center items-center py-2 px-4 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E72F7C] transition-all duration-200"
+                >
+                  Test Credentials (Debug)
                 </button>
               </div>
 
