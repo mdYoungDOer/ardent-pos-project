@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiBuilding, FiArrowRight } from 'react-icons/fi'
+import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiBriefcase, FiArrowRight } from 'react-icons/fi'
 import useAuthStore from '../../stores/authStore'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import Logo from '../../components/ui/Logo'
@@ -56,7 +56,7 @@ const RegisterPage = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <FiBuilding className="h-5 w-5 text-[#746354]" />
+                    <FiBriefcase className="h-5 w-5 text-[#746354]" />
                   </div>
                   <input
                     id="business_name"
