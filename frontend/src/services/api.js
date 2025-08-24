@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Base API configuration
+// Base API configuration for authenticated endpoints
 const api = axios.create({
   baseURL: '/api',
   timeout: 30000,
@@ -10,13 +10,21 @@ const api = axios.create({
 });
 
 // Auth API - direct PHP endpoints (no /api prefix)
+const authAxios = axios.create({
+  baseURL: '', // No base URL for auth endpoints
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export const authAPI = {
   login: async (email, password) => {
     console.log('Making login request to /auth/login.php');
     console.log('Request data:', { email, password: '***' });
     
     try {
-      const response = await axios.post('/auth/login.php', { email, password });
+      const response = await authAxios.post('/auth/login.php', { email, password });
       console.log('Login response:', response.data);
       
       if (response.data.success) {
@@ -33,7 +41,7 @@ export const authAPI = {
   },
 
   register: async (userData) => {
-    const response = await axios.post('/auth/register.php', userData);
+    const response = await authAxios.post('/auth/register.php', userData);
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -43,7 +51,7 @@ export const authAPI = {
   },
 
   verify: async (token) => {
-    const response = await axios.post('/auth/verify.php', { token });
+    const response = await authAxios.post('/auth/verify.php', { token });
     return response.data;
   },
 
@@ -64,17 +72,8 @@ export const authAPI = {
   },
 };
 
-// Authenticated API with token
-const authenticatedApi = axios.create({
-  baseURL: '/api',
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
 // Add token to requests
-authenticatedApi.interceptors.request.use((config) => {
+api.interceptors.request.use((config) => {
   const token = authAPI.getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -83,7 +82,7 @@ authenticatedApi.interceptors.request.use((config) => {
 });
 
 // Handle 401 responses
-authenticatedApi.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -96,40 +95,40 @@ authenticatedApi.interceptors.response.use(
 
 // Dashboard API
 export const dashboardAPI = {
-  getStats: () => authenticatedApi.get('/dashboard.php'),
+  getStats: () => api.get('/dashboard.php'),
 };
 
 // Super Admin API
 export const superAdminAPI = {
-  getStats: () => authenticatedApi.get('/super-admin.php'),
-  getTenants: (params = {}) => authenticatedApi.get('/super-admin.php/tenants', { params }),
-  getActivity: () => authenticatedApi.get('/super-admin.php/activity'),
-  createTenant: (data) => authenticatedApi.post('/super-admin.php/tenant', data),
-  updateTenant: (id, data) => authenticatedApi.put(`/super-admin.php/${id}`, data),
-  deleteTenant: (id) => authenticatedApi.delete(`/super-admin.php/${id}`)
+  getStats: () => api.get('/super-admin.php'),
+  getTenants: (params = {}) => api.get('/super-admin.php/tenants', { params }),
+  getActivity: () => api.get('/super-admin.php/activity'),
+  createTenant: (data) => api.post('/super-admin.php/tenant', data),
+  updateTenant: (id, data) => api.put(`/super-admin.php/${id}`, data),
+  deleteTenant: (id) => api.delete(`/super-admin.php/${id}`)
 };
 
 // Products API
 export const productsAPI = {
-  getAll: () => authenticatedApi.get('/products.php'),
-  create: (product) => authenticatedApi.post('/products.php', product),
-  update: (product) => authenticatedApi.put('/products.php', product),
-  delete: (id) => authenticatedApi.delete(`/products.php?id=${id}`),
+  getAll: () => api.get('/products.php'),
+  create: (product) => api.post('/products.php', product),
+  update: (product) => api.put('/products.php', product),
+  delete: (id) => api.delete(`/products.php?id=${id}`),
 };
 
 // Sales API
 export const salesAPI = {
-  getAll: () => authenticatedApi.get('/sales.php'),
-  create: (sale) => authenticatedApi.post('/sales.php', sale),
-  getReports: () => authenticatedApi.get('/sales/reports.php'),
+  getAll: () => api.get('/sales.php'),
+  create: (sale) => api.post('/sales.php', sale),
+  getReports: () => api.get('/sales/reports.php'),
 };
 
 // Customers API
 export const customersAPI = {
-  getAll: () => authenticatedApi.get('/customers.php'),
-  create: (customer) => authenticatedApi.post('/customers.php', customer),
-  update: (customer) => authenticatedApi.put('/customers.php', customer),
-  delete: (id) => authenticatedApi.delete(`/customers.php?id=${id}`),
+  getAll: () => api.get('/customers.php'),
+  create: (customer) => api.post('/customers.php', customer),
+  update: (customer) => api.put('/customers.php', customer),
+  delete: (id) => api.delete(`/customers.php?id=${id}`),
 };
 
 export default api;
