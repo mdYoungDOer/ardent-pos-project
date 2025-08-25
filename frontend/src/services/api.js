@@ -134,18 +134,18 @@ export const customersAPI = {
 // Notification API
 export const notificationAPI = {
   getSettings: async () => {
-    const response = await api.get('/notifications-working.php?action=settings');
+    const response = await axios.get('/notifications-working.php?action=settings');
     return response.data;
   },
 
   updateSettings: async (settings) => {
-    const response = await api.post('/notifications-working.php?action=update-settings', settings);
+    const response = await axios.post('/notifications-working.php?action=update-settings', settings);
     return response.data;
   },
 
   getLogs: async (params = {}) => {
     const queryParams = new URLSearchParams(params).toString();
-    const response = await api.get(`/notifications-working.php?action=logs&${queryParams}`);
+    const response = await axios.get(`/notifications-working.php?action=logs&${queryParams}`);
     return response.data;
   },
 
@@ -182,7 +182,7 @@ export const notificationAPI = {
   },
 
   testEmail: async (email) => {
-    const response = await api.get(`/notifications-working.php?action=test-email&email=${email}`);
+    const response = await axios.get(`/notifications-working.php?action=test-email&email=${email}`);
     return response.data;
   }
 };
