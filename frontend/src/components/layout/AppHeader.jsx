@@ -1,5 +1,6 @@
 import useAuthStore from '../../stores/authStore'
-import { FiMenu, FiBell, FiUser } from 'react-icons/fi'
+import { FiMenu, FiUser } from 'react-icons/fi'
+import NotificationBell from '../ui/NotificationBell'
 
 const AppHeader = ({ onMenuClick }) => {
   const { user, logout } = useAuthStore()
@@ -25,9 +26,7 @@ const AppHeader = ({ onMenuClick }) => {
         {/* Right side - Notifications and user menu */}
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <button className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
-            <FiBell className="h-6 w-6" />
-          </button>
+          <NotificationBell />
 
           {/* User menu */}
           <div className="relative">

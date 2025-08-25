@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { FiBell, FiMail, FiAlertTriangle, FiCheckCircle, FiSettings, FiSend, FiEye, FiEyeOff } from 'react-icons/fi';
 import { notificationAPI } from '../../services/api';
 import useAuthStore from '../../stores/authStore';
+import useNotificationStore from '../../stores/notificationStore';
 import toast from 'react-hot-toast';
 
 const NotificationSettingsPage = () => {
   const { user, tenant } = useAuthStore();
+  const { addSystemNotification, addLowStockNotification, addSaleNotification, addPaymentNotification } = useNotificationStore();
   const [loading, setLoading] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [showTestEmail, setShowTestEmail] = useState(false);
@@ -70,12 +72,15 @@ const NotificationSettingsPage = () => {
       const response = await notificationAPI.updateSettings(settings);
       if (response.success) {
         toast.success('Notification settings updated successfully!');
+        addSystemNotification('Notification settings updated successfully!', 'success');
       } else {
         toast.error('Failed to update settings');
+        addSystemNotification('Failed to update notification settings', 'error');
       }
     } catch (error) {
       console.error('Failed to save settings:', error);
       toast.error('Failed to save notification settings');
+      addSystemNotification('Failed to save notification settings', 'error');
     } finally {
       setLoading(false);
     }
@@ -92,14 +97,17 @@ const NotificationSettingsPage = () => {
       const response = await notificationAPI.testEmail(testEmail);
       if (response.success) {
         toast.success('Test email sent successfully!');
+        addSystemNotification(`Test email sent to ${testEmail}`, 'success');
         setTestEmail('');
         setShowTestEmail(false);
       } else {
         toast.error('Failed to send test email');
+        addSystemNotification('Failed to send test email', 'error');
       }
     } catch (error) {
       console.error('Failed to send test email:', error);
       toast.error('Failed to send test email');
+      addSystemNotification('Failed to send test email', 'error');
     } finally {
       setLoading(false);
     }
@@ -111,15 +119,28 @@ const NotificationSettingsPage = () => {
       const response = await notificationAPI.sendLowStockAlerts();
       if (response.success) {
         toast.success(`${response.alerts_sent} low stock alerts sent!`);
+        addLowStockNotification('Sample Product', 5, 10);
       } else {
         toast.error('Failed to send low stock alerts');
+        addSystemNotification('Failed to send low stock alerts', 'error');
       }
     } catch (error) {
       console.error('Failed to send low stock alerts:', error);
       toast.error('Failed to send low stock alerts');
+      addSystemNotification('Failed to send low stock alerts', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Demo notification functions
+  const addDemoNotifications = () => {
+    addSystemNotification('Welcome to Ardent POS! Your notification system is now active.', 'info');
+    addLowStockNotification('iPhone 15 Pro', 3, 10);
+    addSaleNotification('$1,250.00', 5);
+    addPaymentNotification('$500.00', 'success');
+    addSystemNotification('System maintenance scheduled for tonight at 2 AM', 'warning');
+    toast.success('Demo notifications added! Check the bell icon in the header.');
   };
 
   const getStatusIcon = (status) => {
@@ -174,6 +195,24 @@ const NotificationSettingsPage = () => {
               </div>
 
               <div className="p-6 space-y-6">
+                {/* Demo Notifications Section */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">In-App Notifications</h3>
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800 mb-3">
+                      Test the in-app notification system by adding demo notifications. 
+                      Click the button below to see how notifications appear in the bell icon.
+                    </p>
+                    <button
+                      onClick={addDemoNotifications}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center"
+                    >
+                      <FiBell className="mr-2" />
+                      Add Demo Notifications
+                    </button>
+                  </div>
+                </div>
+
                 {/* General Email Notifications */}
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">General Settings</h3>
@@ -382,10 +421,10 @@ const NotificationSettingsPage = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {log.type}
+                            {log.subject}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
-                            {log.recipient}
+                            {log.to_email}
                           </p>
                           <p className="text-xs text-gray-400">
                             {new Date(log.sent_at).toLocaleDateString()}
