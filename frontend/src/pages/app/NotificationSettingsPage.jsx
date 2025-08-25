@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const NotificationSettingsPage = () => {
   const { user, tenant } = useAuthStore();
-  const { addSystemNotification, addLowStockNotification, addSaleNotification, addPaymentNotification } = useNotificationStore();
+  const { addSystemNotification } = useNotificationStore();
   const [loading, setLoading] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [showTestEmail, setShowTestEmail] = useState(false);
@@ -42,7 +42,8 @@ const NotificationSettingsPage = () => {
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
-      toast.error('Failed to load notification settings');
+      // Don't show error toast for settings loading failure
+      // Just use default settings
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ const NotificationSettingsPage = () => {
         setTestEmail('');
         setShowTestEmail(false);
       } else {
-        toast.error('Failed to send test email');
+        toast.error(response.error || 'Failed to send test email');
         addSystemNotification('Failed to send test email', 'error');
       }
     } catch (error) {
@@ -119,7 +120,7 @@ const NotificationSettingsPage = () => {
       const response = await notificationAPI.sendLowStockAlerts();
       if (response.success) {
         toast.success(`${response.alerts_sent} low stock alerts sent!`);
-        addLowStockNotification('Sample Product', 5, 10);
+        addSystemNotification('Low stock alerts sent successfully', 'success');
       } else {
         toast.error('Failed to send low stock alerts');
         addSystemNotification('Failed to send low stock alerts', 'error');
@@ -131,16 +132,6 @@ const NotificationSettingsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Demo notification functions
-  const addDemoNotifications = () => {
-    addSystemNotification('Welcome to Ardent POS! Your notification system is now active.', 'info');
-    addLowStockNotification('iPhone 15 Pro', 3, 10);
-    addSaleNotification('$1,250.00', 5);
-    addPaymentNotification('$500.00', 'success');
-    addSystemNotification('System maintenance scheduled for tonight at 2 AM', 'warning');
-    toast.success('Demo notifications added! Check the bell icon in the header.');
   };
 
   const getStatusIcon = (status) => {
@@ -195,24 +186,6 @@ const NotificationSettingsPage = () => {
               </div>
 
               <div className="p-6 space-y-6">
-                {/* Demo Notifications Section */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">In-App Notifications</h3>
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-800 mb-3">
-                      Test the in-app notification system by adding demo notifications. 
-                      Click the button below to see how notifications appear in the bell icon.
-                    </p>
-                    <button
-                      onClick={addDemoNotifications}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center"
-                    >
-                      <FiBell className="mr-2" />
-                      Add Demo Notifications
-                    </button>
-                  </div>
-                </div>
-
                 {/* General Email Notifications */}
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">General Settings</h3>
