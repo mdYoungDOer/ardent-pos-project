@@ -50,21 +50,22 @@ function sendEmail($to, $subject, $htmlContent, $textContent = '') {
         ],
         'from' => ['email' => $fromEmail, 'name' => 'Ardent POS'],
         'subject' => $subject,
-        'content' => [
-            [
-                'type' => 'text/html',
-                'value' => $htmlContent
-            ]
-        ]
+        'content' => []
     ];
     
-    // Add text content if provided
+    // Add text content first if provided (SendGrid requirement)
     if (!empty($textContent)) {
         $data['content'][] = [
             'type' => 'text/plain',
             'value' => $textContent
         ];
     }
+    
+    // Add HTML content
+    $data['content'][] = [
+        'type' => 'text/html',
+        'value' => $htmlContent
+    ];
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, 'https://api.sendgrid.com/v3/mail/send');
