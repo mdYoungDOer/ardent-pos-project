@@ -6,14 +6,21 @@ header('Access-Control-Allow-Origin: *');
 $apiKey = $_ENV['SENDGRID_API_KEY'] ?? '';
 $fromEmail = $_ENV['SENDGRID_FROM_EMAIL'] ?? 'notify@ardentwebservices.com';
 
+// Ensure from email is a valid email address
+if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+    // If it's not a valid email, use a default one
+    $fromEmail = 'notify@ardentwebservices.com';
+}
+
 $result = [
     'debug_info' => [
         'api_key_exists' => !empty($apiKey),
         'api_key_length' => strlen($apiKey),
         'from_email' => $fromEmail,
+        'original_from_email' => $_ENV['SENDGRID_FROM_EMAIL'] ?? 'not set',
         'env_vars' => [
             'SENDGRID_API_KEY' => !empty($apiKey) ? 'SET' : 'MISSING',
-            'SENDGRID_FROM_EMAIL' => !empty($fromEmail) ? 'SET' : 'MISSING'
+            'SENDGRID_FROM_EMAIL' => !empty($_ENV['SENDGRID_FROM_EMAIL']) ? 'SET' : 'MISSING'
         ]
     ]
 ];
@@ -69,7 +76,7 @@ $data = [
             'to' => [['email' => $testEmail]]
         ]
     ],
-    'from' => ['email' => $fromEmail],
+    'from' => ['email' => $fromEmail, 'name' => 'Ardent POS'],
     'subject' => $subject,
     'content' => [
         [

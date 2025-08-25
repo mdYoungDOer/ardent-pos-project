@@ -33,17 +33,22 @@ function sendEmail($to, $subject, $htmlContent, $textContent = '') {
     $apiKey = $_ENV['SENDGRID_API_KEY'] ?? '';
     $fromEmail = $_ENV['SENDGRID_FROM_EMAIL'] ?? 'notify@ardentwebservices.com';
     
+    // Ensure from email is a valid email address
+    if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+        $fromEmail = 'notify@ardentwebservices.com';
+    }
+    
     if (empty($apiKey)) {
         return ['success' => false, 'error' => 'SendGrid API key not configured'];
     }
-
+    
     $data = [
         'personalizations' => [
             [
                 'to' => [['email' => $to]]
             ]
         ],
-        'from' => ['email' => $fromEmail],
+        'from' => ['email' => $fromEmail, 'name' => 'Ardent POS'],
         'subject' => $subject,
         'content' => [
             [
@@ -52,14 +57,15 @@ function sendEmail($to, $subject, $htmlContent, $textContent = '') {
             ]
         ]
     ];
-
+    
+    // Add text content if provided
     if (!empty($textContent)) {
         $data['content'][] = [
             'type' => 'text/plain',
             'value' => $textContent
         ];
     }
-
+    
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, 'https://api.sendgrid.com/v3/mail/send');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -69,15 +75,21 @@ function sendEmail($to, $subject, $htmlContent, $textContent = '') {
         'Authorization: Bearer ' . $apiKey,
         'Content-Type: application/json'
     ]);
-
+    
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
-
+    
     if ($httpCode >= 200 && $httpCode < 300) {
         return ['success' => true, 'message' => 'Email sent successfully'];
     } else {
-        return ['success' => false, 'error' => 'Failed to send email: HTTP ' . $httpCode];
+        return [
+            'success' => false, 
+            'error' => 'Failed to send email: HTTP ' . $httpCode,
+            'response' => $response,
+            'curl_error' => $curlError
+        ];
     }
 }
 
