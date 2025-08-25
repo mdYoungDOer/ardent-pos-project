@@ -40,19 +40,6 @@ export const authAPI = {
     }
   },
 
-  // Debug function to test credentials
-  testCredentials: async (email, password) => {
-    console.log('Testing credentials for:', email);
-    try {
-      const response = await authAxios.post('/test-password.php', { email, password });
-      console.log('Credentials test response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Credentials test error:', error);
-      throw error;
-    }
-  },
-
   register: async (userData) => {
     const response = await authAxios.post('/auth/register.php', userData);
     if (response.data.success) {
