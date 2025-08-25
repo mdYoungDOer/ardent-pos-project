@@ -15,7 +15,8 @@ import {
   FiGlobe,
   FiAward,
   FiTarget,
-  FiLogOut
+  FiLogOut,
+  FiBell
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -41,6 +42,7 @@ const Sidebar = () => {
     { name: 'Inventory', href: '/app/inventory', icon: FiClipboard },
     { name: 'Customers', href: '/app/customers', icon: FiUsers },
     { name: 'Reports', href: '/app/reports', icon: FiBarChart2 },
+    { name: 'Notifications', href: '/app/notifications', icon: FiBell },
     { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 

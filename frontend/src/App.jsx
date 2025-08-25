@@ -29,6 +29,7 @@ import SalesPage from './pages/app/SalesPage'
 import CustomersPage from './pages/app/CustomersPage'
 import ReportsPage from './pages/app/ReportsPage'
 import SettingsPage from './pages/app/SettingsPage'
+import NotificationSettingsPage from './pages/app/NotificationSettingsPage';
 
 // Super Admin Pages
 import SuperAdminDashboard from './pages/app/SuperAdminDashboard'
@@ -68,10 +69,6 @@ function App() {
       {/* Protected App Routes - Role-based */}
       <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         {/* Super Admin Routes */}
-        <Route path="super-admin" element={<SuperAdminDashboard />} />
-        <Route path="tenants" element={<TenantManagementPage />} />
-        
-        {/* Regular User Routes */}
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="products" element={<ProductsPage />} />
@@ -80,6 +77,9 @@ function App() {
         <Route path="customers" element={<CustomersPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="notifications" element={<NotificationSettingsPage />} />
+        <Route path="super-admin" element={<SuperAdminDashboard />} />
+        <Route path="tenant-management" element={<TenantManagementPage />} />
       </Route>
 
       {/* Catch-all route for 404 */}
