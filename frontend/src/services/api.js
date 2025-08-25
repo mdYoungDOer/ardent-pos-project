@@ -131,4 +131,115 @@ export const customersAPI = {
   delete: (id) => api.delete(`/customers.php?id=${id}`),
 };
 
+// Notification API
+export const notificationAPI = {
+  getSettings: async (tenantId) => {
+    const response = await api.get(`/notifications?tenant_id=${tenantId}`);
+    return response.data;
+  },
+
+  updateSettings: async (settings) => {
+    const response = await api.post('/notifications/update-settings', settings);
+    return response.data;
+  },
+
+  getLogs: async (params = {}) => {
+    const queryParams = new URLSearchParams(params).toString();
+    const response = await api.get(`/notifications/logs?${queryParams}`);
+    return response.data;
+  },
+
+  sendLowStockAlerts: async () => {
+    const response = await api.post('/notifications/send-low-stock-alerts');
+    return response.data;
+  },
+
+  sendSaleReceipt: async (saleId) => {
+    const response = await api.post('/notifications/send-sale-receipt', { sale_id: saleId });
+    return response.data;
+  },
+
+  sendPaymentConfirmation: async (paymentId) => {
+    const response = await api.post('/notifications/send-payment-confirmation', { payment_id: paymentId });
+    return response.data;
+  },
+
+  sendSystemAlert: async (type, message, recipients = []) => {
+    const response = await api.post('/notifications/send-system-alert', {
+      type,
+      message,
+      recipients
+    });
+    return response.data;
+  },
+
+  sendMonthlyReport: async (tenantId, month = null) => {
+    const response = await api.post('/notifications/send-monthly-report', {
+      tenant_id: tenantId,
+      month
+    });
+    return response.data;
+  },
+
+  testEmail: async (email) => {
+    const response = await api.get(`/notifications/test-email?email=${email}`);
+    return response.data;
+  }
+};
+
+// Payment API
+export const paymentAPI = {
+  getConfig: async () => {
+    const response = await api.get('/payments');
+    return response.data;
+  },
+
+  getBanks: async () => {
+    const response = await api.get('/payments/banks');
+    return response.data;
+  },
+
+  resolveAccount: async (accountNumber, bankCode) => {
+    const response = await api.get(`/payments/resolve-account?account_number=${accountNumber}&bank_code=${bankCode}`);
+    return response.data;
+  },
+
+  getTransactionHistory: async (customerCode = null, page = 1) => {
+    const params = new URLSearchParams({ page });
+    if (customerCode) params.append('customer_code', customerCode);
+    const response = await api.get(`/payments/transaction-history?${params}`);
+    return response.data;
+  },
+
+  initializeTransaction: async (paymentData) => {
+    const response = await api.post('/payments/initialize', paymentData);
+    return response.data;
+  },
+
+  verifyTransaction: async (reference) => {
+    const response = await api.post('/payments/verify', { reference });
+    return response.data;
+  },
+
+  refundTransaction: async (reference, amount = null) => {
+    const response = await api.post('/payments/refund', { reference, amount });
+    return response.data;
+  },
+
+  createCustomer: async (customerData) => {
+    const response = await api.post('/payments/create-customer', customerData);
+    return response.data;
+  },
+
+  createPlan: async (planData) => {
+    const response = await api.post('/payments/create-plan', planData);
+    return response.data;
+  },
+
+  createSubscription: async (subscriptionData) => {
+    const response = await api.post('/payments/create-subscription', subscriptionData);
+    return response.data;
+  }
+};
+
 export default api;
