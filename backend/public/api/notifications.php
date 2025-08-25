@@ -194,6 +194,17 @@ try {
                     }
                     break;
 
+                case 'test':
+                    // Simple test endpoint
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Notifications API is working',
+                        'timestamp' => date('Y-m-d H:i:s'),
+                        'method' => $method,
+                        'endpoint' => $endpoint
+                    ]);
+                    break;
+
                 case 'test-email':
                     // Test email configuration
                     $testEmail = $_GET['email'] ?? '';
@@ -202,6 +213,9 @@ try {
                         echo json_encode(['error' => 'Email address required']);
                         exit;
                     }
+
+                    // Debug logging
+                    error_log("Test email request - Email: $testEmail");
 
                     $subject = 'Test Email - Ardent POS';
                     $htmlContent = "
@@ -240,6 +254,9 @@ try {
                     </html>";
 
                     $result = sendEmail($testEmail, $subject, $htmlContent, 'Test email from Ardent POS');
+                    
+                    // Debug logging
+                    error_log("Test email result: " . json_encode($result));
                     
                     if ($result['success']) {
                         logEmail($pdo, $testEmail, $subject, 'success');
