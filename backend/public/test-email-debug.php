@@ -6,7 +6,7 @@ header('Access-Control-Allow-Origin: *');
 $apiKey = $_ENV['SENDGRID_API_KEY'] ?? '';
 $fromEmail = $_ENV['SENDGRID_FROM_EMAIL'] ?? 'notify@ardentwebservices.com';
 
-echo json_encode([
+$result = [
     'debug_info' => [
         'api_key_exists' => !empty($apiKey),
         'api_key_length' => strlen($apiKey),
@@ -16,13 +16,12 @@ echo json_encode([
             'SENDGRID_FROM_EMAIL' => !empty($fromEmail) ? 'SET' : 'MISSING'
         ]
     ]
-]);
+];
 
 if (empty($apiKey)) {
-    echo json_encode([
-        'success' => false,
-        'error' => 'SendGrid API key not configured'
-    ]);
+    $result['success'] = false;
+    $result['error'] = 'SendGrid API key not configured';
+    echo json_encode($result, JSON_PRETTY_PRINT);
     exit;
 }
 
@@ -95,13 +94,11 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 curl_close($ch);
 
-$result = [
-    'success' => $httpCode >= 200 && $httpCode < 300,
-    'http_code' => $httpCode,
-    'response' => $response,
-    'curl_error' => $curlError,
-    'request_data' => $data
-];
+$result['success'] = $httpCode >= 200 && $httpCode < 300;
+$result['http_code'] = $httpCode;
+$result['response'] = $response;
+$result['curl_error'] = $curlError;
+$result['request_data'] = $data;
 
 if ($result['success']) {
     $result['message'] = 'Test email sent successfully';

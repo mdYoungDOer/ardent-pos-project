@@ -102,6 +102,9 @@ try {
     $pathParts = explode('/', trim($path, '/'));
     $endpoint = end($pathParts);
 
+    // Debug logging
+    error_log("Notifications API Debug - Method: $method, Path: $path, Endpoint: $endpoint, PathParts: " . json_encode($pathParts));
+
     switch ($method) {
         case 'GET':
             switch ($endpoint) {
@@ -237,7 +240,15 @@ try {
 
                 default:
                     http_response_code(404);
-                    echo json_encode(['error' => 'Endpoint not found']);
+                    echo json_encode([
+                        'error' => 'Endpoint not found',
+                        'debug' => [
+                            'method' => $method,
+                            'path' => $path,
+                            'endpoint' => $endpoint,
+                            'pathParts' => $pathParts
+                        ]
+                    ]);
                     break;
             }
             break;
