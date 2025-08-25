@@ -30,7 +30,7 @@ const SuperAdminLoginPage = () => {
     try {
       console.log('Attempting super admin login with:', formData.email);
       
-      const response = await fetch('/auth/super-admin-login.php', {
+      const response = await fetch('/super-admin-login-working.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
