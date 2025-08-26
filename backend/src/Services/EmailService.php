@@ -156,11 +156,11 @@ class EmailService
             </style>
         </head>
         <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>Welcome to Ardent POS!</h1>
-                </div>
-                <div class='content'>
+                        <div class='container'>
+                            <div class='header'>
+                                <h1>Welcome to Ardent POS!</h1>
+                            </div>
+                            <div class='content'>
                     <h2>Hello $name,</h2>
                     <p>Welcome to Ardent POS! Your account for <strong>$businessName</strong> has been successfully created.</p>
                     <p>You can now:</p>
@@ -209,23 +209,23 @@ class EmailService
                     <div class='warning'>
                         <strong>Security Notice:</strong> This link will expire in 1 hour. If you didn't request this reset, please ignore this email.
                     </div>
-                </div>
-                <div class='footer'>
+                            </div>
+                            <div class='footer'>
                     <p>© 2024 Ardent POS. All rights reserved.</p>
-                </div>
-            </div>
+                            </div>
+                        </div>
         </body>
         </html>";
     }
 
     private function getLowStockTemplate(string $name, array $products): string
     {
-        $productList = '';
+                $productList = '';
         foreach ($products as $product) {
             $productList .= "<tr><td>{$product['name']}</td><td>{$product['current_stock']}</td><td>{$product['min_stock']}</td></tr>";
-        }
-
-        return "
+                }
+                
+                return "
         <!DOCTYPE html>
         <html>
         <head>
@@ -242,11 +242,11 @@ class EmailService
             </style>
         </head>
         <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>Low Stock Alert</h1>
-                </div>
-                <div class='content'>
+                        <div class='container'>
+                            <div class='header'>
+                                <h1>Low Stock Alert</h1>
+                            </div>
+                            <div class='content'>
                     <h2>Hello $name,</h2>
                     <p>The following products are running low on stock:</p>
                     <table>
@@ -260,10 +260,10 @@ class EmailService
                         <tbody>
                             $productList
                         </tbody>
-                    </table>
+                                </table>
                     <a href='" . $_ENV['APP_URL'] . "/app/inventory' class='button'>Manage Inventory</a>
-                </div>
-                <div class='footer'>
+                            </div>
+                            <div class='footer'>
                     <p>© 2024 Ardent POS. All rights reserved.</p>
                 </div>
             </div>
@@ -300,7 +300,7 @@ class EmailService
                 <div class='header'>
                     <h1>Receipt</h1>
                     <p>Sale #{$saleData['sale_id']}</p>
-                </div>
+                            </div>
                 <div class='content'>
                     <div class='receipt'>
                         <h2>Thank you for your purchase!</h2>
@@ -372,7 +372,7 @@ class EmailService
 
     private function getSubscriptionTemplate(string $name, array $subscriptionData): string
     {
-        return "
+                return "
         <!DOCTYPE html>
         <html>
         <head>
@@ -386,11 +386,11 @@ class EmailService
             </style>
         </head>
         <body>
-            <div class='container'>
-                <div class='header'>
+                        <div class='container'>
+                            <div class='header'>
                     <h1>Subscription Update</h1>
-                </div>
-                <div class='content'>
+                            </div>
+                            <div class='content'>
                     <h2>Hello $name,</h2>
                     <p>Your subscription has been updated.</p>
                     <div class='subscription-details'>
@@ -399,11 +399,11 @@ class EmailService
                         <p><strong>Next Billing:</strong> {$subscriptionData['next_billing']}</p>
                         <p><strong>Amount:</strong> {$subscriptionData['amount']}</p>
                     </div>
-                </div>
-                <div class='footer'>
+                            </div>
+                            <div class='footer'>
                     <p>© 2024 Ardent POS. All rights reserved.</p>
-                </div>
-            </div>
+                            </div>
+                        </div>
         </body>
         </html>";
     }

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiShield, FiEye, FiEyeOff, FiAlertCircle, FiLoader, FiArrowRight } from 'react-icons/fi';
-import useAuthStore from '../../stores/authStore';
+import useSuperAdminAuthStore from '../../stores/superAdminAuthStore';
 import Logo from '../../components/ui/Logo';
 
 const SuperAdminLoginPage = () => {
   const navigate = useNavigate();
-  const { error, setError } = useAuthStore();
+  const { error, login, clearError } = useSuperAdminAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -19,92 +19,31 @@ const SuperAdminLoginPage = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
-    if (error) setError(null);
+    if (error) clearError();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       console.log('=== SUPER ADMIN LOGIN DEBUG START ===');
       console.log('Attempting super admin login with:', formData.email);
-      console.log('Form data:', formData);
       
-      // Direct login attempt without test API call
-      console.log('Making request to /super-admin-login-final.php...');
+      // Use the Super Admin auth store login method
+      await login(formData.email, formData.password);
       
-      const response = await fetch('/super-admin-login-final.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      console.log('Response received:');
-      console.log('- Status:', response.status);
-      console.log('- Status text:', response.statusText);
-      console.log('- Headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Super admin login successful, redirecting...');
       
-      let data;
-      const responseText = await response.text();
-      console.log('Response text length:', responseText.length);
-      console.log('Response text:', responseText);
-      
-      try {
-        data = JSON.parse(responseText);
-        console.log('Parsed JSON data:', data);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        console.error('Raw response:', responseText);
-        throw new Error('Invalid response from server. Please check server logs.');
-      }
-      
-      console.log('Login response data:', data);
-
-      if (data.success) {
-        console.log('Login successful, storing data...');
-        
-        // Store token and user data
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('tenant', JSON.stringify(data.tenant));
-        
-        console.log('Data stored successfully');
-        
-        // Update auth store state
-        const { initialize } = useAuthStore.getState();
-        initialize();
-        
-        console.log('Auth store updated, redirecting to /app/super-admin...');
-        
-        // Redirect to super admin dashboard
-        navigate('/app/super-admin');
-      } else {
-        console.log('Login failed:', data.error);
-        setError(data.error || 'Super admin login failed');
-      }
+      // Redirect to super admin dashboard
+      navigate('/super-admin/dashboard');
       
       console.log('=== SUPER ADMIN LOGIN DEBUG END ===');
     } catch (err) {
       console.error('=== SUPER ADMIN LOGIN ERROR ===');
-      console.error('Error type:', err.constructor.name);
-      console.error('Error message:', err.message);
-      console.error('Error stack:', err.stack);
+      console.error('Error:', err.message);
       console.error('=== END ERROR ===');
-      
-      // Provide more specific error messages
-      if (err.message.includes('Failed to fetch')) {
-        setError('Network error: Unable to connect to server. Please check your internet connection.');
-      } else if (err.message.includes('API endpoint not accessible')) {
-        setError('Server error: API endpoint not accessible. Please contact support.');
-      } else {
-        setError(err.message || 'Network error. Please try again.');
-      }
     } finally {
-      console.log('Setting loading to false');
       setLoading(false);
     }
   };

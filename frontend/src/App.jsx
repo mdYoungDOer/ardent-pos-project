@@ -6,6 +6,7 @@ import useAuthStore from './stores/authStore'
 import AppLayout from './layouts/AppLayout'
 import AuthLayout from './layouts/AuthLayout'
 import PublicLayout from './layouts/PublicLayout'
+import SuperAdminLayout from './layouts/SuperAdminLayout'
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage'
@@ -38,7 +39,7 @@ import TenantManagementPage from './pages/app/TenantManagementPage'
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute'
-import RoleProtectedRoute from './components/auth/RoleProtectedRoute'
+import SuperAdminProtectedRoute from './components/auth/SuperAdminProtectedRoute'
 
 function App() {
   const { initialize } = useAuthStore()
@@ -68,9 +69,8 @@ function App() {
         <Route path="super-admin" element={<SuperAdminLoginPage />} />
       </Route>
 
-      {/* Protected App Routes - Role-based */}
+      {/* Protected App Routes - Regular Users */}
       <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        {/* Regular User Routes */}
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="products" element={<ProductsPage />} />
@@ -80,10 +80,15 @@ function App() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="notifications" element={<NotificationSettingsPage />} />
-        
-        {/* Super Admin Routes */}
-        <Route path="super-admin" element={<RoleProtectedRoute requiredRole="super_admin"><SuperAdminDashboard /></RoleProtectedRoute>} />
-        <Route path="tenant-management" element={<RoleProtectedRoute requiredRole="super_admin"><TenantManagementPage /></RoleProtectedRoute>} />
+      </Route>
+
+      {/* Super Admin Routes - Completely Separate */}
+      <Route path="/super-admin" element={<SuperAdminProtectedRoute><SuperAdminLayout /></SuperAdminProtectedRoute>}>
+        <Route index element={<SuperAdminDashboard />} />
+        <Route path="dashboard" element={<SuperAdminDashboard />} />
+        <Route path="tenants" element={<TenantManagementPage />} />
+        <Route path="settings" element={<div>Super Admin Settings</div>} />
+        <Route path="analytics" element={<div>Super Admin Analytics</div>} />
       </Route>
 
       {/* Catch-all route for 404 */}

@@ -19,20 +19,20 @@ class NotificationService
     public function sendWelcomeNotification(string $userId, string $tenantId): bool
     {
         try {
-            $user = Database::fetch(
+        $user = Database::fetch(
                 'SELECT u.*, t.name as business_name FROM users u JOIN tenants t ON u.tenant_id = t.id WHERE u.id = ?',
-                [$userId]
-            );
+            [$userId]
+        );
 
-            if (!$user) {
-                return false;
-            }
+        if (!$user) {
+            return false;
+        }
 
-            return $this->emailService->sendWelcomeEmail(
-                $user['email'],
+        return $this->emailService->sendWelcomeEmail(
+            $user['email'],
                 $user['first_name'] . ' ' . $user['last_name'],
-                ['business_name' => $user['business_name']]
-            );
+            ['business_name' => $user['business_name']]
+        );
         } catch (\Exception $e) {
             error_log('Welcome notification failed: ' . $e->getMessage());
             return false;
@@ -43,10 +43,10 @@ class NotificationService
     {
         try {
             $user = Database::fetch('SELECT first_name, last_name FROM users WHERE email = ?', [$email]);
-            
-            if (!$user) {
-                return false;
-            }
+        
+        if (!$user) {
+            return false;
+        }
 
             $name = $user['first_name'] . ' ' . $user['last_name'];
             return $this->emailService->sendPasswordResetEmail($email, $name, $resetToken);
@@ -62,34 +62,34 @@ class NotificationService
         $alertsSent = 0;
         
         try {
-            // Get all tenants with email notifications enabled
-            $tenants = Database::fetchAll(
+        // Get all tenants with email notifications enabled
+        $tenants = Database::fetchAll(
                 'SELECT id, name, email_notifications FROM tenants WHERE status = ? AND email_notifications = ?',
                 ['active', true]
-            );
+        );
 
-            foreach ($tenants as $tenant) {
+        foreach ($tenants as $tenant) {
                 // Get low stock products for this tenant
-                $lowStockProducts = Database::fetchAll(
+            $lowStockProducts = Database::fetchAll(
                     'SELECT p.name, i.quantity as current_stock, p.min_stock 
                      FROM products p 
                      JOIN inventory i ON p.id = i.product_id 
                      WHERE p.tenant_id = ? AND i.quantity <= p.min_stock',
-                    [$tenant['id']]
-                );
+                [$tenant['id']]
+            );
 
-                if (!empty($lowStockProducts)) {
-                    // Get admin users for this tenant
-                    $admins = Database::fetchAll(
+            if (!empty($lowStockProducts)) {
+                // Get admin users for this tenant
+                $admins = Database::fetchAll(
                         'SELECT email, first_name, last_name FROM users 
                          WHERE tenant_id = ? AND role IN (?, ?) AND status = ?',
                         [$tenant['id'], 'admin', 'manager', 'active']
-                    );
+                );
 
-                    foreach ($admins as $admin) {
+                foreach ($admins as $admin) {
                         $name = $admin['first_name'] . ' ' . $admin['last_name'];
                         if ($this->emailService->sendLowStockAlert($admin['email'], $name, $lowStockProducts)) {
-                            $alertsSent++;
+                        $alertsSent++;
                         }
                     }
                 }
@@ -107,22 +107,22 @@ class NotificationService
         try {
             $sale = Database::fetch(
                 'SELECT s.*, c.email as customer_email, c.first_name, c.last_name, t.name as business_name
-                 FROM sales s 
+            FROM sales s
                  JOIN customers c ON s.customer_id = c.id 
-                 JOIN tenants t ON s.tenant_id = t.id 
+            JOIN tenants t ON s.tenant_id = t.id
                  WHERE s.id = ?',
                 [$saleId]
             );
 
             if (!$sale || empty($sale['customer_email'])) {
-                return false;
-            }
+            return false;
+        }
 
-            // Get sale items
+        // Get sale items
             $items = Database::fetchAll(
                 'SELECT p.name, si.quantity, si.unit_price, si.total_price 
-                 FROM sale_items si 
-                 JOIN products p ON si.product_id = p.id 
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
                  WHERE si.sale_id = ?',
                 [$saleId]
             );
@@ -309,7 +309,7 @@ class NotificationService
         // Total sales
         $salesResult = Database::fetch(
             'SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total 
-             FROM sales 
+            FROM sales 
              WHERE tenant_id = ? AND DATE(created_at) BETWEEN ? AND ?',
             [$tenantId, $startDate, $endDate]
         );
@@ -319,11 +319,11 @@ class NotificationService
         // Top products
         $topProducts = Database::fetchAll(
             'SELECT p.name, SUM(si.quantity) as total_sold 
-             FROM sale_items si 
-             JOIN products p ON si.product_id = p.id 
-             JOIN sales s ON si.sale_id = s.id 
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            JOIN sales s ON si.sale_id = s.id
              WHERE s.tenant_id = ? AND DATE(s.created_at) BETWEEN ? AND ? 
-             GROUP BY p.id, p.name 
+            GROUP BY p.id, p.name
              ORDER BY total_sold DESC 
              LIMIT 5',
             [$tenantId, $startDate, $endDate]
