@@ -152,6 +152,7 @@ export const superAdminAPI = {
   toggleMaintenanceMode: (enabled) => api.post('/super-admin.php/maintenance', { enabled }),
   createBackup: () => api.post('/super-admin.php/backup'),
   getBackups: () => api.get('/super-admin.php/backups'),
+  clearAllSessions: () => api.post('/clear-sessions.php'),
   
   // System Health
   getSystemHealth: () => api.get('/super-admin.php/health'),
