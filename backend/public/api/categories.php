@@ -58,35 +58,118 @@ function uploadImage($file, $type = 'categories') {
 function getFallbackCategories() {
     return [
         [
-            'id' => 'cat_1',
+            'id' => 'cat_electronics_001',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Electronics',
             'description' => 'Electronic devices and accessories',
             'color' => '#3b82f6',
             'image_url' => null,
+            'parent_id' => null,
+            'level' => 1,
+            'path' => 'Electronics',
+            'sort_order' => 1,
             'product_count' => 15,
+            'sub_categories' => [
+                [
+                    'id' => 'cat_phones_001',
+                    'name' => 'Phones',
+                    'description' => 'Mobile phones and accessories',
+                    'color' => '#10b981',
+                    'level' => 2,
+                    'path' => 'Electronics/Phones',
+                    'product_count' => 8,
+                    'sub_categories' => [
+                        [
+                            'id' => 'cat_smartphones_001',
+                            'name' => 'Smartphones',
+                            'description' => 'Smart mobile phones',
+                            'color' => '#f59e0b',
+                            'level' => 3,
+                            'path' => 'Electronics/Phones/Smartphones',
+                            'product_count' => 5
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 'cat_computers_001',
+                    'name' => 'Computers',
+                    'description' => 'Desktop and laptop computers',
+                    'color' => '#8b5cf6',
+                    'level' => 2,
+                    'path' => 'Electronics/Computers',
+                    'product_count' => 7
+                ]
+            ],
             'created_at' => date('Y-m-d H:i:s', strtotime('-30 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'cat_2',
+            'id' => 'cat_clothing_001',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Clothing',
             'description' => 'Apparel and fashion items',
             'color' => '#10b981',
             'image_url' => null,
+            'parent_id' => null,
+            'level' => 1,
+            'path' => 'Clothing',
+            'sort_order' => 2,
             'product_count' => 25,
+            'sub_categories' => [
+                [
+                    'id' => 'cat_mens_clothing_001',
+                    'name' => 'Men\'s Clothing',
+                    'description' => 'Clothing for men',
+                    'color' => '#f97316',
+                    'level' => 2,
+                    'path' => 'Clothing/Men\'s Clothing',
+                    'product_count' => 12
+                ],
+                [
+                    'id' => 'cat_womens_clothing_001',
+                    'name' => 'Women\'s Clothing',
+                    'description' => 'Clothing for women',
+                    'color' => '#ec4899',
+                    'level' => 2,
+                    'path' => 'Clothing/Women\'s Clothing',
+                    'product_count' => 13
+                ]
+            ],
             'created_at' => date('Y-m-d H:i:s', strtotime('-20 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'cat_3',
+            'id' => 'cat_food_001',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Food & Beverages',
             'description' => 'Food items and drinks',
             'color' => '#f59e0b',
             'image_url' => null,
+            'parent_id' => null,
+            'level' => 1,
+            'path' => 'Food & Beverages',
+            'sort_order' => 3,
             'product_count' => 30,
+            'sub_categories' => [
+                [
+                    'id' => 'cat_beverages_001',
+                    'name' => 'Beverages',
+                    'description' => 'Drinks and beverages',
+                    'color' => '#ef4444',
+                    'level' => 2,
+                    'path' => 'Food & Beverages/Beverages',
+                    'product_count' => 15
+                ],
+                [
+                    'id' => 'cat_snacks_001',
+                    'name' => 'Snacks',
+                    'description' => 'Snack foods',
+                    'color' => '#8b5cf6',
+                    'level' => 2,
+                    'path' => 'Food & Beverages/Snacks',
+                    'product_count' => 15
+                ]
+            ],
             'created_at' => date('Y-m-d H:i:s', strtotime('-10 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ]
@@ -129,17 +212,69 @@ try {
         case 'GET':
             if ($useDatabase && $pdo) {
                 try {
-                    // List categories for the tenant with product count
-                    $stmt = $pdo->prepare("
-                        SELECT c.*, COUNT(p.id) as product_count
-                        FROM categories c
-                        LEFT JOIN products p ON c.id = p.category_id AND p.tenant_id = c.tenant_id
-                        WHERE c.tenant_id = ?
-                        GROUP BY c.id
-                        ORDER BY c.created_at DESC
-                    ");
-                    $stmt->execute([$tenantId]);
-                    $categories = $stmt->fetchAll();
+                    $parentId = $_GET['parent_id'] ?? null;
+                    $includeSubcategories = isset($_GET['include_subcategories']) ? $_GET['include_subcategories'] === 'true' : false;
+                    
+                    if ($parentId) {
+                        // Get subcategories of a specific parent
+                        $stmt = $pdo->prepare("
+                            SELECT c.*, COUNT(p.id) as product_count
+                            FROM categories c
+                            LEFT JOIN products p ON c.id = p.category_id AND p.tenant_id = c.tenant_id
+                            WHERE c.tenant_id = ? AND c.parent_id = ?
+                            GROUP BY c.id
+                            ORDER BY c.sort_order, c.name
+                        ");
+                        $stmt->execute([$tenantId, $parentId]);
+                        $categories = $stmt->fetchAll();
+                    } else {
+                        // Get root categories with optional subcategories
+                        if ($includeSubcategories) {
+                            // Get hierarchical structure
+                            $stmt = $pdo->prepare("
+                                WITH RECURSIVE category_tree AS (
+                                    -- Root categories
+                                    SELECT 
+                                        c.*,
+                                        COUNT(p.id) as product_count,
+                                        0 as depth
+                                    FROM categories c
+                                    LEFT JOIN products p ON c.id = p.category_id AND p.tenant_id = c.tenant_id
+                                    WHERE c.tenant_id = ? AND c.parent_id IS NULL
+                                    GROUP BY c.id
+                                    
+                                    UNION ALL
+                                    
+                                    -- Child categories
+                                    SELECT 
+                                        child.*,
+                                        COUNT(p.id) as product_count,
+                                        ct.depth + 1
+                                    FROM categories child
+                                    LEFT JOIN products p ON child.id = p.category_id AND p.tenant_id = child.tenant_id
+                                    INNER JOIN category_tree ct ON child.parent_id = ct.id
+                                    WHERE child.tenant_id = ?
+                                    GROUP BY child.id, ct.depth
+                                )
+                                SELECT * FROM category_tree
+                                ORDER BY depth, sort_order, name
+                            ");
+                            $stmt->execute([$tenantId, $tenantId]);
+                            $categories = $stmt->fetchAll();
+                        } else {
+                            // Get only root categories
+                            $stmt = $pdo->prepare("
+                                SELECT c.*, COUNT(p.id) as product_count
+                                FROM categories c
+                                LEFT JOIN products p ON c.id = p.category_id AND p.tenant_id = c.tenant_id
+                                WHERE c.tenant_id = ? AND c.parent_id IS NULL
+                                GROUP BY c.id
+                                ORDER BY c.sort_order, c.name
+                            ");
+                            $stmt->execute([$tenantId]);
+                            $categories = $stmt->fetchAll();
+                        }
+                    }
                     
                     sendSuccessResponse($categories, 'Categories loaded successfully');
                 } catch (PDOException $e) {
@@ -159,6 +294,8 @@ try {
             $name = $_POST['name'] ?? '';
             $description = $_POST['description'] ?? '';
             $color = $_POST['color'] ?? '#e41e5b';
+            $parentId = $_POST['parent_id'] ?? null;
+            $sortOrder = intval($_POST['sort_order'] ?? 0);
             $imageUrl = null;
 
             // Handle image upload
@@ -172,12 +309,21 @@ try {
 
             if ($useDatabase && $pdo) {
                 try {
+                    // Validate parent category exists if provided
+                    if ($parentId) {
+                        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND tenant_id = ?");
+                        $stmt->execute([$parentId, $tenantId]);
+                        if (!$stmt->fetch()) {
+                            sendErrorResponse('Parent category not found', 400);
+                        }
+                    }
+
                     // Create category
                     $categoryId = uniqid('cat_', true);
                     
                     $stmt = $pdo->prepare("
-                        INSERT INTO categories (id, tenant_id, name, description, color, image_url, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+                        INSERT INTO categories (id, tenant_id, name, description, color, parent_id, sort_order, image_url, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
                     ");
                     $stmt->execute([
                         $categoryId, 
@@ -185,6 +331,8 @@ try {
                         $name, 
                         $description, 
                         $color, 
+                        $parentId, 
+                        $sortOrder, 
                         $imageUrl
                     ]);
                     
@@ -219,6 +367,8 @@ try {
             $name = $data['name'] ?? '';
             $description = $data['description'] ?? '';
             $color = $data['color'] ?? '#e41e5b';
+            $parentId = $data['parent_id'] ?? null;
+            $sortOrder = intval($data['sort_order'] ?? 0);
 
             if (empty($categoryId) || empty($name)) {
                 sendErrorResponse('Category ID and name are required', 400);
@@ -226,16 +376,32 @@ try {
 
             if ($useDatabase && $pdo) {
                 try {
+                    // Validate parent category exists if provided
+                    if ($parentId) {
+                        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND tenant_id = ?");
+                        $stmt->execute([$parentId, $tenantId]);
+                        if (!$stmt->fetch()) {
+                            sendErrorResponse('Parent category not found', 400);
+                        }
+                        
+                        // Prevent circular references
+                        if ($parentId === $categoryId) {
+                            sendErrorResponse('Category cannot be its own parent', 400);
+                        }
+                    }
+
                     // Update category
                     $stmt = $pdo->prepare("
                         UPDATE categories 
-                        SET name = ?, description = ?, color = ?, updated_at = NOW()
+                        SET name = ?, description = ?, color = ?, parent_id = ?, sort_order = ?, updated_at = NOW()
                         WHERE id = ? AND tenant_id = ?
                     ");
                     $stmt->execute([
                         $name, 
                         $description, 
                         $color, 
+                        $parentId, 
+                        $sortOrder, 
                         $categoryId, 
                         $tenantId
                     ]);

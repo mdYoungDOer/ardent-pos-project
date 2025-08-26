@@ -205,12 +205,24 @@ export const customersAPI = {
 
 // Categories API
 export const categoriesAPI = {
-  getAll: () => api.get('/categories.php'),
+  getAll: (params = {}) => api.get('/categories.php', { params }),
   create: (category) => api.post('/categories.php', category),
   update: (category) => api.put('/categories.php', category),
   delete: (id) => api.delete(`/categories.php?id=${id}`),
   getById: (id) => api.get(`/categories.php?id=${id}`),
+  getSubcategories: (parentId) => api.get(`/categories.php?parent_id=${parentId}`),
+  getHierarchical: () => api.get('/categories.php?include_subcategories=true'),
   getProductsByCategory: (categoryId) => api.get(`/categories.php?category_id=${categoryId}&include_products=true`),
+};
+
+// Sub-Categories API
+export const subCategoriesAPI = {
+  getAll: (params = {}) => api.get('/sub-categories.php', { params }),
+  getByCategory: (categoryId) => api.get(`/sub-categories.php?category_id=${categoryId}`),
+  create: (subCategory) => api.post('/sub-categories.php', subCategory),
+  update: (subCategory) => api.put('/sub-categories.php', subCategory),
+  delete: (id) => api.delete(`/sub-categories.php?id=${id}`),
+  getById: (id) => api.get(`/sub-categories.php?id=${id}`),
 };
 
 // Locations API

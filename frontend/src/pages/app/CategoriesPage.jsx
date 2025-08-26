@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FiPlus, FiEdit, FiTrash, FiSearch, FiTag, FiAlertCircle, 
-  FiCheck, FiX, FiEye, FiPackage, FiTrendingUp, FiImage, FiUpload, FiCamera
+  FiCheck, FiX, FiEye, FiPackage, FiTrendingUp, FiImage, FiUpload, FiCamera,
+  FiFolder
 } from 'react-icons/fi';
-import { categoriesAPI } from '../../services/api';
+import { categoriesAPI, subCategoriesAPI } from '../../services/api';
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
@@ -18,7 +19,9 @@ const CategoriesPage = () => {
     name: '',
     description: '',
     color: '#e41e5b',
-    image_url: ''
+    image_url: '',
+    parent_id: '',
+    sort_order: 0
   });
 
   const predefinedColors = [
@@ -31,7 +34,7 @@ const CategoriesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await categoriesAPI.getAll();
+      const response = await categoriesAPI.getHierarchical();
       
       if (response.data.success) {
         setCategories(response.data.data);
@@ -95,7 +98,14 @@ const CategoriesPage = () => {
       if (response.data.success) {
         setShowModal(false);
         setEditingCategory(null);
-        setFormData({ name: '', description: '', color: '#e41e5b', image_url: '' });
+        setFormData({ 
+          name: '', 
+          description: '', 
+          color: '#e41e5b', 
+          image_url: '',
+          parent_id: '',
+          sort_order: 0
+        });
         setImageFile(null);
         setImagePreview(null);
         fetchCategories();
@@ -114,7 +124,9 @@ const CategoriesPage = () => {
       name: category.name,
       description: category.description || '',
       color: category.color || '#e41e5b',
-      image_url: category.image_url || ''
+      image_url: category.image_url || '',
+      parent_id: category.parent_id || '',
+      sort_order: category.sort_order || 0
     });
     setImagePreview(category.image_url || ''); // Set image preview for editing
     setShowModal(true);
@@ -141,8 +153,29 @@ const CategoriesPage = () => {
 
   const handleNewCategory = () => {
     setEditingCategory(null);
-    setFormData({ name: '', description: '', color: '#e41e5b', image_url: '' });
+    setFormData({ 
+      name: '', 
+      description: '', 
+      color: '#e41e5b', 
+      image_url: '',
+      parent_id: '',
+      sort_order: 0
+    });
     setImagePreview(''); // Clear image preview for new category
+    setShowModal(true);
+  };
+
+  const handleCreateSubCategory = (parentCategory) => {
+    setEditingCategory(null);
+    setFormData({ 
+      name: '', 
+      description: '', 
+      color: '#e41e5b', 
+      image_url: '',
+      parent_id: parentCategory.id,
+      sort_order: 0
+    });
+    setImagePreview(''); // Clear image preview for new sub-category
     setShowModal(true);
   };
 
@@ -150,6 +183,126 @@ const CategoriesPage = () => {
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Function to render category with proper indentation based on level
+  const renderCategoryCard = (category, depth = 0) => {
+    const indentClass = depth > 0 ? `ml-${depth * 4}` : '';
+    const isSubCategory = category.parent_id || category.level > 1;
+    const isRootCategory = !category.parent_id && category.level === 1;
+    
+    return (
+      <div
+        key={category.id}
+        className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow ${indentClass}`}
+      >
+        {/* Category Image */}
+        <div className="h-32 bg-gray-200 relative">
+          {category.image_url ? (
+            <img 
+              src={category.image_url} 
+              alt={category.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div className={`w-full h-full flex items-center justify-center ${category.image_url ? 'hidden' : 'flex'}`}>
+            <div className="text-center">
+              <FiTag className="h-8 w-8 text-gray-400 mx-auto mb-1" />
+              <p className="text-xs text-gray-500">No Image</p>
+            </div>
+          </div>
+          
+                               {/* Action Buttons */}
+                     <div className="absolute top-2 right-2 flex items-center space-x-1">
+                       {isRootCategory && (
+                         <button
+                           onClick={() => handleCreateSubCategory(category)}
+                           className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-[#10b981] hover:bg-white rounded transition-colors"
+                           title="Create Sub-Category"
+                         >
+                           <FiFolder className="h-3 w-3" />
+                         </button>
+                       )}
+                       <button
+                         onClick={() => handleEdit(category)}
+                         className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-[#e41e5b] hover:bg-white rounded transition-colors"
+                         title="Edit Category"
+                       >
+                         <FiEdit className="h-3 w-3" />
+                       </button>
+                       <button
+                         onClick={() => handleDelete(category.id)}
+                         className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-red-600 hover:bg-white rounded transition-colors"
+                         title="Delete Category"
+                       >
+                         <FiTrash className="h-3 w-3" />
+                       </button>
+                     </div>
+          
+                               {/* Color Indicator */}
+                     <div className="absolute bottom-2 left-2">
+                       <div 
+                         className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                         style={{ backgroundColor: category.color }}
+                       ></div>
+                     </div>
+
+                     {/* Level Badge */}
+                     {isSubCategory && (
+                       <div className="absolute top-2 left-2">
+                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                           Level {category.level || 2}
+                         </span>
+                       </div>
+                     )}
+        </div>
+
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: category.color + '20' }}
+            >
+              <FiTag 
+                className="h-4 w-4" 
+                style={{ color: category.color }}
+              />
+            </div>
+          </div>
+
+                         <div>
+                 {/* Breadcrumb for sub-categories */}
+                 {isSubCategory && category.path && (
+                   <div className="text-xs text-[#746354] mb-1">
+                     <span className="font-medium">Path:</span> {category.path}
+                   </div>
+                 )}
+                 
+                 <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">
+                   {category.name}
+                 </h3>
+                 {category.description && (
+                   <p className="text-[#746354] text-sm mb-3 line-clamp-2">
+                     {category.description}
+                   </p>
+                 )}
+            
+            <div className="flex items-center justify-between text-xs text-[#746354]">
+              <span>
+                {category.product_count || 0} products
+              </span>
+              <span>
+                {new Date(category.created_at).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -213,93 +366,7 @@ const CategoriesPage = () => {
 
       {/* Categories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredCategories.map((category) => (
-          <div
-            key={category.id}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-          >
-            {/* Category Image */}
-            <div className="h-32 bg-gray-200 relative">
-              {category.image_url ? (
-                <img 
-                  src={category.image_url} 
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div className={`w-full h-full flex items-center justify-center ${category.image_url ? 'hidden' : 'flex'}`}>
-                <div className="text-center">
-                  <FiTag className="h-8 w-8 text-gray-400 mx-auto mb-1" />
-                  <p className="text-xs text-gray-500">No Image</p>
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="absolute top-2 right-2 flex items-center space-x-1">
-                <button
-                  onClick={() => handleEdit(category)}
-                  className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-[#e41e5b] hover:bg-white rounded transition-colors"
-                  title="Edit Category"
-                >
-                  <FiEdit className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={() => handleDelete(category.id)}
-                  className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-red-600 hover:bg-white rounded transition-colors"
-                  title="Delete Category"
-                >
-                  <FiTrash className="h-3 w-3" />
-                </button>
-              </div>
-              
-              {/* Color Indicator */}
-              <div className="absolute bottom-2 left-2">
-                <div 
-                  className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-                  style={{ backgroundColor: category.color }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div 
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: category.color + '20' }}
-                >
-                  <FiTag 
-                    className="h-4 w-4" 
-                    style={{ color: category.color }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">
-                  {category.name}
-                </h3>
-                {category.description && (
-                  <p className="text-[#746354] text-sm mb-3 line-clamp-2">
-                    {category.description}
-                  </p>
-                )}
-                
-                <div className="flex items-center justify-between text-xs text-[#746354]">
-                  <span>
-                    {category.product_count || 0} products
-                  </span>
-                  <span>
-                    {new Date(category.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+        {filteredCategories.map((category) => renderCategoryCard(category, category.level - 1))}
       </div>
 
       {/* Empty State */}
@@ -399,39 +466,81 @@ const CategoriesPage = () => {
                 </div>
               </div>
 
-              {/* Color Selection */}
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-3">
-                  Category Color
-                </label>
-                <div className="grid grid-cols-5 gap-2">
-                  {predefinedColors.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, color })}
-                      className={`w-10 h-10 rounded-lg border-2 transition-all ${
-                        formData.color === color
-                          ? 'border-[#2c2c2c] scale-110'
-                          : 'border-gray-300 hover:border-[#e41e5b]'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    >
-                      {formData.color === color && (
-                        <FiCheck className="h-5 w-5 text-white mx-auto" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-2 flex items-center space-x-2">
-                  <div 
-                    className="w-4 h-4 rounded-full border border-gray-300"
-                    style={{ backgroundColor: formData.color }}
-                  ></div>
-                  <span className="text-sm text-[#746354]">{formData.color}</span>
-                </div>
-              </div>
+                             {/* Parent Category Selection */}
+               <div>
+                 <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                   Parent Category
+                 </label>
+                 <select
+                   value={formData.parent_id}
+                   onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b]"
+                 >
+                   <option value="">No Parent (Root Category)</option>
+                   {categories
+                     .filter(cat => cat.level === 1 && cat.id !== editingCategory?.id)
+                     .map(category => (
+                       <option key={category.id} value={category.id}>
+                         {category.name}
+                       </option>
+                     ))}
+                 </select>
+                 <p className="text-xs text-[#746354] mt-1">
+                   Leave empty to create a root category, or select a parent to create a sub-category
+                 </p>
+               </div>
+
+               {/* Sort Order */}
+               <div>
+                 <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                   Sort Order
+                 </label>
+                 <input
+                   type="number"
+                   value={formData.sort_order}
+                   onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b]"
+                   placeholder="0"
+                   min="0"
+                 />
+                 <p className="text-xs text-[#746354] mt-1">
+                   Lower numbers appear first in the list
+                 </p>
+               </div>
+
+               {/* Color Selection */}
+               <div>
+                 <label className="block text-sm font-medium text-[#2c2c2c] mb-3">
+                   Category Color
+                 </label>
+                 <div className="grid grid-cols-5 gap-2">
+                   {predefinedColors.map((color) => (
+                     <button
+                       key={color}
+                       type="button"
+                       onClick={() => setFormData({ ...formData, color })}
+                       className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                         formData.color === color
+                           ? 'border-[#2c2c2c] scale-110'
+                           : 'border-gray-300 hover:border-[#e41e5b]'
+                       }`}
+                       style={{ backgroundColor: color }}
+                       title={color}
+                     >
+                       {formData.color === color && (
+                         <FiCheck className="h-5 w-5 text-white mx-auto" />
+                       )}
+                     </button>
+                   ))}
+                 </div>
+                 <div className="mt-2 flex items-center space-x-2">
+                   <div 
+                     className="w-4 h-4 rounded-full border border-gray-300"
+                     style={{ backgroundColor: formData.color }}
+                   ></div>
+                   <span className="text-sm text-[#746354]">{formData.color}</span>
+                 </div>
+               </div>
 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-4">

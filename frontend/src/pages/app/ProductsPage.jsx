@@ -3,17 +3,19 @@ import {
   FiPlus, FiEdit, FiTrash, FiSearch, FiPackage, FiAlertCircle,
   FiImage, FiUpload, FiCamera, FiTag, FiDollarSign, FiTrendingUp
 } from 'react-icons/fi';
-import { productsAPI, categoriesAPI } from '../../services/api';
+import { productsAPI, categoriesAPI, subCategoriesAPI } from '../../services/api';
 import useAuthStore from '../../stores/authStore';
 
 const ProductsPage = () => {
   const { user } = useAuthStore();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [subCategoryFilter, setSubCategoryFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -24,6 +26,7 @@ const ProductsPage = () => {
     price: '',
     stock: '',
     category_id: '',
+    sub_category_id: '',
     sku: '',
     barcode: '',
     image_url: ''
@@ -58,10 +61,32 @@ const ProductsPage = () => {
     }
   };
 
+  const fetchSubCategories = async (categoryId = null) => {
+    try {
+      const params = categoryId ? { category_id: categoryId } : {};
+      const response = await subCategoriesAPI.getAll(params);
+      if (response.data.success) {
+        setSubCategories(response.data.data);
+      }
+    } catch (err) {
+      console.error('Sub-categories error:', err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchSubCategories();
   }, []);
+
+  // Fetch sub-categories when category filter changes
+  useEffect(() => {
+    if (categoryFilter !== 'all') {
+      fetchSubCategories(categoryFilter);
+    } else {
+      fetchSubCategories();
+    }
+  }, [categoryFilter]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -103,6 +128,7 @@ const ProductsPage = () => {
         price: '',
         stock: '',
         category_id: '',
+        sub_category_id: '',
         sku: '',
         barcode: '',
         image_url: ''
@@ -135,6 +161,7 @@ const ProductsPage = () => {
       price: product.price,
       stock: product.stock || 0,
       category_id: product.category_id || '',
+      sub_category_id: product.sub_category_id || '',
       sku: product.sku || '',
       barcode: product.barcode || '',
       image_url: product.image_url || ''
@@ -143,10 +170,19 @@ const ProductsPage = () => {
     setShowAddModal(true);
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredProducts = products.filter(product => {
+    // Text search
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    // Category filter
+    const matchesCategory = categoryFilter === 'all' || product.category_id === categoryFilter;
+    
+    // Sub-category filter
+    const matchesSubCategory = subCategoryFilter === 'all' || product.sub_category_id === subCategoryFilter;
+    
+    return matchesSearch && matchesCategory && matchesSubCategory;
+  });
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GH', {
@@ -187,7 +223,7 @@ const ProductsPage = () => {
 
       {/* Search and Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="relative">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#746354]" />
             <input
@@ -206,6 +242,17 @@ const ProductsPage = () => {
             <option value="all">All Categories</option>
             {categories.map(category => (
               <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
+          <select
+            value={subCategoryFilter}
+            onChange={(e) => setSubCategoryFilter(e.target.value)}
+            className="px-4 py-3 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+            disabled={categoryFilter === 'all'}
+          >
+            <option value="all">All Sub-Categories</option>
+            {subCategories.map(subCategory => (
+              <option key={subCategory.id} value={subCategory.id}>{subCategory.name}</option>
             ))}
           </select>
         </div>
@@ -403,11 +450,34 @@ const ProductsPage = () => {
                 <select
                   className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
                   value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, category_id: e.target.value, sub_category_id: '' });
+                    if (e.target.value) {
+                      fetchSubCategories(e.target.value);
+                    } else {
+                      fetchSubCategories();
+                    }
+                  }}
                 >
                   <option value="">Select a category</option>
                   {categories.map(category => (
                     <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                  Sub-Category
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                  value={formData.sub_category_id}
+                  onChange={(e) => setFormData({ ...formData, sub_category_id: e.target.value })}
+                  disabled={!formData.category_id}
+                >
+                  <option value="">Select a sub-category (optional)</option>
+                  {subCategories.map(subCategory => (
+                    <option key={subCategory.id} value={subCategory.id}>{subCategory.name}</option>
                   ))}
                 </select>
               </div>

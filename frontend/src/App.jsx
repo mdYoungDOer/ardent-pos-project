@@ -33,6 +33,7 @@ import ReportsPage from './pages/app/ReportsPage'
 import SettingsPage from './pages/app/SettingsPage'
 import NotificationSettingsPage from './pages/app/NotificationSettingsPage'
 import UserManagementPage from './pages/app/UserManagementPage'
+import SubCategoriesPage from './pages/app/SubCategoriesPage'
 import DiscountsPage from './pages/app/DiscountsPage'
 import CouponsPage from './pages/app/CouponsPage'
 
@@ -93,6 +94,7 @@ function App() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="notifications" element={<NotificationSettingsPage />} />
         <Route path="user-management" element={<UserManagementPage />} />
+        <Route path="sub-categories" element={<SubCategoriesPage />} />
         <Route path="discounts" element={<DiscountsPage />} />
         <Route path="coupons" element={<CouponsPage />} />
       </Route>
