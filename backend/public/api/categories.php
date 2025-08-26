@@ -58,7 +58,7 @@ function uploadImage($file, $type = 'categories') {
 function getFallbackCategories() {
     return [
         [
-            'id' => 'cat_electronics_001',
+            'id' => '550e8400-e29b-41d4-a716-446655440001',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Electronics',
             'description' => 'Electronic devices and accessories',
@@ -71,7 +71,7 @@ function getFallbackCategories() {
             'product_count' => 15,
             'sub_categories' => [
                 [
-                    'id' => 'cat_phones_001',
+                    'id' => '550e8400-e29b-41d4-a716-446655440002',
                     'name' => 'Phones',
                     'description' => 'Mobile phones and accessories',
                     'color' => '#10b981',
@@ -80,7 +80,7 @@ function getFallbackCategories() {
                     'product_count' => 8,
                     'sub_categories' => [
                         [
-                            'id' => 'cat_smartphones_001',
+                            'id' => '550e8400-e29b-41d4-a716-446655440003',
                             'name' => 'Smartphones',
                             'description' => 'Smart mobile phones',
                             'color' => '#f59e0b',
@@ -91,7 +91,7 @@ function getFallbackCategories() {
                     ]
                 ],
                 [
-                    'id' => 'cat_computers_001',
+                    'id' => '550e8400-e29b-41d4-a716-446655440005',
                     'name' => 'Computers',
                     'description' => 'Desktop and laptop computers',
                     'color' => '#8b5cf6',
@@ -104,7 +104,7 @@ function getFallbackCategories() {
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'cat_clothing_001',
+            'id' => '550e8400-e29b-41d4-a716-446655440008',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Clothing',
             'description' => 'Apparel and fashion items',
@@ -117,7 +117,7 @@ function getFallbackCategories() {
             'product_count' => 25,
             'sub_categories' => [
                 [
-                    'id' => 'cat_mens_clothing_001',
+                    'id' => '550e8400-e29b-41d4-a716-446655440009',
                     'name' => 'Men\'s Clothing',
                     'description' => 'Clothing for men',
                     'color' => '#f97316',
@@ -126,7 +126,7 @@ function getFallbackCategories() {
                     'product_count' => 12
                 ],
                 [
-                    'id' => 'cat_womens_clothing_001',
+                    'id' => '550e8400-e29b-41d4-a716-446655440010',
                     'name' => 'Women\'s Clothing',
                     'description' => 'Clothing for women',
                     'color' => '#ec4899',
@@ -139,7 +139,7 @@ function getFallbackCategories() {
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'cat_food_001',
+            'id' => '550e8400-e29b-41d4-a716-446655440012',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Food & Beverages',
             'description' => 'Food items and drinks',
@@ -152,7 +152,7 @@ function getFallbackCategories() {
             'product_count' => 30,
             'sub_categories' => [
                 [
-                    'id' => 'cat_beverages_001',
+                    'id' => '550e8400-e29b-41d4-a716-446655440013',
                     'name' => 'Beverages',
                     'description' => 'Drinks and beverages',
                     'color' => '#ef4444',
@@ -161,7 +161,7 @@ function getFallbackCategories() {
                     'product_count' => 15
                 ],
                 [
-                    'id' => 'cat_snacks_001',
+                    'id' => '550e8400-e29b-41d4-a716-446655440014',
                     'name' => 'Snacks',
                     'description' => 'Snack foods',
                     'color' => '#8b5cf6',

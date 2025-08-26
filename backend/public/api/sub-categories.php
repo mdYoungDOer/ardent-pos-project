@@ -58,9 +58,9 @@ function uploadImage($file, $type = 'sub_categories') {
 function getFallbackSubCategories() {
     return [
         [
-            'id' => 'sub_android_001',
+            'id' => '550e8400-e29b-41d4-a716-446655440015',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
-            'category_id' => 'cat_smartphones_001',
+            'category_id' => '550e8400-e29b-41d4-a716-446655440003',
             'category_name' => 'Smartphones',
             'name' => 'Android Phones',
             'description' => 'Android smartphones',
@@ -73,9 +73,9 @@ function getFallbackSubCategories() {
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'sub_iphone_001',
+            'id' => '550e8400-e29b-41d4-a716-446655440016',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
-            'category_id' => 'cat_smartphones_001',
+            'category_id' => '550e8400-e29b-41d4-a716-446655440003',
             'category_name' => 'Smartphones',
             'name' => 'iPhones',
             'description' => 'Apple iPhones',
@@ -88,9 +88,9 @@ function getFallbackSubCategories() {
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'sub_gaming_laptops_001',
+            'id' => '550e8400-e29b-41d4-a716-446655440018',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
-            'category_id' => 'cat_laptops_001',
+            'category_id' => '550e8400-e29b-41d4-a716-446655440006',
             'category_name' => 'Laptops',
             'name' => 'Gaming Laptops',
             'description' => 'High-performance gaming laptops',

@@ -210,58 +210,58 @@ COMMENT ON COLUMN products.sub_category_id IS 'Reference to specific sub-categor
 -- Insert some sample hierarchical categories for testing
 INSERT INTO categories (id, tenant_id, name, description, color, parent_id, level, path, sort_order) VALUES
 -- Electronics (Root Category)
-('cat_electronics_001', '00000000-0000-0000-0000-000000000000', 'Electronics', 'Electronic devices and accessories', '#3b82f6', NULL, 1, 'Electronics', 1),
+('550e8400-e29b-41d4-a716-446655440001', '00000000-0000-0000-0000-000000000000', 'Electronics', 'Electronic devices and accessories', '#3b82f6', NULL, 1, 'Electronics', 1),
 -- Phones (Sub-category of Electronics)
-('cat_phones_001', '00000000-0000-0000-0000-000000000000', 'Phones', 'Mobile phones and accessories', '#10b981', 'cat_electronics_001', 2, 'Electronics/Phones', 1),
+('550e8400-e29b-41d4-a716-446655440002', '00000000-0000-0000-0000-000000000000', 'Phones', 'Mobile phones and accessories', '#10b981', '550e8400-e29b-41d4-a716-446655440001', 2, 'Electronics/Phones', 1),
 -- Smartphones (Sub-category of Phones)
-('cat_smartphones_001', '00000000-0000-0000-0000-000000000000', 'Smartphones', 'Smart mobile phones', '#f59e0b', 'cat_phones_001', 3, 'Electronics/Phones/Smartphones', 1),
+('550e8400-e29b-41d4-a716-446655440003', '00000000-0000-0000-0000-000000000000', 'Smartphones', 'Smart mobile phones', '#f59e0b', '550e8400-e29b-41d4-a716-446655440002', 3, 'Electronics/Phones/Smartphones', 1),
 -- Feature Phones (Sub-category of Phones)
-('cat_feature_phones_001', '00000000-0000-0000-0000-000000000000', 'Feature Phones', 'Basic mobile phones', '#ef4444', 'cat_phones_001', 3, 'Electronics/Phones/Feature Phones', 2),
+('550e8400-e29b-41d4-a716-446655440004', '00000000-0000-0000-0000-000000000000', 'Feature Phones', 'Basic mobile phones', '#ef4444', '550e8400-e29b-41d4-a716-446655440002', 3, 'Electronics/Phones/Feature Phones', 2),
 -- Computers (Sub-category of Electronics)
-('cat_computers_001', '00000000-0000-0000-0000-000000000000', 'Computers', 'Desktop and laptop computers', '#8b5cf6', 'cat_electronics_001', 2, 'Electronics/Computers', 2),
+('550e8400-e29b-41d4-a716-446655440005', '00000000-0000-0000-0000-000000000000', 'Computers', 'Desktop and laptop computers', '#8b5cf6', '550e8400-e29b-41d4-a716-446655440001', 2, 'Electronics/Computers', 2),
 -- Laptops (Sub-category of Computers)
-('cat_laptops_001', '00000000-0000-0000-0000-000000000000', 'Laptops', 'Portable computers', '#06b6d4', 'cat_computers_001', 3, 'Electronics/Computers/Laptops', 1),
+('550e8400-e29b-41d4-a716-446655440006', '00000000-0000-0000-0000-000000000000', 'Laptops', 'Portable computers', '#06b6d4', '550e8400-e29b-41d4-a716-446655440005', 3, 'Electronics/Computers/Laptops', 1),
 -- Desktops (Sub-category of Computers)
-('cat_desktops_001', '00000000-0000-0000-0000-000000000000', 'Desktops', 'Desktop computers', '#84cc16', 'cat_computers_001', 3, 'Electronics/Computers/Desktops', 2),
+('550e8400-e29b-41d4-a716-446655440007', '00000000-0000-0000-0000-000000000000', 'Desktops', 'Desktop computers', '#84cc16', '550e8400-e29b-41d4-a716-446655440005', 3, 'Electronics/Computers/Desktops', 2),
 
 -- Clothing (Root Category)
-('cat_clothing_001', '00000000-0000-0000-0000-000000000000', 'Clothing', 'Apparel and fashion items', '#10b981', NULL, 1, 'Clothing', 2),
+('550e8400-e29b-41d4-a716-446655440008', '00000000-0000-0000-0000-000000000000', 'Clothing', 'Apparel and fashion items', '#10b981', NULL, 1, 'Clothing', 2),
 -- Men's Clothing (Sub-category of Clothing)
-('cat_mens_clothing_001', '00000000-0000-0000-0000-000000000000', 'Men''s Clothing', 'Clothing for men', '#f97316', 'cat_clothing_001', 2, 'Clothing/Men''s Clothing', 1),
+('550e8400-e29b-41d4-a716-446655440009', '00000000-0000-0000-0000-000000000000', 'Men''s Clothing', 'Clothing for men', '#f97316', '550e8400-e29b-41d4-a716-446655440008', 2, 'Clothing/Men''s Clothing', 1),
 -- Women's Clothing (Sub-category of Clothing)
-('cat_womens_clothing_001', '00000000-0000-0000-0000-000000000000', 'Women''s Clothing', 'Clothing for women', '#ec4899', 'cat_clothing_001', 2, 'Clothing/Women''s Clothing', 2),
+('550e8400-e29b-41d4-a716-446655440010', '00000000-0000-0000-0000-000000000000', 'Women''s Clothing', 'Clothing for women', '#ec4899', '550e8400-e29b-41d4-a716-446655440008', 2, 'Clothing/Women''s Clothing', 2),
 -- Kids' Clothing (Sub-category of Clothing)
-('cat_kids_clothing_001', '00000000-0000-0000-0000-000000000000', 'Kids'' Clothing', 'Clothing for children', '#6366f1', 'cat_clothing_001', 2, 'Clothing/Kids'' Clothing', 3),
+('550e8400-e29b-41d4-a716-446655440011', '00000000-0000-0000-0000-000000000000', 'Kids'' Clothing', 'Clothing for children', '#6366f1', '550e8400-e29b-41d4-a716-446655440008', 2, 'Clothing/Kids'' Clothing', 3),
 
 -- Food & Beverages (Root Category)
-('cat_food_001', '00000000-0000-0000-0000-000000000000', 'Food & Beverages', 'Food items and drinks', '#f59e0b', NULL, 1, 'Food & Beverages', 3),
+('550e8400-e29b-41d4-a716-446655440012', '00000000-0000-0000-0000-000000000000', 'Food & Beverages', 'Food items and drinks', '#f59e0b', NULL, 1, 'Food & Beverages', 3),
 -- Beverages (Sub-category of Food)
-('cat_beverages_001', '00000000-0000-0000-0000-000000000000', 'Beverages', 'Drinks and beverages', '#ef4444', 'cat_food_001', 2, 'Food & Beverages/Beverages', 1),
+('550e8400-e29b-41d4-a716-446655440013', '00000000-0000-0000-0000-000000000000', 'Beverages', 'Drinks and beverages', '#ef4444', '550e8400-e29b-41d4-a716-446655440012', 2, 'Food & Beverages/Beverages', 1),
 -- Snacks (Sub-category of Food)
-('cat_snacks_001', '00000000-0000-0000-0000-000000000000', 'Snacks', 'Snack foods', '#8b5cf6', 'cat_food_001', 2, 'Food & Beverages/Snacks', 2)
+('550e8400-e29b-41d4-a716-446655440014', '00000000-0000-0000-0000-000000000000', 'Snacks', 'Snack foods', '#8b5cf6', '550e8400-e29b-41d4-a716-446655440012', 2, 'Food & Beverages/Snacks', 2)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample sub-categories
 INSERT INTO sub_categories (id, tenant_id, category_id, name, description, color, sort_order) VALUES
 -- Sub-categories for Smartphones
-('sub_android_001', '00000000-0000-0000-0000-000000000000', 'cat_smartphones_001', 'Android Phones', 'Android smartphones', '#3b82f6', 1),
-('sub_iphone_001', '00000000-0000-0000-0000-000000000000', 'cat_smartphones_001', 'iPhones', 'Apple iPhones', '#10b981', 2),
-('sub_windows_phone_001', '00000000-0000-0000-0000-000000000000', 'cat_smartphones_001', 'Windows Phones', 'Windows smartphones', '#f59e0b', 3),
+('550e8400-e29b-41d4-a716-446655440015', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440003', 'Android Phones', 'Android smartphones', '#3b82f6', 1),
+('550e8400-e29b-41d4-a716-446655440016', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440003', 'iPhones', 'Apple iPhones', '#10b981', 2),
+('550e8400-e29b-41d4-a716-446655440017', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440003', 'Windows Phones', 'Windows smartphones', '#f59e0b', 3),
 
 -- Sub-categories for Laptops
-('sub_gaming_laptops_001', '00000000-0000-0000-0000-000000000000', 'cat_laptops_001', 'Gaming Laptops', 'High-performance gaming laptops', '#ef4444', 1),
-('sub_business_laptops_001', '00000000-0000-0000-0000-000000000000', 'cat_laptops_001', 'Business Laptops', 'Professional business laptops', '#8b5cf6', 2),
-('sub_student_laptops_001', '00000000-0000-0000-0000-000000000000', 'cat_laptops_001', 'Student Laptops', 'Affordable laptops for students', '#06b6d4', 3),
+('550e8400-e29b-41d4-a716-446655440018', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440006', 'Gaming Laptops', 'High-performance gaming laptops', '#ef4444', 1),
+('550e8400-e29b-41d4-a716-446655440019', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440006', 'Business Laptops', 'Professional business laptops', '#8b5cf6', 2),
+('550e8400-e29b-41d4-a716-446655440020', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440006', 'Student Laptops', 'Affordable laptops for students', '#06b6d4', 3),
 
 -- Sub-categories for Men's Clothing
-('sub_mens_shirts_001', '00000000-0000-0000-0000-000000000000', 'cat_mens_clothing_001', 'Shirts', 'Men''s shirts and tops', '#84cc16', 1),
-('sub_mens_pants_001', '00000000-0000-0000-0000-000000000000', 'cat_mens_clothing_001', 'Pants', 'Men''s pants and trousers', '#f97316', 2),
-('sub_mens_shoes_001', '00000000-0000-0000-0000-000000000000', 'cat_mens_clothing_001', 'Shoes', 'Men''s footwear', '#ec4899', 3),
+('550e8400-e29b-41d4-a716-446655440021', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440009', 'Shirts', 'Men''s shirts and tops', '#84cc16', 1),
+('550e8400-e29b-41d4-a716-446655440022', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440009', 'Pants', 'Men''s pants and trousers', '#f97316', 2),
+('550e8400-e29b-41d4-a716-446655440023', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440009', 'Shoes', 'Men''s footwear', '#ec4899', 3),
 
 -- Sub-categories for Beverages
-('sub_soft_drinks_001', '00000000-0000-0000-0000-000000000000', 'cat_beverages_001', 'Soft Drinks', 'Carbonated soft drinks', '#6366f1', 1),
-('sub_juices_001', '00000000-0000-0000-0000-000000000000', 'cat_beverages_001', 'Juices', 'Fruit juices and drinks', '#3b82f6', 2),
-('sub_water_001', '00000000-0000-0000-0000-000000000000', 'cat_beverages_001', 'Water', 'Bottled water and beverages', '#10b981', 3)
+('550e8400-e29b-41d4-a716-446655440024', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440013', 'Soft Drinks', 'Carbonated soft drinks', '#6366f1', 1),
+('550e8400-e29b-41d4-a716-446655440025', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440013', 'Juices', 'Fruit juices and drinks', '#3b82f6', 2),
+('550e8400-e29b-41d4-a716-446655440026', '00000000-0000-0000-0000-000000000000', '550e8400-e29b-41d4-a716-446655440013', 'Water', 'Bottled water and beverages', '#10b981', 3)
 ON CONFLICT (id) DO NOTHING;
 
 -- Success message
