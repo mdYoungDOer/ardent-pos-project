@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   FiBarChart2, FiTrendingUp, FiTrendingDown, FiDollarSign, FiPackage, FiUsers, FiCalendar, FiDownload,
   FiShoppingCart, FiUserCheck, FiStar, FiActivity, FiAlertCircle, FiRefreshCw
@@ -267,17 +267,118 @@ const DashboardPage = () => {
       </div>
 
       {/* Dashboard Content */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
-        <h2 className="text-xl font-semibold text-[#2c2c2c] mb-4">Dashboard Loaded Successfully</h2>
-        <p className="text-[#746354]">Your business dashboard is now working properly!</p>
-        {stats && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-[#2c2c2c] mb-2">Current Stats:</h3>
-            <pre className="text-sm text-[#746354] overflow-auto">
-              {JSON.stringify(stats, null, 2)}
-            </pre>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Recent Sales */}
+        <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-[#2c2c2c]">Recent Sales</h3>
+            <Link 
+              to="/app/sales" 
+              className="text-sm text-[#e41e5b] hover:text-[#9a0864] transition-colors"
+            >
+              View All
+            </Link>
           </div>
-        )}
+          <div className="space-y-3">
+            {stats?.recentSales?.length > 0 ? (
+              stats.recentSales.map((sale) => (
+                <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-[#2c2c2c]">
+                      {sale.first_name} {sale.last_name}
+                    </p>
+                    <p className="text-sm text-[#746354]">{formatDate(sale.created_at)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-[#2c2c2c]">{formatCurrency(sale.total_amount)}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-[#746354]">
+                <FiShoppingCart className="h-12 w-12 mx-auto mb-3 text-[#746354]/30" />
+                <p>No recent sales</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Low Stock Alert */}
+        <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-[#2c2c2c]">Low Stock Alert</h3>
+            <Link 
+              to="/app/inventory" 
+              className="text-sm text-[#e41e5b] hover:text-[#9a0864] transition-colors"
+            >
+              View All
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {stats?.lowStockProducts?.length > 0 ? (
+              stats.lowStockProducts.map((product) => (
+                <div key={product.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div>
+                    <p className="font-medium text-[#2c2c2c]">{product.name}</p>
+                    <p className="text-sm text-[#746354]">{formatCurrency(product.price)}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      product.stock === 0 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {product.stock === 0 ? 'Out of Stock' : `${product.stock} left`}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-[#746354]">
+                <FiPackage className="h-12 w-12 mx-auto mb-3 text-[#746354]/30" />
+                <p>All products well stocked</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6">
+        <h3 className="text-lg font-semibold text-[#2c2c2c] mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Link 
+            to="/app/pos" 
+            className="flex flex-col items-center p-4 bg-[#e41e5b]/10 rounded-lg hover:bg-[#e41e5b]/20 transition-colors"
+          >
+            <FiShoppingCart className="h-8 w-8 text-[#e41e5b] mb-2" />
+            <span className="text-sm font-medium text-[#2c2c2c]">New Sale</span>
+          </Link>
+          
+          <Link 
+            to="/app/products" 
+            className="flex flex-col items-center p-4 bg-[#9a0864]/10 rounded-lg hover:bg-[#9a0864]/20 transition-colors"
+          >
+            <FiPackage className="h-8 w-8 text-[#9a0864] mb-2" />
+            <span className="text-sm font-medium text-[#2c2c2c]">Add Product</span>
+          </Link>
+          
+          <Link 
+            to="/app/customers" 
+            className="flex flex-col items-center p-4 bg-[#a67c00]/10 rounded-lg hover:bg-[#a67c00]/20 transition-colors"
+          >
+            <FiUsers className="h-8 w-8 text-[#a67c00] mb-2" />
+            <span className="text-sm font-medium text-[#2c2c2c]">Add Customer</span>
+          </Link>
+          
+          <Link 
+            to="/app/reports" 
+            className="flex flex-col items-center p-4 bg-[#746354]/10 rounded-lg hover:bg-[#746354]/20 transition-colors"
+          >
+            <FiBarChart2 className="h-8 w-8 text-[#746354] mb-2" />
+            <span className="text-sm font-medium text-[#2c2c2c]">View Reports</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

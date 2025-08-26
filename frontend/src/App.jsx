@@ -31,7 +31,8 @@ import SalesPage from './pages/app/SalesPage'
 import CustomersPage from './pages/app/CustomersPage'
 import ReportsPage from './pages/app/ReportsPage'
 import SettingsPage from './pages/app/SettingsPage'
-import NotificationSettingsPage from './pages/app/NotificationSettingsPage';
+import NotificationSettingsPage from './pages/app/NotificationSettingsPage'
+import UserManagementPage from './pages/app/UserManagementPage'
 
 // Super Admin Pages
 import SuperAdminDashboard from './pages/app/SuperAdminDashboard'
@@ -89,6 +90,7 @@ function App() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="notifications" element={<NotificationSettingsPage />} />
+        <Route path="user-management" element={<UserManagementPage />} />
       </Route>
 
       {/* Super Admin Routes - Completely Separate */}

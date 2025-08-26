@@ -353,4 +353,21 @@ export const paymentAPI = {
   }
 };
 
+// User Management API (for admins within their business account)
+export const userManagementAPI = {
+  getAll: () => api.get('/user-management.php'),
+  create: (userData) => api.post('/user-management.php', userData),
+  update: (id, userData) => api.put('/user-management.php', { id, ...userData }),
+  delete: (id) => api.delete(`/user-management.php?id=${id}`),
+  getById: (id) => api.get(`/user-management.php?id=${id}`),
+  updateStatus: (id, status) => api.put('/user-management.php/status', { id, status }),
+  updateRole: (id, role) => api.put('/user-management.php/role', { id, role }),
+  updatePermissions: (id, permissions) => api.put('/user-management.php/permissions', { id, permissions }),
+  bulkAction: (userIds, action) => api.post('/user-management.php/bulk', { userIds, action }),
+  getRoles: () => api.get('/user-management.php/roles'),
+  getPermissions: () => api.get('/user-management.php/permissions'),
+  resetPassword: (id) => api.post('/user-management.php/reset-password', { id }),
+  sendInvitation: (email, role) => api.post('/user-management.php/invite', { email, role }),
+};
+
 export default api;

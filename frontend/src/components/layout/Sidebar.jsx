@@ -18,7 +18,8 @@ import {
   FiLogOut,
   FiBell,
   FiTag,
-  FiMapPin
+  FiMapPin,
+  FiUserCheck
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -51,8 +52,22 @@ const Sidebar = () => {
     { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 
+  // Admin Navigation (includes User Management)
+  const adminNavigation = [
+    ...regularUserNavigation.slice(0, -1), // All regular items except Settings
+    { name: 'User Management', href: '/app/user-management', icon: FiUserCheck },
+    { name: 'Settings', href: '/app/settings', icon: FiSettings },
+  ]
+
   // Determine which navigation to show based on user role
-  const navigation = user?.role === 'super_admin' ? superAdminNavigation : regularUserNavigation
+  let navigation
+  if (user?.role === 'super_admin') {
+    navigation = superAdminNavigation
+  } else if (user?.role === 'admin') {
+    navigation = adminNavigation
+  } else {
+    navigation = regularUserNavigation
+  }
 
   const handleLogout = () => {
     logout()
