@@ -5,11 +5,11 @@ import {
   FiMapPin, FiPhone, FiMail, FiPackage, FiTrendingUp, FiTrendingDown,
   FiMoreVertical, FiDownload, FiRefreshCw, FiAlertCircle
 } from 'react-icons/fi';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 import { superAdminAPI } from '../../services/api';
 
 const TenantManagementPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

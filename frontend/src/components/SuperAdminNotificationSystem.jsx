@@ -3,10 +3,10 @@ import {
   FiBell, FiX, FiCheck, FiAlertTriangle, FiInfo, FiSettings,
   FiRefreshCw, FiTrash, FiEye, FiEyeOff, FiVolume2, FiVolumeX
 } from 'react-icons/fi';
-import useSuperAdminAuthStore from '../stores/superAdminAuthStore';
+import { useAuth } from '../contexts/AuthContext';
 
 const SuperAdminNotificationSystem = () => {
-  const { user } = useSuperAdminAuthStore();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);

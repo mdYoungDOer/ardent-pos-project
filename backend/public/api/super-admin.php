@@ -415,11 +415,55 @@ switch ($endpoint) {
         
     case 'subscription-plans':
         try {
-            $data = [
-                ['id' => 'starter', 'name' => 'Starter', 'monthly_price' => 120, 'yearly_price' => 1200],
-                ['id' => 'professional', 'name' => 'Professional', 'monthly_price' => 240, 'yearly_price' => 2400],
-                ['id' => 'enterprise', 'name' => 'Enterprise', 'monthly_price' => 480, 'yearly_price' => 4800]
-            ];
+            if ($pdo) {
+                $stmt = $pdo->query("SELECT * FROM subscription_plans ORDER BY monthly_price ASC");
+                $plans = $stmt->fetchAll();
+                
+                // Format the data for frontend
+                $data = array_map(function($plan) {
+                    return [
+                        'id' => $plan['plan_id'],
+                        'name' => $plan['name'],
+                        'description' => $plan['description'],
+                        'monthly_price' => (float)$plan['monthly_price'],
+                        'yearly_price' => (float)$plan['yearly_price'],
+                        'currency' => $plan['currency'],
+                        'features' => json_decode($plan['features'], true),
+                        'limits' => json_decode($plan['limits'], true),
+                        'is_active' => (bool)$plan['is_active'],
+                        'is_popular' => (bool)$plan['is_popular'],
+                        'created_at' => $plan['created_at']
+                    ];
+                }, $plans);
+            } else {
+                // Fallback data
+                $data = [
+                    [
+                        'id' => 'starter',
+                        'name' => 'Starter',
+                        'description' => 'Perfect for small businesses',
+                        'monthly_price' => 120.00,
+                        'yearly_price' => 1200.00,
+                        'currency' => 'GHS',
+                        'features' => ['Basic POS functionality', 'Up to 2 locations'],
+                        'limits' => ['locations' => 2, 'users' => 3],
+                        'is_active' => true,
+                        'is_popular' => false
+                    ],
+                    [
+                        'id' => 'professional',
+                        'name' => 'Professional',
+                        'description' => 'Ideal for growing businesses',
+                        'monthly_price' => 240.00,
+                        'yearly_price' => 2400.00,
+                        'currency' => 'GHS',
+                        'features' => ['Everything in Starter', 'Up to 5 locations'],
+                        'limits' => ['locations' => 5, 'users' => 10],
+                        'is_active' => true,
+                        'is_popular' => true
+                    ]
+                ];
+            }
             sendResponse($data);
         } catch (Exception $e) {
             sendError('Error fetching subscription plans: ' . $e->getMessage());

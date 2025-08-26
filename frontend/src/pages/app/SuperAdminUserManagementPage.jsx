@@ -6,11 +6,11 @@ import {
   FiMoreVertical, FiDownload, FiRefreshCw, FiAlertCircle, FiCheckCircle,
   FiXCircle, FiUserCheck, FiUserX, FiLock, FiUnlock
 } from 'react-icons/fi';
-import useSuperAdminAuthStore from '../../stores/superAdminAuthStore';
+import { useAuth } from '../../contexts/AuthContext';
 import { superAdminAPI } from '../../services/api';
 
 const SuperAdminUserManagementPage = () => {
-  const { user } = useSuperAdminAuthStore();
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

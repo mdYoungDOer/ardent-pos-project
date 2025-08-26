@@ -3,9 +3,9 @@ import { Routes, Route } from 'react-router-dom';
 import SuperAdminLayout from '../layouts/SuperAdminLayout';
 import SuperAdminDashboard from '../pages/app/SuperAdminDashboard';
 import SuperAdminAnalytics from '../pages/app/SuperAdminAnalytics';
-import SuperAdminTenants from '../pages/app/SuperAdminTenants';
-import SuperAdminUsers from '../pages/app/SuperAdminUsers';
-import SuperAdminSettings from '../pages/app/SuperAdminSettings';
+import SuperAdminTenants from '../pages/app/TenantManagementPage';
+import SuperAdminUsers from '../pages/app/SuperAdminUserManagementPage';
+import SuperAdminSettings from '../pages/app/SuperAdminSettingsPage';
 import SuperAdminSubscriptionPlans from '../pages/app/SuperAdminSubscriptionPlansPage';
 
 const SuperAdminRoutes = () => {
