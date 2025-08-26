@@ -159,9 +159,13 @@ export const superAdminAPI = {
   getSystemLogs: (params = {}) => api.get('/super-admin.php/logs', { params }),
   
   // Billing & Subscriptions
-  getBillingStats: () => api.get('/super-admin.php/billing/stats'),
-  getSubscriptions: (params = {}) => api.get('/super-admin.php/subscriptions', { params }),
-  updateSubscription: (id, data) => api.put(`/super-admin.php/subscription/${id}`, data),
+  getBillingStats: () => api.get('/super-admin-enhanced.php/billing/stats'),
+  getSubscriptions: (params = {}) => api.get('/super-admin-enhanced.php/subscriptions', { params }),
+  updateSubscription: (id, data) => api.put(`/super-admin-enhanced.php/subscription/${id}`, data),
+  createSubscription: (data) => api.post('/super-admin-enhanced.php/subscription', data),
+  cancelSubscription: (id, reason) => api.post(`/super-admin-enhanced.php/subscription/${id}/cancel`, { reason }),
+  getSubscriptionPlans: () => api.get('/super-admin-enhanced.php/subscription-plans'),
+  updateSubscriptionPlan: (id, planData) => api.put(`/super-admin-enhanced.php/subscription/${id}/plan`, planData),
   
   // Security & Audit
   getAuditLogs: (params = {}) => api.get('/super-admin.php/audit-logs', { params }),
