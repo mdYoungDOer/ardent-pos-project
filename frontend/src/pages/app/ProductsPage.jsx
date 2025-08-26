@@ -89,7 +89,9 @@ const ProductsPage = () => {
       }
 
       if (editingProduct) {
-        await productsAPI.update({ ...submitData, id: editingProduct.id });
+        // For update, include the ID in the FormData
+        submitData.append('id', editingProduct.id);
+        await productsAPI.update(submitData);
       } else {
         await productsAPI.create(submitData);
       }

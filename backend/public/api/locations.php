@@ -240,11 +240,17 @@ try {
 
         case 'PUT':
             // Update location
+            // Handle both JSON and FormData
             $input = file_get_contents('php://input');
             $data = json_decode($input, true);
+            
+            // If JSON decode failed, try to parse as FormData
+            if (!$data) {
+                parse_str($input, $data);
+            }
 
             if (!$data) {
-                sendErrorResponse('Invalid JSON data', 400);
+                sendErrorResponse('Invalid data format', 400);
             }
 
             $locationId = $data['id'] ?? '';

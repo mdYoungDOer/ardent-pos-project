@@ -85,7 +85,9 @@ const CategoriesPage = () => {
 
       let response;
       if (editingCategory) {
-        response = await categoriesAPI.update(editingCategory.id, submitData);
+        // For update, include the ID in the FormData
+        submitData.append('id', editingCategory.id);
+        response = await categoriesAPI.update(submitData);
       } else {
         response = await categoriesAPI.create(submitData);
       }

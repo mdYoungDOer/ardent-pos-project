@@ -117,7 +117,9 @@ const LocationsPage = () => {
 
       let response;
       if (editingLocation) {
-        response = await locationsAPI.update(editingLocation.id, submitData);
+        // For update, include the ID in the FormData
+        submitData.append('id', editingLocation.id);
+        response = await locationsAPI.update(submitData);
       } else {
         response = await locationsAPI.create(submitData);
       }
