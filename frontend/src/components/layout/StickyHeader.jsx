@@ -1,29 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiChevronDown } from 'react-icons/fi';
+import { FiMenu, FiX } from 'react-icons/fi';
 import Logo from '../ui/Logo';
 
 const StickyHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
   const location = useLocation();
 
-  // Handle scroll effect
+  // Handle scroll effect with throttling for better performance
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
-    setActiveDropdown(null);
   }, [location.pathname]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('header')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -37,7 +64,7 @@ const StickyHeader = () => {
   const isActive = (href) => location.pathname === href;
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
       isScrolled 
         ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100' 
         : 'bg-transparent'
@@ -57,7 +84,7 @@ const StickyHeader = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                className={`relative px-3 py-2 text-sm font-medium transition-all duration-200 ease-in-out ${
                   isActive(item.href)
                     ? 'text-primary'
                     : isScrolled
@@ -67,7 +94,7 @@ const StickyHeader = () => {
               >
                 {item.name}
                 {isActive(item.href) && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary transition-all duration-200"></span>
                 )}
               </Link>
             ))}
@@ -77,7 +104,7 @@ const StickyHeader = () => {
           <div className="hidden lg:flex items-center space-x-4">
             <Link
               to="/auth/login"
-              className={`px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+              className={`px-4 py-2 text-sm font-medium transition-all duration-200 ease-in-out ${
                 isScrolled
                   ? 'text-gray-700 hover:text-primary'
                   : 'text-white hover:text-primary-200'
@@ -87,7 +114,7 @@ const StickyHeader = () => {
             </Link>
             <Link
               to="/auth/register"
-              className="btn-primary btn-sm"
+              className="btn-primary btn-sm transition-all duration-200 ease-in-out hover:scale-105"
             >
               Get Started
             </Link>
@@ -97,11 +124,12 @@ const StickyHeader = () => {
           <div className="lg:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`p-2 rounded-md transition-colors duration-200 ${
+              className={`p-2 rounded-md transition-all duration-200 ease-in-out ${
                 isScrolled
-                  ? 'text-gray-700 hover:text-primary'
-                  : 'text-white hover:text-primary-200'
+                  ? 'text-gray-700 hover:text-primary hover:bg-gray-100'
+                  : 'text-white hover:text-primary-200 hover:bg-white/10'
               }`}
+              aria-label="Toggle mobile menu"
             >
               {isMobileMenuOpen ? (
                 <FiX className="h-6 w-6" />
@@ -116,16 +144,17 @@ const StickyHeader = () => {
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
         <div className="lg:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg border-t border-gray-100">
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`block px-3 py-2 text-base font-medium transition-colors duration-200 ${
+                className={`block px-3 py-2 text-base font-medium transition-all duration-200 ease-in-out ${
                   isActive(item.href)
                     ? 'text-primary bg-primary-50'
                     : 'text-gray-700 hover:text-primary hover:bg-gray-50'
                 }`}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 {item.name}
               </Link>
@@ -133,13 +162,15 @@ const StickyHeader = () => {
             <div className="pt-4 pb-3 border-t border-gray-200">
               <Link
                 to="/auth/login"
-                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary transition-colors duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Sign In
               </Link>
               <Link
                 to="/auth/register"
-                className="block mt-2 px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-600 rounded-md text-center"
+                className="block mt-2 px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-600 rounded-md text-center transition-all duration-200 ease-in-out hover:scale-105"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Get Started
               </Link>

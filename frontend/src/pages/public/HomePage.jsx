@@ -11,7 +11,6 @@ import {
   HiStar
 } from 'react-icons/hi'
 import Logo from '../../components/ui/Logo'
-import StickyHeader from '../../components/layout/StickyHeader'
 
 const HomePage = () => {
   const features = [
@@ -65,8 +64,6 @@ const HomePage = () => {
 
   return (
     <div>
-      <StickyHeader />
-      
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary-50 to-accent-50 overflow-hidden pt-24">
         <div className="max-w-7xl mx-auto">
