@@ -1,7 +1,7 @@
--- Complete Subscription System Migration
--- This script handles both new installations and existing databases
+-- Step-by-Step Subscription Migration
+-- Run these commands in sequence in pgAdmin
 
--- Step 1: Create subscription_plans table (if it doesn't exist)
+-- Step 1: Create subscription_plans table
 CREATE TABLE IF NOT EXISTS subscription_plans (
     id SERIAL PRIMARY KEY,
     plan_id VARCHAR(50) UNIQUE NOT NULL,
@@ -18,9 +18,14 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Step 2: Insert subscription plans (only if they don't exist)
+-- Step 2: Insert the first subscription plan (Starter)
 INSERT INTO subscription_plans (plan_id, name, description, monthly_price, yearly_price, features, limits, is_popular) 
-SELECT 'starter', 'Starter', 'Perfect for small businesses and startups getting started with POS', 120.00, 1200.00,
+VALUES (
+    'starter',
+    'Starter',
+    'Perfect for small businesses and startups getting started with POS',
+    120.00,
+    1200.00,
     '[
         "Basic POS functionality",
         "Up to 2 locations",
@@ -44,10 +49,34 @@ SELECT 'starter', 'Starter', 'Perfect for small businesses and startups getting 
         "backup_retention_days": 30
     }',
     false
-WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE plan_id = 'starter');
+) ON CONFLICT (plan_id) DO NOTHING;
 
+-- Step 3: Add plan_id column to existing subscriptions table
+ALTER TABLE subscriptions 
+ADD COLUMN IF NOT EXISTS plan_id VARCHAR(50);
+
+-- Step 4: Set default plan for existing subscriptions
+UPDATE subscriptions 
+SET plan_id = 'starter' 
+WHERE plan_id IS NULL;
+
+-- Step 5: Add foreign key constraint
+ALTER TABLE subscriptions 
+ADD CONSTRAINT fk_subscriptions_plan_id 
+FOREIGN KEY (plan_id) REFERENCES subscription_plans(plan_id);
+
+-- Step 6: Make plan_id NOT NULL
+ALTER TABLE subscriptions 
+ALTER COLUMN plan_id SET NOT NULL;
+
+-- Step 7: Insert remaining subscription plans
 INSERT INTO subscription_plans (plan_id, name, description, monthly_price, yearly_price, features, limits, is_popular) 
-SELECT 'professional', 'Professional', 'Ideal for growing businesses with multiple locations', 240.00, 2400.00,
+VALUES (
+    'professional',
+    'Professional',
+    'Ideal for growing businesses with multiple locations',
+    240.00,
+    2400.00,
     '[
         "Everything in Starter",
         "Up to 5 locations",
@@ -73,10 +102,15 @@ SELECT 'professional', 'Professional', 'Ideal for growing businesses with multip
         "backup_retention_days": 90
     }',
     true
-WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE plan_id = 'professional');
+) ON CONFLICT (plan_id) DO NOTHING;
 
 INSERT INTO subscription_plans (plan_id, name, description, monthly_price, yearly_price, features, limits, is_popular) 
-SELECT 'business', 'Business', 'Comprehensive solution for established businesses', 360.00, 3600.00,
+VALUES (
+    'business',
+    'Business',
+    'Comprehensive solution for established businesses',
+    360.00,
+    3600.00,
     '[
         "Everything in Professional",
         "Up to 10 locations",
@@ -103,10 +137,15 @@ SELECT 'business', 'Business', 'Comprehensive solution for established businesse
         "backup_retention_days": 180
     }',
     false
-WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE plan_id = 'business');
+) ON CONFLICT (plan_id) DO NOTHING;
 
 INSERT INTO subscription_plans (plan_id, name, description, monthly_price, yearly_price, features, limits, is_popular) 
-SELECT 'enterprise', 'Enterprise', 'Full-featured solution for large enterprises and chains', 480.00, 4800.00,
+VALUES (
+    'enterprise',
+    'Enterprise',
+    'Full-featured solution for large enterprises and chains',
+    480.00,
+    4800.00,
     '[
         "Everything in Business",
         "Unlimited locations",
@@ -133,10 +172,15 @@ SELECT 'enterprise', 'Enterprise', 'Full-featured solution for large enterprises
         "backup_retention_days": 365
     }',
     false
-WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE plan_id = 'enterprise');
+) ON CONFLICT (plan_id) DO NOTHING;
 
 INSERT INTO subscription_plans (plan_id, name, description, monthly_price, yearly_price, features, limits, is_popular) 
-SELECT 'premium', 'Premium', 'Ultimate solution with custom features and dedicated support', 600.00, 6000.00,
+VALUES (
+    'premium',
+    'Premium',
+    'Ultimate solution with custom features and dedicated support',
+    600.00,
+    6000.00,
     '[
         "Everything in Enterprise",
         "Custom feature development",
@@ -162,68 +206,14 @@ SELECT 'premium', 'Premium', 'Ultimate solution with custom features and dedicat
         "backup_retention_days": 730
     }',
     false
-WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE plan_id = 'premium');
+) ON CONFLICT (plan_id) DO NOTHING;
 
--- Step 3: Check if subscriptions table exists and add plan_id column
-DO $$
-BEGIN
-    -- Check if subscriptions table exists
-    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'subscriptions') THEN
-        -- Add plan_id column if it doesn't exist
-        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'subscriptions' AND column_name = 'plan_id') THEN
-            ALTER TABLE subscriptions ADD COLUMN plan_id VARCHAR(50);
-        END IF;
-        
-        -- Add foreign key constraint if it doesn't exist
-        IF NOT EXISTS (SELECT FROM information_schema.table_constraints WHERE constraint_name = 'fk_subscriptions_plan_id') THEN
-            ALTER TABLE subscriptions ADD CONSTRAINT fk_subscriptions_plan_id FOREIGN KEY (plan_id) REFERENCES subscription_plans(plan_id);
-        END IF;
-        
-        -- Update existing subscriptions to have a default plan
-        UPDATE subscriptions SET plan_id = 'starter' WHERE plan_id IS NULL;
-        
-        -- Make plan_id NOT NULL after setting default values
-        ALTER TABLE subscriptions ALTER COLUMN plan_id SET NOT NULL;
-    ELSE
-        -- Create subscriptions table if it doesn't exist
-        CREATE TABLE subscriptions (
-            id SERIAL PRIMARY KEY,
-            tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-            plan_id VARCHAR(50) REFERENCES subscription_plans(plan_id),
-            status VARCHAR(20) DEFAULT 'active', -- active, cancelled, expired, pending
-            billing_cycle VARCHAR(10) NOT NULL, -- monthly, yearly
-            amount DECIMAL(10,2) NOT NULL,
-            currency VARCHAR(3) DEFAULT 'GHS',
-            paystack_reference VARCHAR(100),
-            next_billing_date DATE,
-            trial_ends_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    END IF;
-END $$;
-
--- Step 4: Create indexes for better performance
+-- Step 8: Create indexes
 CREATE INDEX IF NOT EXISTS idx_subscription_plans_plan_id ON subscription_plans(plan_id);
 CREATE INDEX IF NOT EXISTS idx_subscription_plans_active ON subscription_plans(is_active);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant_id ON subscriptions(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_plan_id ON subscriptions(plan_id);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_next_billing_date ON subscriptions(next_billing_date);
 
--- Step 5: Add comments for documentation
-COMMENT ON TABLE subscription_plans IS 'Available subscription plans for tenants';
-COMMENT ON TABLE subscriptions IS 'Active subscriptions for tenants';
-COMMENT ON COLUMN subscription_plans.features IS 'JSON array of features included in this plan';
-COMMENT ON COLUMN subscription_plans.limits IS 'JSON object defining usage limits for this plan';
-COMMENT ON COLUMN subscriptions.status IS 'Subscription status: active, cancelled, expired, pending';
-COMMENT ON COLUMN subscriptions.billing_cycle IS 'Billing frequency: monthly or yearly';
-COMMENT ON COLUMN subscriptions.paystack_reference IS 'Paystack payment reference for tracking';
-COMMENT ON COLUMN subscriptions.next_billing_date IS 'Next billing date for recurring payments';
-COMMENT ON COLUMN subscriptions.trial_ends_at IS 'Trial period end date if applicable';
-COMMENT ON COLUMN subscriptions.plan_id IS 'Reference to subscription plan from subscription_plans table';
-
--- Step 6: Verify the migration
+-- Step 9: Verify migration
 SELECT 'Migration completed successfully!' as status;
 SELECT COUNT(*) as subscription_plans_count FROM subscription_plans;
 SELECT COUNT(*) as subscriptions_count FROM subscriptions;
