@@ -8,16 +8,34 @@ import { dashboardAPI } from '../../services/api';
 import useAuthStore from '../../stores/authStore';
 
 const DashboardPage = () => {
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('30'); // days
+  const [timeRange, setTimeRange] = useState('30');
+  const [debugInfo, setDebugInfo] = useState({});
+
+  // Debug authentication state
+  useEffect(() => {
+    console.log('DashboardPage - Authentication State:', {
+      isAuthenticated,
+      user,
+      hasToken: !!localStorage.getItem('token')
+    });
+    
+    setDebugInfo({
+      isAuthenticated,
+      userRole: user?.role,
+      hasToken: !!localStorage.getItem('token'),
+      timestamp: new Date().toISOString()
+    });
+  }, [isAuthenticated, user]);
 
   // Redirect super admin to super admin dashboard
   useEffect(() => {
     if (user?.role === 'super_admin') {
+      console.log('Redirecting Super Admin to /super-admin/dashboard');
       navigate('/super-admin/dashboard');
       return;
     }
@@ -28,27 +46,36 @@ const DashboardPage = () => {
       setLoading(true);
       setError(null);
       console.log('Fetching dashboard stats for user:', user);
+      
       const response = await dashboardAPI.getStats();
       console.log('Dashboard API response:', response);
+      
       if (response.data.success) {
         setStats(response.data.data);
+        console.log('Dashboard stats loaded successfully:', response.data.data);
       } else {
-        setError('Failed to load dashboard: ' + (response.data.message || 'Unknown error'));
+        const errorMsg = response.data.message || 'Unknown error';
+        console.error('Dashboard API returned error:', errorMsg);
+        setError(`Failed to load dashboard: ${errorMsg}`);
       }
     } catch (err) {
-      console.error('Dashboard error:', err);
-      setError('Error loading dashboard: ' + (err.message || 'Network error'));
+      console.error('Dashboard fetch error:', err);
+      setError(`Error loading dashboard: ${err.message || 'Network error'}`);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Always fetch stats for non-super-admin users, even if user is not loaded yet
-    if (!user || user?.role !== 'super_admin') {
+    // Only fetch stats if user is authenticated and not a super admin
+    if (isAuthenticated && user?.role !== 'super_admin') {
+      console.log('User authenticated, fetching dashboard stats');
       fetchStats();
+    } else if (!isAuthenticated) {
+      console.log('User not authenticated, skipping dashboard fetch');
+      setLoading(false);
     }
-  }, [timeRange, user]);
+  }, [isAuthenticated, user, timeRange]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GH', {
@@ -73,6 +100,29 @@ const DashboardPage = () => {
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e41e5b]"></div>
         <span className="ml-3 text-[#746354]">Redirecting to Super Admin Dashboard...</span>
+      </div>
+    );
+  }
+
+  // Show authentication error if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <FiAlertCircle className="h-12 w-12 mx-auto" />
+            </div>
+            <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">Authentication Required</h3>
+            <p className="text-[#746354] mb-4">Please log in to access the dashboard</p>
+            <button 
+              onClick={() => navigate('/auth/login')}
+              className="px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -102,6 +152,14 @@ const DashboardPage = () => {
             >
               Retry
             </button>
+            
+            {/* Debug Information */}
+            <div className="mt-6 p-4 bg-gray-100 rounded-lg text-left">
+              <h4 className="font-medium text-[#2c2c2c] mb-2">Debug Information:</h4>
+              <pre className="text-xs text-[#746354] overflow-auto">
+                {JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </div>
           </div>
         </div>
       </div>
@@ -140,22 +198,6 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <FiAlertCircle className="h-5 w-5 text-red-500 mr-2" />
-            <span className="text-red-800">{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="ml-auto text-red-500 hover:text-red-700"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

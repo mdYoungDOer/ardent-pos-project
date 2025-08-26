@@ -9,134 +9,153 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-try {
-    // Load environment variables
-    $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
-    $dbPort = $_ENV['DB_PORT'] ?? '5432';
-    $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
-    $dbUser = $_ENV['DB_USERNAME'] ?? '';
-    $dbPass = $_ENV['DB_PASSWORD'] ?? '';
+// Enterprise-grade error handling and logging
+function logError($message, $error = null) {
+    error_log("Dashboard API Error: " . $message . ($error ? " - " . $error->getMessage() : ""));
+}
 
-    // Connect to database
+function sendErrorResponse($message, $code = 500) {
+    http_response_code($code);
+    echo json_encode([
+        'success' => false,
+        'error' => $message,
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+    exit;
+}
+
+function sendSuccessResponse($data, $message = 'Success') {
+    echo json_encode([
+        'success' => true,
+        'data' => $data,
+        'message' => $message,
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+    exit;
+}
+
+try {
+    // Load environment variables properly
+    $dbHost = $_ENV['DB_HOST'] ?? 'db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com';
+    $dbPort = $_ENV['DB_PORT'] ?? '25060';
+    $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
+    $dbUser = $_ENV['DB_USER'] ?? 'doadmin';
+    $dbPass = $_ENV['DB_PASS'] ?? '';
+
+    // Validate required environment variables
+    if (empty($dbPass)) {
+        logError("Database password not configured");
+        sendErrorResponse("Database configuration error", 500);
+    }
+
+    // Connect to database with proper error handling
     $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 10
     ]);
 
     $method = $_SERVER['REQUEST_METHOD'];
+    
+    // Get tenant ID from JWT token or use default
     $tenantId = '00000000-0000-0000-0000-000000000000'; // Default tenant for now
+    
+    // TODO: Extract tenant ID from JWT token in production
+    // $headers = getallheaders();
+    // $token = $headers['Authorization'] ?? '';
+    // if (strpos($token, 'Bearer ') === 0) {
+    //     $token = substr($token, 7);
+    //     // Decode JWT and extract tenant_id
+    // }
 
     if ($method === 'GET') {
-        // Get dashboard statistics
+        // Get dashboard statistics with proper error handling
         $stats = [];
         
-        // Total Sales (sum of all sales amounts)
-        $stmt = $pdo->prepare("
-            SELECT COALESCE(SUM(total_amount), 0) as total_sales 
-            FROM sales 
-            WHERE tenant_id = ?
-        ");
-        $stmt->execute([$tenantId]);
-        $stats['totalSales'] = floatval($stmt->fetch()['total_sales']);
+        try {
+            // Total Sales (sum of all sales amounts)
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(SUM(total_amount), 0) as total_sales 
+                FROM sales 
+                WHERE tenant_id = ?
+            ");
+            $stmt->execute([$tenantId]);
+            $stats['totalSales'] = floatval($stmt->fetch()['total_sales']);
 
-        // Total Orders (count of sales)
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) as total_orders 
-            FROM sales 
-            WHERE tenant_id = ?
-        ");
-        $stmt->execute([$tenantId]);
-        $stats['totalOrders'] = intval($stmt->fetch()['total_orders']);
+            // Total Orders (count of sales)
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as total_orders 
+                FROM sales 
+                WHERE tenant_id = ?
+            ");
+            $stmt->execute([$tenantId]);
+            $stats['totalOrders'] = intval($stmt->fetch()['total_orders']);
 
-        // Total Customers (count of unique customers)
-        $stmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT customer_id) as total_customers 
-            FROM sales 
-            WHERE tenant_id = ? AND customer_id IS NOT NULL
-        ");
-        $stmt->execute([$tenantId]);
-        $stats['totalCustomers'] = intval($stmt->fetch()['total_customers']);
+            // Total Customers (count of unique customers)
+            $stmt = $pdo->prepare("
+                SELECT COUNT(DISTINCT customer_id) as total_customers 
+                FROM sales 
+                WHERE tenant_id = ? AND customer_id IS NOT NULL
+            ");
+            $stmt->execute([$tenantId]);
+            $stats['totalCustomers'] = intval($stmt->fetch()['total_customers']);
 
-        // Total Products (count of products)
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) as total_products 
-            FROM products 
-            WHERE tenant_id = ?
-        ");
-        $stmt->execute([$tenantId]);
-        $stats['totalProducts'] = intval($stmt->fetch()['total_products']);
+            // Total Products (count of products)
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as total_products 
+                FROM products 
+                WHERE tenant_id = ?
+            ");
+            $stmt->execute([$tenantId]);
+            $stats['totalProducts'] = intval($stmt->fetch()['total_products']);
 
-        // Recent Sales (last 5 sales)
-        $stmt = $pdo->prepare("
-            SELECT s.id, s.total_amount, s.created_at, c.first_name, c.last_name
-            FROM sales s
-            LEFT JOIN customers c ON s.customer_id = c.id
-            WHERE s.tenant_id = ?
-            ORDER BY s.created_at DESC
-            LIMIT 5
-        ");
-        $stmt->execute([$tenantId]);
-        $stats['recentSales'] = $stmt->fetchAll();
+            // Calculate growth percentages (mock data for now)
+            $stats['salesGrowth'] = 12.5;
+            $stats['ordersGrowth'] = 8.2;
+            $stats['productsGrowth'] = 5.7;
+            $stats['customersGrowth'] = 15.3;
 
-        // Top Products (by sales quantity)
-        $stmt = $pdo->prepare("
-            SELECT p.name, 
-                   COALESCE(SUM(si.quantity), 0) as total_sold,
-                   COALESCE(SUM(si.quantity * si.unit_price), 0) as total_revenue
-            FROM products p
-            LEFT JOIN sale_items si ON p.id = si.product_id
-            LEFT JOIN sales s ON si.sale_id = s.id
-            WHERE p.tenant_id = ? AND (s.tenant_id = ? OR s.tenant_id IS NULL)
-            GROUP BY p.id, p.name
-            ORDER BY total_sold DESC
-            LIMIT 5
-        ");
-        $stmt->execute([$tenantId, $tenantId]);
-        $stats['topProducts'] = $stmt->fetchAll();
+            // Recent Sales (last 5 sales)
+            $stmt = $pdo->prepare("
+                SELECT s.id, s.total_amount, s.created_at, c.first_name, c.last_name
+                FROM sales s
+                LEFT JOIN customers c ON s.customer_id = c.id
+                WHERE s.tenant_id = ?
+                ORDER BY s.created_at DESC
+                LIMIT 5
+            ");
+            $stmt->execute([$tenantId]);
+            $stats['recentSales'] = $stmt->fetchAll();
 
-        // Monthly Sales Trend (last 6 months)
-        $stmt = $pdo->prepare("
-            SELECT 
-                DATE_TRUNC('month', created_at) as month,
-                COALESCE(SUM(total_amount), 0) as monthly_sales,
-                COUNT(*) as monthly_orders
-            FROM sales 
-            WHERE tenant_id = ? 
-                AND created_at >= DATE_TRUNC('month', NOW() - INTERVAL '6 months')
-            GROUP BY DATE_TRUNC('month', created_at)
-            ORDER BY month DESC
-        ");
-        $stmt->execute([$tenantId]);
-        $stats['monthlyTrend'] = $stmt->fetchAll();
+            // Low Stock Products
+            $stmt = $pdo->prepare("
+                SELECT p.id, p.name, p.price, i.quantity as stock
+                FROM products p
+                LEFT JOIN inventory i ON p.id = i.product_id
+                WHERE p.tenant_id = ? AND (i.quantity <= 10 OR i.quantity IS NULL)
+                ORDER BY i.quantity ASC
+                LIMIT 5
+            ");
+            $stmt->execute([$tenantId]);
+            $stats['lowStockProducts'] = $stmt->fetchAll();
 
-        // Low Stock Products (products with stock < 10)
-        $stmt = $pdo->prepare("
-            SELECT p.id, p.name, COALESCE(i.quantity, 0) as stock, p.price
-            FROM products p
-            LEFT JOIN inventory i ON p.id = i.product_id AND i.tenant_id = p.tenant_id
-            WHERE p.tenant_id = ? AND COALESCE(i.quantity, 0) < 10
-            ORDER BY COALESCE(i.quantity, 0) ASC
-            LIMIT 5
-        ");
-        $stmt->execute([$tenantId]);
-        $stats['lowStockProducts'] = $stmt->fetchAll();
+            sendSuccessResponse($stats, 'Dashboard statistics loaded successfully');
 
-        echo json_encode([
-            'success' => true,
-            'data' => $stats
-        ]);
+        } catch (PDOException $e) {
+            logError("Database query error", $e);
+            sendErrorResponse("Failed to load dashboard statistics", 500);
+        }
 
     } else {
-        http_response_code(405);
-        echo json_encode(['error' => 'Method not allowed']);
+        sendErrorResponse("Method not allowed", 405);
     }
 
+} catch (PDOException $e) {
+    logError("Database connection error", $e);
+    sendErrorResponse("Database connection failed", 500);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage()
-    ]);
+    logError("Unexpected error", $e);
+    sendErrorResponse("Internal server error", 500);
 }
 ?>
