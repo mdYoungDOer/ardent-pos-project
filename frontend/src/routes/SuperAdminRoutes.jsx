@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import SuperAdminLayout from '../components/layout/SuperAdminLayout';
+import SuperAdminLayout from '../layouts/SuperAdminLayout';
 import SuperAdminDashboard from '../pages/app/SuperAdminDashboard';
 import SuperAdminAnalytics from '../pages/app/SuperAdminAnalytics';
 import SuperAdminTenants from '../pages/app/SuperAdminTenants';

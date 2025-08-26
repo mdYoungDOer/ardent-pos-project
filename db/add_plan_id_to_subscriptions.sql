@@ -6,9 +6,19 @@ ALTER TABLE subscriptions
 ADD COLUMN IF NOT EXISTS plan_id VARCHAR(50);
 
 -- Add foreign key constraint to subscription_plans table
-ALTER TABLE subscriptions 
-ADD CONSTRAINT IF NOT EXISTS fk_subscriptions_plan_id 
-FOREIGN KEY (plan_id) REFERENCES subscription_plans(plan_id);
+-- Note: PostgreSQL doesn't support IF NOT EXISTS for ADD CONSTRAINT
+-- We'll handle this with a DO block to check if constraint exists
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'fk_subscriptions_plan_id'
+    ) THEN
+        ALTER TABLE subscriptions 
+        ADD CONSTRAINT fk_subscriptions_plan_id 
+        FOREIGN KEY (plan_id) REFERENCES subscription_plans(plan_id);
+    END IF;
+END $$;
 
 -- Add index for better performance
 CREATE INDEX IF NOT EXISTS idx_subscriptions_plan_id_new ON subscriptions(plan_id);
