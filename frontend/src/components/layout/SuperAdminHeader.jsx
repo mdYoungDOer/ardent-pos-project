@@ -1,5 +1,6 @@
-import { FiShield, FiBell } from 'react-icons/fi'
+import { FiShield } from 'react-icons/fi'
 import useSuperAdminAuthStore from '../../stores/superAdminAuthStore'
+import SuperAdminNotificationSystem from '../SuperAdminNotificationSystem'
 
 const SuperAdminHeader = () => {
   const { user } = useSuperAdminAuthStore()
@@ -15,9 +16,7 @@ const SuperAdminHeader = () => {
 
       <div className="flex items-center space-x-4">
         {/* Notifications */}
-        <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
-          <FiBell className="h-5 w-5" />
-        </button>
+        <SuperAdminNotificationSystem />
 
         {/* User Info */}
         <div className="flex items-center space-x-3">

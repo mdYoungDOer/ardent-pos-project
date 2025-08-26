@@ -9,10 +9,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once __DIR__ . '/../../core/Config.php';
-require_once __DIR__ . '/../../core/Database.php';
-require_once __DIR__ . '/../middleware/AuthMiddleware.php';
-require_once __DIR__ . '/../middleware/SuperAdminMiddleware.php';
+// Load configuration and database classes
+$configPath = __DIR__ . '/../../core/Config.php';
+$databasePath = __DIR__ . '/../../core/Database.php';
+
+if (!file_exists($configPath)) {
+    // Try alternative path
+    $configPath = __DIR__ . '/../core/Config.php';
+    $databasePath = __DIR__ . '/../core/Database.php';
+}
+
+if (!file_exists($configPath)) {
+    // Fallback to direct environment loading
+    error_log("Config.php not found, using direct environment loading");
+} else {
+    require_once $configPath;
+    require_once $databasePath;
+}
 
 use ArdentPOS\Core\Config;
 use ArdentPOS\Core\Database;

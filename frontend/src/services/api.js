@@ -127,8 +127,8 @@ export const dashboardAPI = {
 // Super Admin API
 export const superAdminAPI = {
   // Dashboard & Analytics
-  getStats: () => api.get('/super-admin-enhanced.php'),
-  getAnalytics: (params = {}) => api.get('/super-admin-enhanced.php/analytics', { params }),
+  getStats: () => api.get('/super-admin-test.php'),
+  getAnalytics: (params = {}) => api.get('/super-admin-test.php/analytics', { params }),
   getActivity: () => api.get('/super-admin.php/activity'),
   
   // Tenant Management
@@ -138,14 +138,15 @@ export const superAdminAPI = {
   deleteTenant: (id) => api.delete(`/super-admin.php/tenant/${id}`),
   
   // User Management
-  getUsers: (params = {}) => api.get('/super-admin-enhanced.php/users', { params }),
+  getUsers: (params = {}) => api.get('/super-admin-test.php/users', { params }),
   createUser: (data) => api.post('/super-admin.php/user', data),
   updateUser: (id, data) => api.put(`/super-admin-enhanced.php/user/${id}`, data),
   deleteUser: (id) => api.delete(`/super-admin-enhanced.php/user/${id}`),
   bulkUserAction: (userIds, action) => api.post('/super-admin-enhanced.php/users/bulk', { userIds, action }),
   
   // System Settings
-  getSettings: () => api.get('/super-admin-enhanced.php/settings'),
+  getSystemSettings: () => api.get('/super-admin-test.php/settings'),
+  getSettings: () => api.get('/super-admin-test.php/settings'),
   updateSettings: (category, data) => api.put(`/super-admin-enhanced.php/settings/${category}`, data),
   
   // System Maintenance

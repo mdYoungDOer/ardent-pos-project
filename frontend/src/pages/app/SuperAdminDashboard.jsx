@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fi';
 import useSuperAdminAuthStore from '../../stores/superAdminAuthStore';
 import { superAdminAPI } from '../../services/api';
+import SuperAdminNotificationSystem from '../../components/SuperAdminNotificationSystem';
 
 const SuperAdminDashboard = () => {
   const { user } = useSuperAdminAuthStore();
