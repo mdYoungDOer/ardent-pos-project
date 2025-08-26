@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { FiShield, FiUsers, FiSettings, FiBarChart2, FiLogOut } from 'react-icons/fi'
+import { FiShield, FiUsers, FiSettings, FiBarChart2, FiLogOut, FiUserCheck } from 'react-icons/fi'
 import useSuperAdminAuthStore from '../../stores/superAdminAuthStore'
 import Logo from '../ui/Logo'
 
