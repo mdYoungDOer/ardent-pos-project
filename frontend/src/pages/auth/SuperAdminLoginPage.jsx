@@ -30,7 +30,7 @@ const SuperAdminLoginPage = () => {
     try {
       console.log('Attempting super admin login with:', formData.email);
       
-      const response = await fetch('/super-admin-login-working.php', {
+      const response = await fetch('/super-admin-login-debug.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,12 +40,17 @@ const SuperAdminLoginPage = () => {
 
       console.log('Response status:', response.status);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      let data;
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error('Invalid response from server');
       }
-
-      const data = await response.json();
+      
       console.log('Login response:', data);
 
       if (data.success) {
@@ -185,14 +190,7 @@ const SuperAdminLoginPage = () => {
               </div>
             </div>
 
-            {/* Login Credentials Hint */}
-            <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-              <div className="text-sm">
-                <p className="font-semibold text-blue-800 mb-1">Default Super Admin Credentials:</p>
-                <p className="text-blue-700">Email: deyoungdoer@gmail.com</p>
-                <p className="text-blue-700">Password: @am171293GH!!</p>
-              </div>
-            </div>
+
           </div>
 
           {/* Footer Links */}
