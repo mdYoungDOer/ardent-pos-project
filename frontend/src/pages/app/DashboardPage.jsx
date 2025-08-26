@@ -44,7 +44,8 @@ const DashboardPage = () => {
   };
 
   useEffect(() => {
-    if (user?.role !== 'super_admin') {
+    // Always fetch stats for non-super-admin users, even if user is not loaded yet
+    if (!user || user?.role !== 'super_admin') {
       fetchStats();
     }
   }, [timeRange, user]);
