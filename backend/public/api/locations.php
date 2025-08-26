@@ -34,51 +34,73 @@ function sendSuccessResponse($data, $message = 'Success') {
     exit;
 }
 
+function uploadImage($file, $type = 'locations') {
+    try {
+        $uploadDir = "../uploads/$type/";
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $fileName = uniqid() . '_' . basename($file['name']);
+        $targetPath = $uploadDir . $fileName;
+        
+        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            return "/uploads/$type/" . $fileName;
+        } else {
+            return null;
+        }
+    } catch (Exception $e) {
+        logError("Image upload failed", $e);
+        return null;
+    }
+}
+
 function getFallbackLocations() {
     return [
         [
-            'id' => 'location_1',
+            'id' => 'loc_1',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Main Store',
-            'address' => '123 Main Street, Accra',
+            'type' => 'store',
+            'address' => '123 Main Street',
             'city' => 'Accra',
             'state' => 'Greater Accra',
+            'postal_code' => '00233',
             'country' => 'Ghana',
             'phone' => '+233 20 123 4567',
             'email' => 'main@store.com',
-            'manager' => 'John Manager',
+            'manager_id' => 'user_1',
+            'timezone' => 'Africa/Accra',
+            'currency' => 'GHS',
+            'tax_rate' => 15.00,
             'status' => 'active',
-            'created_at' => date('Y-m-d H:i:s', strtotime('-1 day')),
+            'image_url' => null,
+            'user_count' => 5,
+            'sales_count' => 150,
+            'created_at' => date('Y-m-d H:i:s', strtotime('-30 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'location_2',
+            'id' => 'loc_2',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
-            'name' => 'Kumasi Branch',
-            'address' => '456 Oak Avenue, Kumasi',
+            'name' => 'Downtown Branch',
+            'type' => 'store',
+            'address' => '456 Downtown Ave',
             'city' => 'Kumasi',
             'state' => 'Ashanti',
+            'postal_code' => '00233',
             'country' => 'Ghana',
             'phone' => '+233 24 987 6543',
-            'email' => 'kumasi@store.com',
-            'manager' => 'Jane Manager',
+            'email' => 'downtown@store.com',
+            'manager_id' => 'user_2',
+            'timezone' => 'Africa/Accra',
+            'currency' => 'GHS',
+            'tax_rate' => 15.00,
             'status' => 'active',
-            'created_at' => date('Y-m-d H:i:s', strtotime('-2 days')),
-            'updated_at' => date('Y-m-d H:i:s')
-        ],
-        [
-            'id' => 'location_3',
-            'tenant_id' => '00000000-0000-0000-0000-000000000000',
-            'name' => 'Tamale Outlet',
-            'address' => '789 Pine Road, Tamale',
-            'city' => 'Tamale',
-            'state' => 'Northern',
-            'country' => 'Ghana',
-            'phone' => '+233 26 555 1234',
-            'email' => 'tamale@store.com',
-            'manager' => 'Mike Manager',
-            'status' => 'active',
-            'created_at' => date('Y-m-d H:i:s', strtotime('-3 days')),
+            'image_url' => null,
+            'user_count' => 3,
+            'sales_count' => 75,
+            'created_at' => date('Y-m-d H:i:s', strtotime('-20 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ]
     ];
@@ -120,11 +142,17 @@ try {
         case 'GET':
             if ($useDatabase && $pdo) {
                 try {
-                    // List locations
+                    // List locations for the tenant with user and sales counts
                     $stmt = $pdo->prepare("
-                        SELECT * FROM store_locations 
-                        WHERE tenant_id = ? 
-                        ORDER BY created_at DESC
+                        SELECT l.*, 
+                               COUNT(DISTINCT u.id) as user_count,
+                               COUNT(DISTINCT s.id) as sales_count
+                        FROM locations l
+                        LEFT JOIN users u ON l.id = u.location_id AND u.tenant_id = l.tenant_id
+                        LEFT JOIN sales s ON l.id = s.location_id AND s.tenant_id = l.tenant_id
+                        WHERE l.tenant_id = ?
+                        GROUP BY l.id
+                        ORDER BY l.created_at DESC
                     ");
                     $stmt->execute([$tenantId]);
                     $locations = $stmt->fetchAll();
@@ -144,36 +172,59 @@ try {
 
         case 'POST':
             // Create location
-            $input = file_get_contents('php://input');
-            $data = json_decode($input, true);
+            $name = $_POST['name'] ?? '';
+            $type = $_POST['type'] ?? 'store';
+            $address = $_POST['address'] ?? '';
+            $city = $_POST['city'] ?? '';
+            $state = $_POST['state'] ?? '';
+            $postalCode = $_POST['postal_code'] ?? '';
+            $country = $_POST['country'] ?? 'Ghana';
+            $phone = $_POST['phone'] ?? '';
+            $email = $_POST['email'] ?? '';
+            $managerId = $_POST['manager_id'] ?? null;
+            $timezone = $_POST['timezone'] ?? 'Africa/Accra';
+            $currency = $_POST['currency'] ?? 'GHS';
+            $taxRate = floatval($_POST['tax_rate'] ?? 15.00);
+            $status = $_POST['status'] ?? 'active';
+            $imageUrl = null;
 
-            if (!$data) {
-                sendErrorResponse('Invalid JSON data', 400);
+            // Handle image upload
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $imageUrl = uploadImage($_FILES['image'], 'locations');
             }
 
-            $name = trim($data['name'] ?? '');
-            $address = trim($data['address'] ?? '');
-            $city = trim($data['city'] ?? '');
-            $state = trim($data['state'] ?? '');
-            $country = trim($data['country'] ?? '');
-            $phone = trim($data['phone'] ?? '');
-            $email = trim($data['email'] ?? '');
-            $manager = trim($data['manager'] ?? '');
-            $status = $data['status'] ?? 'active';
-
-            if (empty($name) || empty($address)) {
-                sendErrorResponse('Name and address are required', 400);
+            if (empty($name)) {
+                sendErrorResponse('Location name is required', 400);
             }
 
             if ($useDatabase && $pdo) {
                 try {
                     // Create location
-                    $locationId = uniqid('location_', true);
+                    $locationId = uniqid('loc_', true);
+                    
                     $stmt = $pdo->prepare("
-                        INSERT INTO store_locations (id, tenant_id, name, address, city, state, country, phone, email, manager, status, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                        INSERT INTO locations (id, tenant_id, name, type, address, city, state, postal_code, country, phone, email, manager_id, timezone, currency, tax_rate, status, image_url, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
                     ");
-                    $stmt->execute([$locationId, $tenantId, $name, $address, $city, $state, $country, $phone, $email, $manager, $status]);
+                    $stmt->execute([
+                        $locationId, 
+                        $tenantId, 
+                        $name, 
+                        $type, 
+                        $address, 
+                        $city, 
+                        $state, 
+                        $postalCode, 
+                        $country, 
+                        $phone, 
+                        $email, 
+                        $managerId, 
+                        $timezone, 
+                        $currency, 
+                        $taxRate, 
+                        $status, 
+                        $imageUrl
+                    ]);
                     
                     sendSuccessResponse(['id' => $locationId], 'Location created successfully');
                 } catch (PDOException $e) {
@@ -182,7 +233,7 @@ try {
                 }
             } else {
                 // Simulate successful creation when database is not available
-                $locationId = uniqid('location_', true);
+                $locationId = uniqid('loc_', true);
                 sendSuccessResponse(['id' => $locationId], 'Location created successfully (simulated)');
             }
             break;
@@ -197,29 +248,51 @@ try {
             }
 
             $locationId = $data['id'] ?? '';
-            $name = trim($data['name'] ?? '');
-            $address = trim($data['address'] ?? '');
-            $city = trim($data['city'] ?? '');
-            $state = trim($data['state'] ?? '');
-            $country = trim($data['country'] ?? '');
-            $phone = trim($data['phone'] ?? '');
-            $email = trim($data['email'] ?? '');
-            $manager = trim($data['manager'] ?? '');
+            $name = $data['name'] ?? '';
+            $type = $data['type'] ?? 'store';
+            $address = $data['address'] ?? '';
+            $city = $data['city'] ?? '';
+            $state = $data['state'] ?? '';
+            $postalCode = $data['postal_code'] ?? '';
+            $country = $data['country'] ?? 'Ghana';
+            $phone = $data['phone'] ?? '';
+            $email = $data['email'] ?? '';
+            $managerId = $data['manager_id'] ?? null;
+            $timezone = $data['timezone'] ?? 'Africa/Accra';
+            $currency = $data['currency'] ?? 'GHS';
+            $taxRate = floatval($data['tax_rate'] ?? 15.00);
             $status = $data['status'] ?? 'active';
 
-            if (empty($locationId) || empty($name) || empty($address)) {
-                sendErrorResponse('Location ID, name and address are required', 400);
+            if (empty($locationId) || empty($name)) {
+                sendErrorResponse('Location ID and name are required', 400);
             }
 
             if ($useDatabase && $pdo) {
                 try {
                     // Update location
                     $stmt = $pdo->prepare("
-                        UPDATE store_locations 
-                        SET name = ?, address = ?, city = ?, state = ?, country = ?, phone = ?, email = ?, manager = ?, status = ?, updated_at = NOW()
+                        UPDATE locations 
+                        SET name = ?, type = ?, address = ?, city = ?, state = ?, postal_code = ?, country = ?, phone = ?, email = ?, manager_id = ?, timezone = ?, currency = ?, tax_rate = ?, status = ?, updated_at = NOW()
                         WHERE id = ? AND tenant_id = ?
                     ");
-                    $stmt->execute([$name, $address, $city, $state, $country, $phone, $email, $manager, $status, $locationId, $tenantId]);
+                    $stmt->execute([
+                        $name, 
+                        $type, 
+                        $address, 
+                        $city, 
+                        $state, 
+                        $postalCode, 
+                        $country, 
+                        $phone, 
+                        $email, 
+                        $managerId, 
+                        $timezone, 
+                        $currency, 
+                        $taxRate, 
+                        $status, 
+                        $locationId, 
+                        $tenantId
+                    ]);
                     
                     sendSuccessResponse(['id' => $locationId], 'Location updated successfully');
                 } catch (PDOException $e) {
@@ -242,22 +315,22 @@ try {
 
             if ($useDatabase && $pdo) {
                 try {
-                    // Check if location has associated data (users, sales, etc.)
+                    // Check if location has associated users or sales
                     $stmt = $pdo->prepare("
                         SELECT 
                             (SELECT COUNT(*) FROM users WHERE location_id = ?) as user_count,
-                            (SELECT COUNT(*) FROM sales WHERE location_id = ?) as sale_count
+                            (SELECT COUNT(*) FROM sales WHERE location_id = ?) as sales_count
                     ");
                     $stmt->execute([$locationId, $locationId]);
                     $result = $stmt->fetch();
                     
-                    if ($result['user_count'] > 0 || $result['sale_count'] > 0) {
+                    if ($result['user_count'] > 0 || $result['sales_count'] > 0) {
                         sendErrorResponse('Cannot delete location with associated users or sales', 400);
                     }
 
                     // Delete location
                     $stmt = $pdo->prepare("
-                        DELETE FROM store_locations 
+                        DELETE FROM locations 
                         WHERE id = ? AND tenant_id = ?
                     ");
                     $stmt->execute([$locationId, $tenantId]);

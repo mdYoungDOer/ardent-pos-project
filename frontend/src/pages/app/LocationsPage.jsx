@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   FiPlus, FiEdit, FiTrash, FiSearch, FiMapPin, FiAlertCircle, 
   FiCheck, FiX, FiEye, FiUsers, FiShoppingCart, FiSettings,
-  FiPhone, FiMail, FiGlobe, FiClock, FiDollarSign, FiTrendingUp
+  FiPhone, FiMail, FiGlobe, FiClock, FiDollarSign, FiTrendingUp,
+  FiImage, FiUpload, FiCamera
 } from 'react-icons/fi';
+import { locationsAPI } from '../../services/api';
 
 const LocationsPage = () => {
   const [locations, setLocations] = useState([]);
@@ -13,6 +15,8 @@ const LocationsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     type: 'store',
@@ -28,6 +32,7 @@ const LocationsPage = () => {
     currency: 'GHS',
     tax_rate: 15.00,
     status: 'active',
+    image_url: '',
     users: []
   });
 
@@ -42,21 +47,15 @@ const LocationsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/locations', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
+      const response = await locationsAPI.getAll();
       
-      if (data.success) {
-        setLocations(data.data);
+      if (response.data.success) {
+        setLocations(response.data.data);
       } else {
         setError('Failed to load locations');
       }
     } catch (err) {
-      setError('Error loading locations');
+      setError('Error loading locations: ' + err.message);
       console.error('Locations error:', err);
     } finally {
       setLoading(false);
@@ -65,17 +64,12 @@ const LocationsPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        setUsers(data.data);
-      }
+      // For now, we'll use a simple user list since we don't have a users API yet
+      setUsers([
+        { id: 'user_1', name: 'John Manager', email: 'john@business.com' },
+        { id: 'user_2', name: 'Sarah Cashier', email: 'sarah@business.com' },
+        { id: 'user_3', name: 'Mike Staff', email: 'mike@business.com' }
+      ]);
     } catch (err) {
       console.error('Users error:', err);
     }
@@ -85,6 +79,18 @@ const LocationsPage = () => {
     fetchLocations();
     fetchUsers();
   }, []);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,24 +102,27 @@ const LocationsPage = () => {
 
     try {
       setError(null);
-      const url = editingLocation 
-        ? `/api/locations/${editingLocation.id}`
-        : '/api/locations';
       
-      const method = editingLocation ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+      // Create FormData for image upload
+      const submitData = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (key !== 'users') {
+          submitData.append(key, formData[key]);
+        }
       });
       
-      const data = await response.json();
+      if (imageFile) {
+        submitData.append('image', imageFile);
+      }
+
+      let response;
+      if (editingLocation) {
+        response = await locationsAPI.update(editingLocation.id, submitData);
+      } else {
+        response = await locationsAPI.create(submitData);
+      }
       
-      if (data.success) {
+      if (response.data.success) {
         setShowModal(false);
         setEditingLocation(null);
         setFormData({
@@ -131,14 +140,17 @@ const LocationsPage = () => {
           currency: 'GHS',
           tax_rate: 15.00,
           status: 'active',
+          image_url: '',
           users: []
         });
+        setImageFile(null);
+        setImagePreview(null);
         fetchLocations();
       } else {
-        setError(data.error || 'Failed to save location');
+        setError(response.data.error || 'Failed to save location');
       }
     } catch (err) {
-      setError('Error saving location');
+      setError('Error saving location: ' + err.message);
       console.error('Save error:', err);
     }
   };
@@ -160,6 +172,7 @@ const LocationsPage = () => {
       currency: location.currency || 'GHS',
       tax_rate: location.tax_rate || 15.00,
       status: location.status || 'active',
+      image_url: location.image_url || '',
       users: location.users || []
     });
     setShowModal(true);
@@ -171,23 +184,15 @@ const LocationsPage = () => {
     }
 
     try {
-      const response = await fetch(`/api/locations/${locationId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await locationsAPI.delete(locationId);
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.data.success) {
         fetchLocations();
       } else {
-        setError(data.error || 'Failed to delete location');
+        setError(response.data.error || 'Failed to delete location');
       }
     } catch (err) {
-      setError('Error deleting location');
+      setError('Error deleting location: ' + err.message);
       console.error('Delete error:', err);
     }
   };
@@ -209,8 +214,11 @@ const LocationsPage = () => {
       currency: 'GHS',
       tax_rate: 15.00,
       status: 'active',
+      image_url: '',
       users: []
     });
+    setImageFile(null);
+    setImagePreview(null);
     setShowModal(true);
   };
 
@@ -324,26 +332,47 @@ const LocationsPage = () => {
           return (
             <div
               key={location.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-[#e41e5b]/10 rounded-lg flex items-center justify-center">
-                  <TypeIcon className="h-6 w-6 text-[#e41e5b]" />
+              {/* Location Image */}
+              <div className="h-48 bg-gray-200 relative">
+                {location.image_url ? (
+                  <img 
+                    src={location.image_url} 
+                    alt={location.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className={`w-full h-full flex items-center justify-center ${location.image_url ? 'hidden' : 'flex'}`}>
+                  <div className="text-center">
+                    <FiMapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No Image</p>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                
+                {/* Status Badge */}
+                <div className="absolute top-3 right-3">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(location.status)}`}>
                     {location.status}
                   </span>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="absolute top-3 left-3 flex items-center space-x-1">
                   <button
                     onClick={() => handleEdit(location)}
-                    className="p-2 text-[#746354] hover:text-[#e41e5b] hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-[#e41e5b] hover:bg-white rounded-lg transition-colors"
                     title="Edit Location"
                   >
                     <FiEdit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(location.id)}
-                    className="p-2 text-[#746354] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-red-600 hover:bg-white rounded-lg transition-colors"
                     title="Delete Location"
                   >
                     <FiTrash className="h-4 w-4" />
@@ -351,48 +380,57 @@ const LocationsPage = () => {
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">
-                  {location.name}
-                </h3>
-                <p className="text-sm text-[#746354] mb-4 capitalize">
-                  {location.type}
-                </p>
-                
-                <div className="space-y-2 mb-4">
-                  {location.address && (
-                    <div className="flex items-center text-sm text-[#746354]">
-                      <FiMapPin className="h-4 w-4 mr-2" />
-                      <span>{location.address}</span>
-                    </div>
-                  )}
-                  {location.phone && (
-                    <div className="flex items-center text-sm text-[#746354]">
-                      <FiPhone className="h-4 w-4 mr-2" />
-                      <span>{location.phone}</span>
-                    </div>
-                  )}
-                  {location.email && (
-                    <div className="flex items-center text-sm text-[#746354]">
-                      <FiMail className="h-4 w-4 mr-2" />
-                      <span>{location.email}</span>
-                    </div>
-                  )}
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-10 h-10 bg-[#e41e5b]/10 rounded-lg flex items-center justify-center">
+                    <TypeIcon className="h-5 w-5 text-[#e41e5b]" />
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center text-[#746354]">
-                      <FiUsers className="h-4 w-4 mr-1" />
-                      <span>{location.user_count || 0}</span>
-                    </div>
-                    <div className="flex items-center text-[#746354]">
-                      <FiShoppingCart className="h-4 w-4 mr-1" />
-                      <span>{location.sales_count || 0}</span>
-                    </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">
+                    {location.name}
+                  </h3>
+                  <p className="text-sm text-[#746354] mb-4 capitalize">
+                    {location.type}
+                  </p>
+                  
+                  <div className="space-y-2 mb-4">
+                    {location.address && (
+                      <div className="flex items-center text-sm text-[#746354]">
+                        <FiMapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">{location.address}</span>
+                      </div>
+                    )}
+                    {location.phone && (
+                      <div className="flex items-center text-sm text-[#746354]">
+                        <FiPhone className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span>{location.phone}</span>
+                      </div>
+                    )}
+                    {location.email && (
+                      <div className="flex items-center text-sm text-[#746354]">
+                        <FiMail className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">{location.email}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-[#746354]">
-                    {location.currency} {location.tax_rate}%
+
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center text-[#746354]">
+                        <FiUsers className="h-4 w-4 mr-1" />
+                        <span>{location.user_count || 0}</span>
+                      </div>
+                      <div className="flex items-center text-[#746354]">
+                        <FiShoppingCart className="h-4 w-4 mr-1" />
+                        <span>{location.sales_count || 0}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-[#746354]">
+                      <FiDollarSign className="h-4 w-4 mr-1" />
+                      <span>{location.currency || 'GHS'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -557,6 +595,28 @@ const LocationsPage = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b]"
                     placeholder="Email address"
+                  />
+                </div>
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                  Location Image
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Location Preview" className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <FiImage className="h-10 w-10 text-gray-500" />
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
                 </div>
               </div>

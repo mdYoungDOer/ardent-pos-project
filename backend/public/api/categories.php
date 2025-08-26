@@ -34,46 +34,60 @@ function sendSuccessResponse($data, $message = 'Success') {
     exit;
 }
 
+function uploadImage($file, $type = 'categories') {
+    try {
+        $uploadDir = "../uploads/$type/";
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $fileName = uniqid() . '_' . basename($file['name']);
+        $targetPath = $uploadDir . $fileName;
+        
+        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            return "/uploads/$type/" . $fileName;
+        } else {
+            return null;
+        }
+    } catch (Exception $e) {
+        logError("Image upload failed", $e);
+        return null;
+    }
+}
+
 function getFallbackCategories() {
     return [
         [
-            'id' => 'category_1',
+            'id' => 'cat_1',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Electronics',
             'description' => 'Electronic devices and accessories',
-            'color' => '#e41e5b',
+            'color' => '#3b82f6',
+            'image_url' => null,
             'product_count' => 15,
-            'created_at' => date('Y-m-d H:i:s', strtotime('-1 day')),
+            'created_at' => date('Y-m-d H:i:s', strtotime('-30 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'category_2',
+            'id' => 'cat_2',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Clothing',
             'description' => 'Apparel and fashion items',
-            'color' => '#9a0864',
+            'color' => '#10b981',
+            'image_url' => null,
             'product_count' => 25,
-            'created_at' => date('Y-m-d H:i:s', strtotime('-2 days')),
+            'created_at' => date('Y-m-d H:i:s', strtotime('-20 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'category_3',
+            'id' => 'cat_3',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Food & Beverages',
             'description' => 'Food items and drinks',
-            'color' => '#a67c00',
+            'color' => '#f59e0b',
+            'image_url' => null,
             'product_count' => 30,
-            'created_at' => date('Y-m-d H:i:s', strtotime('-3 days')),
-            'updated_at' => date('Y-m-d H:i:s')
-        ],
-        [
-            'id' => 'category_4',
-            'tenant_id' => '00000000-0000-0000-0000-000000000000',
-            'name' => 'Home & Garden',
-            'description' => 'Home improvement and garden supplies',
-            'color' => '#746354',
-            'product_count' => 20,
-            'created_at' => date('Y-m-d H:i:s', strtotime('-4 days')),
+            'created_at' => date('Y-m-d H:i:s', strtotime('-10 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ]
     ];
@@ -115,7 +129,7 @@ try {
         case 'GET':
             if ($useDatabase && $pdo) {
                 try {
-                    // List categories with product count
+                    // List categories for the tenant with product count
                     $stmt = $pdo->prepare("
                         SELECT c.*, COUNT(p.id) as product_count
                         FROM categories c
@@ -142,16 +156,15 @@ try {
 
         case 'POST':
             // Create category
-            $input = file_get_contents('php://input');
-            $data = json_decode($input, true);
+            $name = $_POST['name'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $color = $_POST['color'] ?? '#e41e5b';
+            $imageUrl = null;
 
-            if (!$data) {
-                sendErrorResponse('Invalid JSON data', 400);
+            // Handle image upload
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $imageUrl = uploadImage($_FILES['image'], 'categories');
             }
-
-            $name = trim($data['name'] ?? '');
-            $description = trim($data['description'] ?? '');
-            $color = trim($data['color'] ?? '#e41e5b');
 
             if (empty($name)) {
                 sendErrorResponse('Category name is required', 400);
@@ -160,12 +173,20 @@ try {
             if ($useDatabase && $pdo) {
                 try {
                     // Create category
-                    $categoryId = uniqid('category_', true);
+                    $categoryId = uniqid('cat_', true);
+                    
                     $stmt = $pdo->prepare("
-                        INSERT INTO categories (id, tenant_id, name, description, color, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                        INSERT INTO categories (id, tenant_id, name, description, color, image_url, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
                     ");
-                    $stmt->execute([$categoryId, $tenantId, $name, $description, $color]);
+                    $stmt->execute([
+                        $categoryId, 
+                        $tenantId, 
+                        $name, 
+                        $description, 
+                        $color, 
+                        $imageUrl
+                    ]);
                     
                     sendSuccessResponse(['id' => $categoryId], 'Category created successfully');
                 } catch (PDOException $e) {
@@ -174,7 +195,7 @@ try {
                 }
             } else {
                 // Simulate successful creation when database is not available
-                $categoryId = uniqid('category_', true);
+                $categoryId = uniqid('cat_', true);
                 sendSuccessResponse(['id' => $categoryId], 'Category created successfully (simulated)');
             }
             break;
@@ -189,9 +210,9 @@ try {
             }
 
             $categoryId = $data['id'] ?? '';
-            $name = trim($data['name'] ?? '');
-            $description = trim($data['description'] ?? '');
-            $color = trim($data['color'] ?? '#e41e5b');
+            $name = $data['name'] ?? '';
+            $description = $data['description'] ?? '';
+            $color = $data['color'] ?? '#e41e5b';
 
             if (empty($categoryId) || empty($name)) {
                 sendErrorResponse('Category ID and name are required', 400);
@@ -205,7 +226,13 @@ try {
                         SET name = ?, description = ?, color = ?, updated_at = NOW()
                         WHERE id = ? AND tenant_id = ?
                     ");
-                    $stmt->execute([$name, $description, $color, $categoryId, $tenantId]);
+                    $stmt->execute([
+                        $name, 
+                        $description, 
+                        $color, 
+                        $categoryId, 
+                        $tenantId
+                    ]);
                     
                     sendSuccessResponse(['id' => $categoryId], 'Category updated successfully');
                 } catch (PDOException $e) {
@@ -228,17 +255,15 @@ try {
 
             if ($useDatabase && $pdo) {
                 try {
-                    // Check if category has products
+                    // Check if category has associated products
                     $stmt = $pdo->prepare("
-                        SELECT COUNT(*) as product_count
-                        FROM products 
-                        WHERE category_id = ? AND tenant_id = ?
+                        SELECT COUNT(*) as product_count FROM products WHERE category_id = ?
                     ");
-                    $stmt->execute([$categoryId, $tenantId]);
+                    $stmt->execute([$categoryId]);
                     $result = $stmt->fetch();
                     
                     if ($result['product_count'] > 0) {
-                        sendErrorResponse('Cannot delete category with existing products', 400);
+                        sendErrorResponse('Cannot delete category with associated products', 400);
                     }
 
                     // Delete category

@@ -34,36 +34,57 @@ function sendSuccessResponse($data, $message = 'Success') {
     exit;
 }
 
+function uploadImage($file, $type = 'products') {
+    try {
+        $uploadDir = "../uploads/$type/";
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $fileName = uniqid() . '_' . basename($file['name']);
+        $targetPath = $uploadDir . $fileName;
+        
+        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            return "/uploads/$type/" . $fileName;
+        } else {
+            return null;
+        }
+    } catch (Exception $e) {
+        logError("Image upload failed", $e);
+        return null;
+    }
+}
+
 function getFallbackProducts() {
     return [
         [
-            'id' => 'product_1',
+            'id' => 'prod_1',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Sample Product 1',
-            'description' => 'This is a sample product for testing',
+            'description' => 'This is a sample product description',
             'price' => 25.00,
             'stock' => 50,
-            'created_at' => date('Y-m-d H:i:s', strtotime('-1 day')),
+            'category_id' => 'cat_1',
+            'category_name' => 'Electronics',
+            'sku' => 'PROD001',
+            'barcode' => '1234567890123',
+            'image_url' => null,
+            'created_at' => date('Y-m-d H:i:s', strtotime('-30 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ],
         [
-            'id' => 'product_2',
+            'id' => 'prod_2',
             'tenant_id' => '00000000-0000-0000-0000-000000000000',
             'name' => 'Sample Product 2',
             'description' => 'Another sample product for testing',
             'price' => 15.50,
-            'stock' => 30,
-            'created_at' => date('Y-m-d H:i:s', strtotime('-2 days')),
-            'updated_at' => date('Y-m-d H:i:s')
-        ],
-        [
-            'id' => 'product_3',
-            'tenant_id' => '00000000-0000-0000-0000-000000000000',
-            'name' => 'Sample Product 3',
-            'description' => 'Third sample product for testing',
-            'price' => 45.00,
-            'stock' => 20,
-            'created_at' => date('Y-m-d H:i:s', strtotime('-3 days')),
+            'stock' => 25,
+            'category_id' => 'cat_2',
+            'category_name' => 'Clothing',
+            'sku' => 'PROD002',
+            'barcode' => '1234567890124',
+            'image_url' => null,
+            'created_at' => date('Y-m-d H:i:s', strtotime('-15 days')),
             'updated_at' => date('Y-m-d H:i:s')
         ]
     ];
@@ -105,12 +126,12 @@ try {
         case 'GET':
             if ($useDatabase && $pdo) {
                 try {
-                    // List products with inventory
+                    // List products for the tenant with category information
                     $stmt = $pdo->prepare("
-                        SELECT p.*, COALESCE(i.quantity, 0) as stock
+                        SELECT p.*, c.name as category_name
                         FROM products p
-                        LEFT JOIN inventory i ON p.id = i.product_id AND i.tenant_id = p.tenant_id
-                        WHERE p.tenant_id = ? 
+                        LEFT JOIN categories c ON p.category_id = c.id
+                        WHERE p.tenant_id = ?
                         ORDER BY p.created_at DESC
                     ");
                     $stmt->execute([$tenantId]);
@@ -131,43 +152,55 @@ try {
 
         case 'POST':
             // Create product
-            $input = file_get_contents('php://input');
-            $data = json_decode($input, true);
+            $name = $_POST['name'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $price = floatval($_POST['price'] ?? 0);
+            $stock = intval($_POST['stock'] ?? 0);
+            $categoryId = $_POST['category_id'] ?? null;
+            $sku = $_POST['sku'] ?? '';
+            $barcode = $_POST['barcode'] ?? '';
+            $imageUrl = null;
 
-            if (!$data) {
-                sendErrorResponse('Invalid JSON data', 400);
+            // Handle image upload
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $imageUrl = uploadImage($_FILES['image'], 'products');
             }
 
-            $name = trim($data['name'] ?? '');
-            $description = trim($data['description'] ?? '');
-            $price = floatval($data['price'] ?? 0);
-            $stock = intval($data['stock'] ?? 0);
-
             if (empty($name) || $price <= 0) {
-                sendErrorResponse('Name and price are required', 400);
+                sendErrorResponse('Name and valid price are required', 400);
             }
 
             if ($useDatabase && $pdo) {
                 try {
-                    // Start transaction
                     $pdo->beginTransaction();
-
+                    
                     // Create product
-                    $productId = uniqid('product_', true);
+                    $productId = uniqid('prod_', true);
+                    
                     $stmt = $pdo->prepare("
-                        INSERT INTO products (id, tenant_id, name, description, price, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                        INSERT INTO products (id, tenant_id, name, description, price, stock, category_id, sku, barcode, image_url, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
                     ");
-                    $stmt->execute([$productId, $tenantId, $name, $description, $price]);
-
+                    $stmt->execute([
+                        $productId, 
+                        $tenantId, 
+                        $name, 
+                        $description, 
+                        $price, 
+                        $stock, 
+                        $categoryId, 
+                        $sku, 
+                        $barcode, 
+                        $imageUrl
+                    ]);
+                    
                     // Create inventory record
-                    $inventoryId = uniqid('inventory_', true);
                     $stmt = $pdo->prepare("
-                        INSERT INTO inventory (id, tenant_id, product_id, quantity, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, NOW(), NOW())
+                        INSERT INTO inventory (product_id, quantity, created_at, updated_at)
+                        VALUES (?, ?, NOW(), NOW())
                     ");
-                    $stmt->execute([$inventoryId, $tenantId, $productId, $stock]);
-
+                    $stmt->execute([$productId, $stock]);
+                    
                     $pdo->commit();
                     
                     sendSuccessResponse(['id' => $productId], 'Product created successfully');
@@ -178,7 +211,7 @@ try {
                 }
             } else {
                 // Simulate successful creation when database is not available
-                $productId = uniqid('product_', true);
+                $productId = uniqid('prod_', true);
                 sendSuccessResponse(['id' => $productId], 'Product created successfully (simulated)');
             }
             break;
@@ -193,36 +226,46 @@ try {
             }
 
             $productId = $data['id'] ?? '';
-            $name = trim($data['name'] ?? '');
-            $description = trim($data['description'] ?? '');
+            $name = $data['name'] ?? '';
+            $description = $data['description'] ?? '';
             $price = floatval($data['price'] ?? 0);
             $stock = intval($data['stock'] ?? 0);
+            $categoryId = $data['category_id'] ?? null;
+            $sku = $data['sku'] ?? '';
+            $barcode = $data['barcode'] ?? '';
 
             if (empty($productId) || empty($name) || $price <= 0) {
-                sendErrorResponse('Product ID, name and price are required', 400);
+                sendErrorResponse('Product ID, name and valid price are required', 400);
             }
 
             if ($useDatabase && $pdo) {
                 try {
-                    // Start transaction
                     $pdo->beginTransaction();
-
+                    
                     // Update product
                     $stmt = $pdo->prepare("
                         UPDATE products 
-                        SET name = ?, description = ?, price = ?, updated_at = NOW()
+                        SET name = ?, description = ?, price = ?, stock = ?, category_id = ?, sku = ?, barcode = ?, updated_at = NOW()
                         WHERE id = ? AND tenant_id = ?
                     ");
-                    $stmt->execute([$name, $description, $price, $productId, $tenantId]);
-
+                    $stmt->execute([
+                        $name, 
+                        $description, 
+                        $price, 
+                        $stock, 
+                        $categoryId, 
+                        $sku, 
+                        $barcode, 
+                        $productId, 
+                        $tenantId
+                    ]);
+                    
                     // Update inventory
                     $stmt = $pdo->prepare("
-                        UPDATE inventory 
-                        SET quantity = ?, updated_at = NOW()
-                        WHERE product_id = ? AND tenant_id = ?
+                        UPDATE inventory SET quantity = ?, updated_at = NOW() WHERE product_id = ?
                     ");
-                    $stmt->execute([$stock, $productId, $tenantId]);
-
+                    $stmt->execute([$stock, $productId]);
+                    
                     $pdo->commit();
                     
                     sendSuccessResponse(['id' => $productId], 'Product updated successfully');
@@ -247,23 +290,27 @@ try {
 
             if ($useDatabase && $pdo) {
                 try {
-                    // Start transaction
                     $pdo->beginTransaction();
-
-                    // Delete inventory first (foreign key constraint)
+                    
+                    // Check if product has any associated sales
                     $stmt = $pdo->prepare("
-                        DELETE FROM inventory 
-                        WHERE product_id = ? AND tenant_id = ?
+                        SELECT COUNT(*) as sales_count FROM sale_items WHERE product_id = ?
                     ");
-                    $stmt->execute([$productId, $tenantId]);
+                    $stmt->execute([$productId]);
+                    $result = $stmt->fetch();
+                    
+                    if ($result['sales_count'] > 0) {
+                        sendErrorResponse('Cannot delete product with associated sales', 400);
+                    }
 
+                    // Delete inventory record
+                    $stmt = $pdo->prepare("DELETE FROM inventory WHERE product_id = ?");
+                    $stmt->execute([$productId]);
+                    
                     // Delete product
-                    $stmt = $pdo->prepare("
-                        DELETE FROM products 
-                        WHERE id = ? AND tenant_id = ?
-                    ");
+                    $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND tenant_id = ?");
                     $stmt->execute([$productId, $tenantId]);
-
+                    
                     $pdo->commit();
                     
                     sendSuccessResponse(['id' => $productId], 'Product deleted successfully');

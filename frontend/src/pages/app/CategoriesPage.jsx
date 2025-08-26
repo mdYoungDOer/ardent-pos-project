@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FiPlus, FiEdit, FiTrash, FiSearch, FiTag, FiAlertCircle, 
-  FiCheck, FiX, FiEye, FiPackage, FiTrendingUp 
+  FiCheck, FiX, FiEye, FiPackage, FiTrendingUp, FiImage, FiUpload, FiCamera
 } from 'react-icons/fi';
+import { categoriesAPI } from '../../services/api';
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
@@ -11,10 +12,13 @@ const CategoriesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    color: '#e41e5b'
+    color: '#e41e5b',
+    image_url: ''
   });
 
   const predefinedColors = [
@@ -27,21 +31,15 @@ const CategoriesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/categories', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
+      const response = await categoriesAPI.getAll();
       
-      if (data.success) {
-        setCategories(data.data);
+      if (response.data.success) {
+        setCategories(response.data.data);
       } else {
         setError('Failed to load categories');
       }
     } catch (err) {
-      setError('Error loading categories');
+      setError('Error loading categories: ' + err.message);
       console.error('Categories error:', err);
     } finally {
       setLoading(false);
@@ -51,6 +49,18 @@ const CategoriesPage = () => {
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,33 +72,36 @@ const CategoriesPage = () => {
 
     try {
       setError(null);
-      const url = editingCategory 
-        ? `/api/categories/${editingCategory.id}`
-        : '/api/categories';
       
-      const method = editingCategory ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+      // Create FormData for image upload
+      const submitData = new FormData();
+      Object.keys(formData).forEach(key => {
+        submitData.append(key, formData[key]);
       });
       
-      const data = await response.json();
+      if (imageFile) {
+        submitData.append('image', imageFile);
+      }
+
+      let response;
+      if (editingCategory) {
+        response = await categoriesAPI.update(editingCategory.id, submitData);
+      } else {
+        response = await categoriesAPI.create(submitData);
+      }
       
-      if (data.success) {
+      if (response.data.success) {
         setShowModal(false);
         setEditingCategory(null);
-        setFormData({ name: '', description: '', color: '#e41e5b' });
+        setFormData({ name: '', description: '', color: '#e41e5b', image_url: '' });
+        setImageFile(null);
+        setImagePreview(null);
         fetchCategories();
       } else {
-        setError(data.error || 'Failed to save category');
+        setError(response.data.error || 'Failed to save category');
       }
     } catch (err) {
-      setError('Error saving category');
+      setError('Error saving category: ' + err.message);
       console.error('Save error:', err);
     }
   };
@@ -98,8 +111,10 @@ const CategoriesPage = () => {
     setFormData({
       name: category.name,
       description: category.description || '',
-      color: category.color || '#e41e5b'
+      color: category.color || '#e41e5b',
+      image_url: category.image_url || ''
     });
+    setImagePreview(category.image_url || ''); // Set image preview for editing
     setShowModal(true);
   };
 
@@ -109,30 +124,23 @@ const CategoriesPage = () => {
     }
 
     try {
-      const response = await fetch(`/api/categories/${categoryId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await categoriesAPI.delete(categoryId);
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.data.success) {
         fetchCategories();
       } else {
-        setError(data.error || 'Failed to delete category');
+        setError(response.data.error || 'Failed to delete category');
       }
     } catch (err) {
-      setError('Error deleting category');
+      setError('Error deleting category: ' + err.message);
       console.error('Delete error:', err);
     }
   };
 
   const handleNewCategory = () => {
     setEditingCategory(null);
-    setFormData({ name: '', description: '', color: '#e41e5b' });
+    setFormData({ name: '', description: '', color: '#e41e5b', image_url: '' });
+    setImagePreview(''); // Clear image preview for new category
     setShowModal(true);
   };
 
@@ -206,54 +214,86 @@ const CategoriesPage = () => {
         {filteredCategories.map((category) => (
           <div
             key={category.id}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div 
-                className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: category.color + '20' }}
-              >
-                <FiTag 
-                  className="h-6 w-6" 
-                  style={{ color: category.color }}
+            {/* Category Image */}
+            <div className="h-32 bg-gray-200 relative">
+              {category.image_url ? (
+                <img 
+                  src={category.image_url} 
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
                 />
+              ) : null}
+              <div className={`w-full h-full flex items-center justify-center ${category.image_url ? 'hidden' : 'flex'}`}>
+                <div className="text-center">
+                  <FiTag className="h-8 w-8 text-gray-400 mx-auto mb-1" />
+                  <p className="text-xs text-gray-500">No Image</p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+              
+              {/* Action Buttons */}
+              <div className="absolute top-2 right-2 flex items-center space-x-1">
                 <button
                   onClick={() => handleEdit(category)}
-                  className="p-2 text-[#746354] hover:text-[#e41e5b] hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-[#e41e5b] hover:bg-white rounded transition-colors"
                   title="Edit Category"
                 >
-                  <FiEdit className="h-4 w-4" />
+                  <FiEdit className="h-3 w-3" />
                 </button>
                 <button
                   onClick={() => handleDelete(category.id)}
-                  className="p-2 text-[#746354] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-red-600 hover:bg-white rounded transition-colors"
                   title="Delete Category"
                 >
-                  <FiTrash className="h-4 w-4" />
+                  <FiTrash className="h-3 w-3" />
                 </button>
+              </div>
+              
+              {/* Color Indicator */}
+              <div className="absolute bottom-2 left-2">
+                <div 
+                  className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                  style={{ backgroundColor: category.color }}
+                ></div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">
-                {category.name}
-              </h3>
-              {category.description && (
-                <p className="text-[#746354] text-sm mb-4 line-clamp-2">
-                  {category.description}
-                </p>
-              )}
-              
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-[#746354]">
-                  Created: {new Date(category.created_at).toLocaleDateString()}
-                </span>
+            <div className="p-4">
+              <div className="flex items-start justify-between mb-3">
                 <div 
-                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                  style={{ backgroundColor: category.color }}
-                ></div>
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: category.color + '20' }}
+                >
+                  <FiTag 
+                    className="h-4 w-4" 
+                    style={{ color: category.color }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">
+                  {category.name}
+                </h3>
+                {category.description && (
+                  <p className="text-[#746354] text-sm mb-3 line-clamp-2">
+                    {category.description}
+                  </p>
+                )}
+                
+                <div className="flex items-center justify-between text-xs text-[#746354]">
+                  <span>
+                    {category.product_count || 0} products
+                  </span>
+                  <span>
+                    {new Date(category.created_at).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -329,6 +369,32 @@ const CategoriesPage = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b]"
                   placeholder="Optional description for this category"
                 />
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                  Category Image
+                </label>
+                <div className="flex items-center space-x-3">
+                  <label htmlFor="image-upload" className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-300 transition-colors">
+                    <FiCamera className="h-5 w-5 mr-2" />
+                    Choose Image
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                  {imagePreview && (
+                    <div className="flex-1 flex items-center">
+                      <img src={imagePreview} alt="Preview" className="h-12 w-12 object-cover rounded-md mr-2" />
+                      <span className="text-sm text-[#746354]">{imageFile ? imageFile.name : 'No image selected'}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Color Selection */}

@@ -1,21 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit, FiTrash, FiSearch, FiPackage, FiAlertCircle } from 'react-icons/fi';
-import { productsAPI } from '../../services/api';
+import {
+  FiPlus, FiEdit, FiTrash, FiSearch, FiPackage, FiAlertCircle,
+  FiImage, FiUpload, FiCamera, FiTag, FiDollarSign, FiTrendingUp
+} from 'react-icons/fi';
+import { productsAPI, categoriesAPI } from '../../services/api';
 import useAuthStore from '../../stores/authStore';
 
 const ProductsPage = () => {
   const { user } = useAuthStore();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
-    stock: ''
+    stock: '',
+    category_id: '',
+    sku: '',
+    barcode: '',
+    image_url: ''
   });
 
   const fetchProducts = async () => {
@@ -29,30 +40,76 @@ const ProductsPage = () => {
         setError('Failed to load products');
       }
     } catch (err) {
-      setError('Error loading products');
+      setError('Error loading products: ' + err.message);
       console.error('Products error:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      if (response.data.success) {
+        setCategories(response.data.data);
+      }
+    } catch (err) {
+      console.error('Categories error:', err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Create FormData for image upload
+      const submitData = new FormData();
+      Object.keys(formData).forEach(key => {
+        submitData.append(key, formData[key]);
+      });
+
+      if (imageFile) {
+        submitData.append('image', imageFile);
+      }
+
       if (editingProduct) {
-        await productsAPI.update({ ...formData, id: editingProduct.id });
+        await productsAPI.update({ ...submitData, id: editingProduct.id });
       } else {
-        await productsAPI.create(formData);
+        await productsAPI.create(submitData);
       }
       setShowAddModal(false);
       setEditingProduct(null);
-      setFormData({ name: '', description: '', price: '', stock: '' });
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        stock: '',
+        category_id: '',
+        sku: '',
+        barcode: '',
+        image_url: ''
+      });
+      setImageFile(null);
+      setImagePreview(null);
       fetchProducts();
     } catch (err) {
+      setError('Error saving product: ' + err.message);
       console.error('Product save error:', err);
     }
   };
@@ -74,8 +131,13 @@ const ProductsPage = () => {
       name: product.name,
       description: product.description || '',
       price: product.price,
-      stock: product.stock || 0
+      stock: product.stock || 0,
+      category_id: product.category_id || '',
+      sku: product.sku || '',
+      barcode: product.barcode || '',
+      image_url: product.image_url || ''
     });
+    setImagePreview(product.image_url || null);
     setShowAddModal(true);
   };
 
@@ -121,17 +183,29 @@ const ProductsPage = () => {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search and Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-[#746354]/10 p-6 mb-6">
-        <div className="relative">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#746354]" />
-          <input
-            type="text"
-            placeholder="Search products by name or description..."
-            className="w-full pl-10 pr-4 py-3 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#746354]" />
+            <input
+              type="text"
+              placeholder="Search products by name or description..."
+              className="w-full pl-10 pr-4 py-3 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-3 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+          >
+            <option value="all">All Categories</option>
+            {categories.map(category => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -150,89 +224,116 @@ const ProductsPage = () => {
             </button>
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-[#746354]/10">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#2c2c2c]">Product</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#2c2c2c]">Price</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#2c2c2c]">Stock</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#2c2c2c]">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#2c2c2c]">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#746354]/10">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 bg-[#e41e5b]/10 rounded-xl flex items-center justify-center mr-4">
-                          <FiPackage className="h-6 w-6 text-[#e41e5b]" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-[#2c2c2c]">{product.name}</div>
-                          <div className="text-sm text-[#746354]">{product.description}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-semibold text-[#e41e5b]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+              >
+                {/* Product Image */}
+                <div className="h-48 bg-gray-200 relative">
+                  {product.image_url ? (
+                    <img 
+                      src={product.image_url} 
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-full h-full flex items-center justify-center ${product.image_url ? 'hidden' : 'flex'}`}>
+                    <div className="text-center">
+                      <FiPackage className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No Image</p>
+                    </div>
+                  </div>
+                  
+                  {/* Stock Status Badge */}
+                  <div className="absolute top-3 right-3">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      product.stock === 0 ? 'bg-red-100 text-red-800' :
+                      product.stock < 10 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {product.stock === 0 ? 'Out of Stock' : `${product.stock} in stock`}
+                    </span>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="absolute top-3 left-3 flex items-center space-x-1">
+                    <button
+                      onClick={() => handleEdit(product)}
+                      className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-[#e41e5b] hover:bg-white rounded transition-colors"
+                      title="Edit Product"
+                    >
+                      <FiEdit className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="p-1.5 bg-white/80 backdrop-blur-sm text-[#746354] hover:text-red-600 hover:bg-white rounded transition-colors"
+                      title="Delete Product"
+                    >
+                      <FiTrash className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-8 h-8 bg-[#e41e5b]/10 rounded-lg flex items-center justify-center">
+                      <FiPackage className="h-4 w-4 text-[#e41e5b]" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">
+                      {product.name}
+                    </h3>
+                    {product.description && (
+                      <p className="text-[#746354] text-sm mb-3 line-clamp-2">
+                        {product.description}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-[#746354]">
+                        {product.category_name || 'Uncategorized'}
+                      </span>
+                      <span className="font-semibold text-[#e41e5b]">
                         {formatCurrency(product.price)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        product.stock === 0 ? 'bg-red-100 text-red-800' :
-                        product.stock < 10 ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {product.stock} units
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="p-2 text-[#746354] hover:text-[#e41e5b] hover:bg-[#e41e5b]/10 rounded-lg transition-colors"
-                          title="Edit product"
-                        >
-                          <FiEdit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="p-2 text-[#746354] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete product"
-                        >
-                          <FiTrash className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-[#746354]">
+                      <span>SKU: {product.sku || 'N/A'}</span>
+                      <span>ID: {product.id}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <FiPackage className="h-16 w-16 text-[#746354]/40 mx-auto mb-4" />
+          <div className="p-8 text-center">
+            <FiPackage className="h-12 w-12 text-[#746354] mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-[#2c2c2c] mb-2">No products found</h3>
             <p className="text-[#746354] mb-6">
-              {searchTerm 
+              {searchTerm
                 ? 'Try adjusting your search criteria'
                 : 'Get started by adding your first product'
               }
             </p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="bg-[#e41e5b] text-white px-6 py-3 rounded-xl hover:bg-[#9a0864] transition-colors"
-            >
-              Add Product
-            </button>
+            {!searchTerm && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center px-6 py-3 bg-[#e41e5b] text-white rounded-xl hover:bg-[#9a0864] transition-colors shadow-sm mx-auto"
+              >
+                <FiPlus className="h-5 w-5 mr-2" />
+                Add First Product
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -293,6 +394,69 @@ const ProductsPage = () => {
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                  Category
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                >
+                  <option value="">Select a category</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                  SKU
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                  value={formData.sku}
+                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                  Barcode
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                  value={formData.barcode}
+                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                  Product Image
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="flex items-center px-4 py-2 bg-gray-100 text-[#2c2c2c] rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
+                  >
+                    <FiUpload className="h-5 w-5 mr-2" />
+                    Upload Image
+                  </label>
+                  {imagePreview && (
+                    <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#746354]/20">
+                      <img src={imagePreview} alt="Product Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="flex space-x-3 pt-4">
                 <button
                   type="submit"
@@ -305,7 +469,18 @@ const ProductsPage = () => {
                   onClick={() => {
                     setShowAddModal(false);
                     setEditingProduct(null);
-                    setFormData({ name: '', description: '', price: '', stock: '' });
+                    setFormData({
+                      name: '',
+                      description: '',
+                      price: '',
+                      stock: '',
+                      category_id: '',
+                      sku: '',
+                      barcode: '',
+                      image_url: ''
+                    });
+                    setImageFile(null);
+                    setImagePreview(null);
                   }}
                   className="flex-1 bg-gray-200 text-[#2c2c2c] py-2 rounded-lg hover:bg-gray-300 transition-colors"
                 >
