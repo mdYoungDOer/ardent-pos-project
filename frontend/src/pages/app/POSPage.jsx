@@ -4,7 +4,7 @@ import {
   FiUser, FiShoppingCart, FiX, FiPrinter, FiCalculator, FiClock,
   FiPackage, FiTag, FiAlertCircle, FiCheck, FiArrowLeft, FiArrowRight,
   FiPercent, FiGift, FiTag as FiCoupon, FiVolume2, FiVolumeX, FiRefreshCw,
-  FiGrid, FiList, FiFilter, FiBarcode, FiQrCode, FiCamera, FiEye
+  FiGrid, FiList, FiFilter, FiHash, FiQrCode, FiCamera, FiEye
 } from 'react-icons/fi';
 import { productsAPI, customersAPI, salesAPI } from '../../services/api';
 import useAuthStore from '../../stores/authStore';
@@ -488,7 +488,7 @@ const POSPage = () => {
               onClick={() => setShowScanner(!showScanner)}
               className="px-4 py-3 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors flex items-center"
             >
-              <FiBarcode className="h-4 w-4 mr-2" />
+                              <FiHash className="h-4 w-4 mr-2" />
               Scanner
             </button>
           </div>

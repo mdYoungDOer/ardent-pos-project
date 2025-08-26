@@ -105,15 +105,6 @@ CREATE TRIGGER update_discounts_updated_at BEFORE UPDATE ON discounts
 CREATE TRIGGER update_coupons_updated_at BEFORE UPDATE ON coupons
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert sample data for testing
-INSERT INTO discounts (tenant_id, name, description, type, value, scope, min_amount, max_discount, start_date, end_date, usage_limit, status, created_by) VALUES
-('550e8400-e29b-41d4-a716-446655440000', 'Summer Sale', '20% off all summer items', 'percentage', 20, 'all_products', 50, 100, '2025-06-01', '2025-08-31', 1000, 'active', '550e8400-e29b-41d4-a716-446655440001'),
-('550e8400-e29b-41d4-a716-446655440000', 'Bulk Purchase', '10% off orders over $200', 'percentage', 10, 'all_products', 200, 50, '2025-01-01', '2025-12-31', NULL, 'active', '550e8400-e29b-41d4-a716-446655440001'),
-('550e8400-e29b-41d4-a716-446655440000', 'Location Specific', '15% off at Main Store', 'percentage', 15, 'location', 25, 30, '2025-01-01', '2025-12-31', 500, 'active', '550e8400-e29b-41d4-a716-446655440001')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO coupons (tenant_id, code, name, description, type, value, scope, min_amount, max_discount, start_date, end_date, usage_limit, per_customer_limit, status, created_by) VALUES
-('550e8400-e29b-41d4-a716-446655440000', 'WELCOME20', 'Welcome Discount', '20% off for new customers', 'percentage', 20, 'all_products', 50, 100, '2025-01-01', '2025-12-31', 1000, 1, 'active', '550e8400-e29b-41d4-a716-446655440001'),
-('550e8400-e29b-41d4-a716-446655440000', 'SAVE10', 'Save 10', '10% off any purchase', 'percentage', 10, 'all_products', 25, 50, '2025-01-01', '2025-12-31', 500, 3, 'active', '550e8400-e29b-41d4-a716-446655440001'),
-('550e8400-e29b-41d4-a716-446655440000', 'FIXED5', 'Fixed Discount', '5 GHS off any purchase', 'fixed', 5, 'all_products', 20, 5, '2025-01-01', '2025-12-31', 200, 1, 'active', '550e8400-e29b-41d4-a716-446655440001')
-ON CONFLICT DO NOTHING;
+-- Note: Sample data has been removed to avoid foreign key constraint errors
+-- The discounts and coupons tables are now ready for use
+-- Sample data can be added through the application interface once tenants and users exist
