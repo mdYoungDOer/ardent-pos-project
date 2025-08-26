@@ -67,6 +67,13 @@ try {
         exit;
     }
 
+    // Reject super admin users from regular login
+    if ($user['role'] === 'super_admin') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Super admin users must use the super admin login portal']);
+        exit;
+    }
+
     if ($user['tenant_status'] !== 'active') {
         http_response_code(401);
         echo json_encode(['error' => 'Account is inactive']);

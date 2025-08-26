@@ -36,7 +36,7 @@ const DiscountsPage = () => {
   });
 
   // Check if user has permission to manage discounts
-  const canManageDiscounts = ['admin', 'manager'].includes(user?.role);
+  const canManageDiscounts = user && ['admin', 'manager'].includes(user.role);
 
   useEffect(() => {
     if (canManageDiscounts) {
@@ -45,7 +45,7 @@ const DiscountsPage = () => {
       fetchProducts();
       fetchLocations();
     }
-  }, [canManageDiscounts]);
+  }, [canManageDiscounts, user]);
 
   const fetchDiscounts = async () => {
     try {
@@ -247,13 +247,28 @@ const DiscountsPage = () => {
     }
   };
 
+  // Show loading state while checking permissions
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e41e5b] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!canManageDiscounts) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <FiAlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-600">You don't have permission to manage discounts.</p>
+          <p className="text-gray-600">
+            You don't have permission to manage discounts. 
+            {user.role === 'super_admin' && ' Super admins should use the super admin dashboard.'}
+          </p>
         </div>
       </div>
     );
@@ -281,6 +296,16 @@ const DiscountsPage = () => {
             </button>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <FiAlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <span className="text-red-800">{error}</span>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">

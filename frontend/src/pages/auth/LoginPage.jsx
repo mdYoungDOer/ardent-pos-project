@@ -25,7 +25,15 @@ const LoginPage = () => {
       console.log('Attempting login with:', { email, password: '***' });
       const result = await login(email, password);
       console.log('Login result:', result);
-      navigate('/app/dashboard');
+      
+      // Check if user is super admin and redirect accordingly
+      if (result.user?.role === 'super_admin') {
+        console.log('Super admin detected, redirecting to super admin dashboard');
+        navigate('/super-admin/dashboard');
+      } else {
+        console.log('Regular user, redirecting to app dashboard');
+        navigate('/app/dashboard');
+      }
     } catch (error) {
       console.error('Login failed:', error);
       console.error('Error details:', {
@@ -54,6 +62,15 @@ const LoginPage = () => {
             <p className="text-[#746354] text-lg">
               Sign in to your Ardent POS account
             </p>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Super Admin?</strong> Please use the{' '}
+                <Link to="/auth/super-admin" className="text-blue-800 underline hover:text-blue-900">
+                  Super Admin Login
+                </Link>{' '}
+                instead.
+              </p>
+            </div>
           </div>
 
           {/* Login Form */}
