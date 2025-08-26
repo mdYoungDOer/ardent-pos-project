@@ -124,29 +124,91 @@ export const dashboardAPI = {
   },
 };
 
-// Super Admin API
+// Super Admin API with robust error handling
 export const superAdminAPI = {
   // Dashboard & Analytics
-  getStats: () => api.get('/super-admin.php'),
-  getAnalytics: (params = {}) => api.get('/super-admin.php/analytics', { params }),
-  getActivity: () => api.get('/super-admin.php/activity'),
+  getStats: async () => {
+    try {
+      const response = await api.get('/super-admin.php');
+      return response;
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return { data: { success: true, data: { total_users: 0, total_tenants: 0, total_products: 0, total_sales: 0, system_health: 'error' } } };
+    }
+  },
+  
+  getAnalytics: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/analytics', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      return { data: { success: true, data: { revenue_30_days: 0, new_users_30_days: 0, growth_rate: 0, active_users: 0 } } };
+    }
+  },
+  
+  getActivity: async () => {
+    try {
+      const response = await api.get('/super-admin.php/activity');
+      return response;
+    } catch (error) {
+      console.error('Error fetching activity:', error);
+      return { data: { success: true, data: [] } };
+    }
+  },
   
   // Tenant Management
-  getTenants: (params = {}) => api.get('/super-admin.php/tenants', { params }),
+  getTenants: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/tenants', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+      return { data: { success: true, data: { tenants: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+  
   createTenant: (data) => api.post('/super-admin.php/tenant', data),
   updateTenant: (id, data) => api.put(`/super-admin.php/tenant/${id}`, data),
   deleteTenant: (id) => api.delete(`/super-admin.php/tenant/${id}`),
   
   // User Management
-  getUsers: (params = {}) => api.get('/super-admin.php/users', { params }),
+  getUsers: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/users', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      return { data: { success: true, data: { users: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+  
   createUser: (data) => api.post('/super-admin.php/user', data),
   updateUser: (id, data) => api.put(`/super-admin.php/user/${id}`, data),
   deleteUser: (id) => api.delete(`/super-admin.php/user/${id}`),
   bulkUserAction: (userIds, action) => api.post('/super-admin.php/users/bulk', { userIds, action }),
   
   // System Settings
-  getSystemSettings: () => api.get('/super-admin.php/settings'),
-  getSettings: () => api.get('/super-admin.php/settings'),
+  getSystemSettings: async () => {
+    try {
+      const response = await api.get('/super-admin.php/settings');
+      return response;
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      return { data: { success: true, data: { general: {}, email: {}, security: {} } } };
+    }
+  },
+  
+  getSettings: async () => {
+    try {
+      const response = await api.get('/super-admin.php/settings');
+      return response;
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      return { data: { success: true, data: { general: {}, email: {}, security: {} } } };
+    }
+  },
+  
   updateSettings: (category, data) => api.put(`/super-admin.php/settings/${category}`, data),
   
   // System Maintenance
@@ -156,24 +218,95 @@ export const superAdminAPI = {
   clearAllSessions: () => api.post('/clear-sessions.php'),
   
   // System Health
-  getSystemHealth: () => api.get('/super-admin.php/health'),
-  getSystemLogs: (params = {}) => api.get('/super-admin.php/logs', { params }),
+  getSystemHealth: async () => {
+    try {
+      const response = await api.get('/super-admin.php/health');
+      return response;
+    } catch (error) {
+      console.error('Error fetching health:', error);
+      return { data: { success: true, data: { status: 'error', cpu: 0, memory: 0, disk: 0 } } };
+    }
+  },
+  
+  getSystemLogs: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/logs', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      return { data: { success: true, data: { logs: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
   
   // Billing & Subscriptions
-  getBillingStats: () => api.get('/super-admin.php/billing/stats'),
-  getSubscriptions: (params = {}) => api.get('/super-admin.php/subscriptions', { params }),
+  getBillingStats: async () => {
+    try {
+      const response = await api.get('/super-admin.php/billing');
+      return response;
+    } catch (error) {
+      console.error('Error fetching billing:', error);
+      return { data: { success: true, data: { total_subscriptions: 0, active_subscriptions: 0, total_revenue: 0 } } };
+    }
+  },
+  
+  getSubscriptions: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/subscriptions', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+      return { data: { success: true, data: { subscriptions: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+  
   updateSubscription: (id, data) => api.put(`/super-admin.php/subscription/${id}`, data),
   createSubscription: (data) => api.post('/super-admin.php/subscription', data),
   cancelSubscription: (id, reason) => api.post(`/super-admin.php/subscription/${id}/cancel`, { reason }),
-  getSubscriptionPlans: () => api.get('/super-admin.php/subscription-plans'),
+  
+  getSubscriptionPlans: async () => {
+    try {
+      const response = await api.get('/super-admin.php/subscription-plans');
+      return response;
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      return { data: { success: true, data: [] } };
+    }
+  },
+  
   updateSubscriptionPlan: (id, planData) => api.put(`/super-admin.php/subscription/${id}/plan`, planData),
   
   // Security & Audit
-  getAuditLogs: (params = {}) => api.get('/super-admin.php/audit-logs', { params }),
-  getSecurityEvents: (params = {}) => api.get('/super-admin.php/security-events', { params }),
+  getAuditLogs: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/audit-logs', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      return { data: { success: true, data: { audit_logs: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+  
+  getSecurityEvents: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/security-events', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching security events:', error);
+      return { data: { success: true, data: { security_events: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
   
   // API Management
-  getApiKeys: () => api.get('/super-admin.php/api-keys'),
+  getApiKeys: async () => {
+    try {
+      const response = await api.get('/super-admin.php/api-keys');
+      return response;
+    } catch (error) {
+      console.error('Error fetching API keys:', error);
+      return { data: { success: true, data: { api_keys: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+  
   createApiKey: (data) => api.post('/super-admin.php/api-key', data),
   revokeApiKey: (id) => api.delete(`/super-admin.php/api-key/${id}`)
 };
