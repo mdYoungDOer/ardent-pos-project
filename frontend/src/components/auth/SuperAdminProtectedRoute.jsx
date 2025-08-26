@@ -1,19 +1,27 @@
-import useSuperAdminAuthStore from '../../stores/superAdminAuthStore'
-import { Navigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 const SuperAdminProtectedRoute = ({ children }) => {
-  const { isAuthenticated, user } = useSuperAdminAuthStore()
+  const { isAuthenticated, isSuperAdmin, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth/super-admin" replace />
+    return <Navigate to="/auth/super-admin" replace />;
   }
 
   // Ensure user is actually a super admin
-  if (user?.role !== 'super_admin') {
-    return <Navigate to="/auth/super-admin" replace />
+  if (!isSuperAdmin) {
+    return <Navigate to="/auth/super-admin" replace />;
   }
 
-  return children
-}
+  return children;
+};
 
-export default SuperAdminProtectedRoute
+export default SuperAdminProtectedRoute;

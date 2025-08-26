@@ -19,12 +19,12 @@ const authAxios = axios.create({
 });
 
 export const authAPI = {
-  login: async (email, password) => {
+  login: async (credentials) => {
     console.log('Making login request to /auth/login.php');
-    console.log('Request data:', { email, password: '***' });
+    console.log('Request data:', { email: credentials.email, password: '***' });
     
     try {
-      const response = await authAxios.post('/auth/login.php', { email, password });
+      const response = await authAxios.post('/auth/login.php', credentials);
       console.log('Login response:', response.data);
       
       if (response.data.success) {
@@ -53,6 +53,21 @@ export const authAPI = {
   verify: async (token) => {
     const response = await authAxios.post('/auth/verify.php', { token });
     return response.data;
+  },
+
+  verifyToken: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: 'No token found' };
+    }
+    
+    try {
+      const response = await authAxios.post('/auth/verify.php', { token });
+      return response.data;
+    } catch (error) {
+      console.error('Token verification error:', error);
+      return { success: false, message: 'Token verification failed' };
+    }
   },
 
   logout: () => {
