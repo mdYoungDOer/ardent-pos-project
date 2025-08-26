@@ -37,7 +37,10 @@ const Sidebar = () => {
   // Regular User Navigation
   const regularUserNavigation = [
     { name: 'Dashboard', href: '/app/dashboard', icon: FiHome },
+    { name: 'POS Terminal', href: '/app/pos', icon: FiShoppingCart },
     { name: 'Products', href: '/app/products', icon: FiPackage },
+    { name: 'Categories', href: '/app/categories', icon: FiTag },
+    { name: 'Locations', href: '/app/locations', icon: FiMapPin },
     { name: 'Sales', href: '/app/sales', icon: FiShoppingCart },
     { name: 'Inventory', href: '/app/inventory', icon: FiClipboard },
     { name: 'Customers', href: '/app/customers', icon: FiUsers },

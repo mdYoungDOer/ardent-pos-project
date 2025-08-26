@@ -39,6 +39,9 @@ import TenantManagementPage from './pages/app/TenantManagementPage'
 import SuperAdminAnalyticsPage from './pages/app/SuperAdminAnalyticsPage'
 import SuperAdminUserManagementPage from './pages/app/SuperAdminUserManagementPage'
 import SuperAdminSettingsPage from './pages/app/SuperAdminSettingsPage'
+import POSPage from './pages/app/POSPage'
+import CategoriesPage from './pages/app/CategoriesPage'
+import LocationsPage from './pages/app/LocationsPage'
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -76,7 +79,10 @@ function App() {
       <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="pos" element={<POSPage />} />
         <Route path="products" element={<ProductsPage />} />
+        <Route path="categories" element={<CategoriesPage />} />
+        <Route path="locations" element={<LocationsPage />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="sales" element={<SalesPage />} />
         <Route path="customers" element={<CustomersPage />} />
