@@ -236,38 +236,38 @@ switch ($endpoint) {
                 
                 $data = [
                     'general' => [
-                        'site_name' => $formattedSettings['site_name'] ?? 'Ardent POS',
-                        'site_description' => $formattedSettings['site_description'] ?? 'Enterprise Point of Sale System',
-                        'timezone' => $formattedSettings['timezone'] ?? 'UTC',
-                        'maintenance_mode' => ($formattedSettings['maintenance_mode'] ?? 'false') === 'true'
+                        'site_name' => $formattedSettings['general_site_name'] ?? 'Ardent POS',
+                        'site_description' => $formattedSettings['general_site_description'] ?? 'Enterprise Point of Sale System',
+                        'timezone' => $formattedSettings['general_timezone'] ?? 'UTC',
+                        'maintenance_mode' => ($formattedSettings['general_maintenance_mode'] ?? 'false') === 'true'
                     ],
                     'email' => [
-                        'smtp_host' => $formattedSettings['smtp_host'] ?? '',
-                        'smtp_port' => $formattedSettings['smtp_port'] ?? '587',
-                        'smtp_username' => $formattedSettings['smtp_username'] ?? '',
-                        'smtp_password' => $formattedSettings['smtp_password'] ?? '',
-                        'from_email' => $formattedSettings['from_email'] ?? 'noreply@ardentpos.com',
-                        'from_name' => $formattedSettings['from_name'] ?? 'Ardent POS',
-                        'email_verification' => ($formattedSettings['email_verification'] ?? 'true') === 'true'
+                        'smtp_host' => $formattedSettings['email_smtp_host'] ?? '',
+                        'smtp_port' => $formattedSettings['email_smtp_port'] ?? '587',
+                        'smtp_username' => $formattedSettings['email_smtp_username'] ?? '',
+                        'smtp_password' => $formattedSettings['email_smtp_password'] ?? '',
+                        'from_email' => $formattedSettings['email_from_email'] ?? 'noreply@ardentpos.com',
+                        'from_name' => $formattedSettings['email_from_name'] ?? 'Ardent POS',
+                        'email_verification' => ($formattedSettings['email_email_verification'] ?? 'true') === 'true'
                     ],
                     'payment' => [
-                        'paystack_public_key' => $formattedSettings['paystack_public_key'] ?? '',
-                        'paystack_secret_key' => $formattedSettings['paystack_secret_key'] ?? '',
-                        'paystack_webhook_secret' => $formattedSettings['paystack_webhook_secret'] ?? '',
-                        'currency' => $formattedSettings['currency'] ?? 'GHS',
-                        'currency_symbol' => $formattedSettings['currency_symbol'] ?? '₵'
+                        'paystack_public_key' => $formattedSettings['payment_paystack_public_key'] ?? '',
+                        'paystack_secret_key' => $formattedSettings['payment_paystack_secret_key'] ?? '',
+                        'paystack_webhook_secret' => $formattedSettings['payment_paystack_webhook_secret'] ?? '',
+                        'currency' => $formattedSettings['payment_currency'] ?? 'GHS',
+                        'currency_symbol' => $formattedSettings['payment_currency_symbol'] ?? '₵'
                     ],
                     'security' => [
-                        'session_timeout' => (int)($formattedSettings['session_timeout'] ?? 3600),
-                        'max_login_attempts' => (int)($formattedSettings['max_login_attempts'] ?? 5),
-                        'require_2fa' => ($formattedSettings['require_2fa'] ?? 'false') === 'true',
-                        'password_min_length' => (int)($formattedSettings['password_min_length'] ?? 8),
-                        'password_require_special' => ($formattedSettings['password_require_special'] ?? 'true') === 'true'
+                        'session_timeout' => (int)($formattedSettings['security_session_timeout'] ?? 3600),
+                        'max_login_attempts' => (int)($formattedSettings['security_max_login_attempts'] ?? 5),
+                        'require_2fa' => ($formattedSettings['security_require_2fa'] ?? 'false') === 'true',
+                        'password_min_length' => (int)($formattedSettings['security_password_min_length'] ?? 8),
+                        'password_require_special' => ($formattedSettings['security_password_require_special'] ?? 'true') === 'true'
                     ],
                     'notifications' => [
-                        'email_notifications' => ($formattedSettings['email_notifications'] ?? 'true') === 'true',
-                        'push_notifications' => ($formattedSettings['push_notifications'] ?? 'true') === 'true',
-                        'sms_notifications' => ($formattedSettings['sms_notifications'] ?? 'false') === 'true'
+                        'email_notifications' => ($formattedSettings['notifications_email_notifications'] ?? 'true') === 'true',
+                        'push_notifications' => ($formattedSettings['notifications_push_notifications'] ?? 'true') === 'true',
+                        'sms_notifications' => ($formattedSettings['notifications_sms_notifications'] ?? 'false') === 'true'
                     ]
                 ];
             } else {

@@ -273,7 +273,35 @@ export const superAdminAPI = {
     }
   },
   
-  updateSubscriptionPlan: (id, planData) => api.put(`/super-admin.php/subscription/${id}/plan`, planData),
+  createSubscriptionPlan: async (planData) => {
+    try {
+      const response = await api.post('/subscription-plans.php', planData);
+      return response;
+    } catch (error) {
+      console.error('Error creating subscription plan:', error);
+      throw error;
+    }
+  },
+  
+  updateSubscriptionPlan: async (id, planData) => {
+    try {
+      const response = await api.put(`/subscription-plans.php/${id}`, planData);
+      return response;
+    } catch (error) {
+      console.error('Error updating subscription plan:', error);
+      throw error;
+    }
+  },
+  
+  deleteSubscriptionPlan: async (id) => {
+    try {
+      const response = await api.delete(`/subscription-plans.php/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error deleting subscription plan:', error);
+      throw error;
+    }
+  },
   
   // Security & Audit
   getAuditLogs: async (params = {}) => {

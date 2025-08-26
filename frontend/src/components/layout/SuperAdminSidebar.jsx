@@ -1,79 +1,130 @@
-import { Link, useLocation } from 'react-router-dom'
-import { FiShield, FiUsers, FiSettings, FiBarChart2, FiLogOut, FiUserCheck } from 'react-icons/fi'
-import useSuperAdminAuthStore from '../../stores/superAdminAuthStore'
-import Logo from '../ui/Logo'
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  FiHome, 
+  FiBarChart3, 
+  FiUsers, 
+  FiSettings, 
+  FiLogOut, 
+  FiBuilding,
+  FiCreditCard,
+  FiActivity,
+  FiShield,
+  FiFileText,
+  FiKey,
+  FiMonitor
+} from 'react-icons/fi';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SuperAdminSidebar = () => {
-  const location = useLocation()
-  const { logout, user } = useSuperAdminAuthStore()
+  const location = useLocation();
+  const { logout } = useAuth();
 
-  const navigation = [
-  { name: 'Dashboard', href: '/super-admin/dashboard', icon: FiShield },
-  { name: 'Analytics', href: '/super-admin/analytics', icon: FiBarChart2 },
-  { name: 'Tenant Management', href: '/super-admin/tenants', icon: FiUsers },
-  { name: 'User Management', href: '/super-admin/users', icon: FiUserCheck },
-  { name: 'System Settings', href: '/super-admin/settings', icon: FiSettings },
-]
+  const menuItems = [
+    { 
+      path: '/super-admin/dashboard', 
+      name: 'Dashboard', 
+      icon: FiHome 
+    },
+    { 
+      path: '/super-admin/analytics', 
+      name: 'Analytics', 
+      icon: FiBarChart3 
+    },
+    { 
+      path: '/super-admin/tenants', 
+      name: 'Tenant Management', 
+      icon: FiBuilding 
+    },
+    { 
+      path: '/super-admin/users', 
+      name: 'User Management', 
+      icon: FiUsers 
+    },
+    { 
+      path: '/super-admin/subscriptions', 
+      name: 'Subscription Plans', 
+      icon: FiCreditCard 
+    },
+    { 
+      path: '/super-admin/billing', 
+      name: 'Billing & Payments', 
+      icon: FiActivity 
+    },
+    { 
+      path: '/super-admin/security', 
+      name: 'Security', 
+      icon: FiShield 
+    },
+    { 
+      path: '/super-admin/logs', 
+      name: 'System Logs', 
+      icon: FiFileText 
+    },
+    { 
+      path: '/super-admin/api-keys', 
+      name: 'API Keys', 
+      icon: FiKey 
+    },
+    { 
+      path: '/super-admin/monitoring', 
+      name: 'System Health', 
+      icon: FiMonitor 
+    },
+    { 
+      path: '/super-admin/settings', 
+      name: 'System Settings', 
+      icon: FiSettings 
+    }
+  ];
 
-  const isActive = (href) => location.pathname === href
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
-    <div className="w-64 bg-white shadow-lg border-r border-gray-200">
-      <div className="flex flex-col h-full">
-        {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <Logo size="medium" />
-            <div className="bg-[#E72F7C] rounded-full p-1">
-              <FiShield className="h-4 w-4 text-white" />
-            </div>
-          </div>
-        </div>
+    <div className="bg-dark text-white w-64 min-h-screen flex flex-col">
+      {/* Logo */}
+      <div className="p-6 border-b border-neutral">
+        <h1 className="text-xl font-bold text-primary">Ardent POS</h1>
+        <p className="text-sm text-neutral mt-1">Super Admin</p>
+      </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
-          {navigation.map((item) => (
+      {/* Navigation Menu */}
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          
+          return (
             <Link
-              key={item.name}
-              to={item.href}
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                isActive(item.href)
-                  ? 'bg-[#E72F7C] text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+              key={item.path}
+              to={item.path}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                isActive
+                  ? 'bg-primary text-white'
+                  : 'text-neutral hover:bg-neutral hover:text-white'
               }`}
             >
-              <item.icon className="h-5 w-5 mr-3" />
-              {item.name}
+              <Icon className="h-5 w-5 mr-3" />
+              <span className="font-medium">{item.name}</span>
             </Link>
-          ))}
-        </nav>
+          );
+        })}
+      </nav>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center mb-3">
-            <div className="w-8 h-8 bg-[#E72F7C] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-semibold">
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
-              </span>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">
-                {user?.first_name} {user?.last_name}
-              </p>
-              <p className="text-xs text-gray-500">Super Admin</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <FiLogOut className="h-5 w-5 mr-3" />
-            Logout
-          </button>
-        </div>
+      {/* Logout Button - Always visible at bottom */}
+      <div className="p-4 border-t border-neutral">
+        <button
+          onClick={handleLogout}
+          className="flex items-center w-full px-4 py-3 text-neutral hover:text-white hover:bg-neutral rounded-lg transition-colors duration-200"
+        >
+          <FiLogOut className="h-5 w-5 mr-3" />
+          <span className="font-medium">Logout</span>
+        </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SuperAdminSidebar
+export default SuperAdminSidebar;
