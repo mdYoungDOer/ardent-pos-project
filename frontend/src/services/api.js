@@ -178,13 +178,19 @@ export const productsAPI = {
   create: (product) => api.post('/products.php', product),
   update: (product) => api.put('/products.php', product),
   delete: (id) => api.delete(`/products.php?id=${id}`),
+  getById: (id) => api.get(`/products.php?id=${id}`),
+  search: (query) => api.get(`/products.php?search=${encodeURIComponent(query)}`),
 };
 
 // Sales API
 export const salesAPI = {
   getAll: () => api.get('/sales.php'),
   create: (sale) => api.post('/sales.php', sale),
+  update: (sale) => api.put('/sales.php', sale),
+  delete: (id) => api.delete(`/sales.php?id=${id}`),
+  getById: (id) => api.get(`/sales.php?id=${id}`),
   getReports: () => api.get('/sales/reports.php'),
+  getByDateRange: (startDate, endDate) => api.get(`/sales.php?start_date=${startDate}&end_date=${endDate}`),
 };
 
 // Customers API
@@ -193,6 +199,47 @@ export const customersAPI = {
   create: (customer) => api.post('/customers.php', customer),
   update: (customer) => api.put('/customers.php', customer),
   delete: (id) => api.delete(`/customers.php?id=${id}`),
+  getById: (id) => api.get(`/customers.php?id=${id}`),
+  search: (query) => api.get(`/customers.php?search=${encodeURIComponent(query)}`),
+};
+
+// Categories API
+export const categoriesAPI = {
+  getAll: () => api.get('/categories.php'),
+  create: (category) => api.post('/categories.php', category),
+  update: (category) => api.put('/categories.php', category),
+  delete: (id) => api.delete(`/categories.php?id=${id}`),
+  getById: (id) => api.get(`/categories.php?id=${id}`),
+  getProductsByCategory: (categoryId) => api.get(`/categories.php?category_id=${categoryId}&include_products=true`),
+};
+
+// Locations API
+export const locationsAPI = {
+  getAll: () => api.get('/locations.php'),
+  create: (location) => api.post('/locations.php', location),
+  update: (location) => api.put('/locations.php', location),
+  delete: (id) => api.delete(`/locations.php?id=${id}`),
+  getById: (id) => api.get(`/locations.php?id=${id}`),
+  getUsersByLocation: (locationId) => api.get(`/locations.php?location_id=${locationId}&include_users=true`),
+  getSalesByLocation: (locationId) => api.get(`/locations.php?location_id=${locationId}&include_sales=true`),
+};
+
+// Inventory API
+export const inventoryAPI = {
+  getAll: () => api.get('/inventory.php'),
+  updateStock: (productId, quantity) => api.put('/inventory.php', { product_id: productId, quantity }),
+  getLowStock: () => api.get('/inventory.php?low_stock=true'),
+  getStockHistory: (productId) => api.get(`/inventory.php?product_id=${productId}&history=true`),
+  addStock: (productId, quantity, reason) => api.post('/inventory.php', { product_id: productId, quantity, reason }),
+};
+
+// Reports API
+export const reportsAPI = {
+  getSalesReport: (params = {}) => api.get('/reports/sales.php', { params }),
+  getInventoryReport: (params = {}) => api.get('/reports/inventory.php', { params }),
+  getCustomerReport: (params = {}) => api.get('/reports/customers.php', { params }),
+  getProductReport: (params = {}) => api.get('/reports/products.php', { params }),
+  exportReport: (type, params = {}) => api.get(`/reports/export.php?type=${type}`, { params }),
 };
 
 // Notification API
