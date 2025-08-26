@@ -16,7 +16,9 @@ import {
   FiAward,
   FiTarget,
   FiLogOut,
-  FiBell
+  FiBell,
+  FiTag,
+  FiMapPin
 } from 'react-icons/fi'
 
 const Sidebar = () => {
