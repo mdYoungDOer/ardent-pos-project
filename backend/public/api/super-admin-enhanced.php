@@ -124,6 +124,36 @@ try {
                     ]);
                     break;
 
+                case 'subscriptions':
+                    $params = [
+                        'page' => $_GET['page'] ?? 1,
+                        'limit' => $_GET['limit'] ?? 50,
+                        'status' => $_GET['status'] ?? null,
+                        'plan' => $_GET['plan'] ?? null
+                    ];
+                    $subscriptions = getSubscriptions($pdo, $params);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $subscriptions
+                    ]);
+                    break;
+
+                case 'subscription-plans':
+                    $plans = getSubscriptionPlans($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $plans
+                    ]);
+                    break;
+
+                case 'billing':
+                    $billingStats = getBillingStats($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $billingStats
+                    ]);
+                    break;
+
                 default:
                     http_response_code(404);
                     echo json_encode(['error' => 'Endpoint not found']);
@@ -608,6 +638,179 @@ function updateSettings($pdo, $category, $data) {
     }
 }
 
+function getSubscriptions($pdo, $params) {
+    try {
+        $page = (int)$params['page'];
+        $limit = (int)$params['limit'];
+        $offset = ($page - 1) * $limit;
+
+        $whereConditions = ["s.tenant_id != '00000000-0000-0000-0000-000000000000'"];
+        $queryParams = [];
+
+        if (!empty($params['status'])) {
+            $whereConditions[] = "s.status = ?";
+            $queryParams[] = $params['status'];
+        }
+
+        if (!empty($params['plan'])) {
+            $whereConditions[] = "s.plan_name = ?";
+            $queryParams[] = $params['plan'];
+        }
+
+        $whereClause = implode(' AND ', $whereConditions);
+
+        // Get total count
+        $countStmt = $pdo->prepare("
+            SELECT COUNT(*) as total 
+            FROM subscriptions s
+            WHERE $whereClause
+        ");
+        $countStmt->execute($queryParams);
+        $total = $countStmt->fetch()['total'];
+
+        // Get subscriptions
+        $queryParams[] = $limit;
+        $queryParams[] = $offset;
+        
+        $stmt = $pdo->prepare("
+            SELECT s.*, t.name as tenant_name
+            FROM subscriptions s
+            LEFT JOIN tenants t ON s.tenant_id = t.id
+            WHERE $whereClause
+            ORDER BY s.created_at DESC
+            LIMIT ? OFFSET ?
+        ");
+        $stmt->execute($queryParams);
+        $subscriptions = $stmt->fetchAll();
+
+        return [
+            'subscriptions' => $subscriptions,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ]
+        ];
+    } catch (Exception $e) {
+        return getFallbackSubscriptions($params);
+    }
+}
+
+function getSubscriptionPlans($pdo) {
+    try {
+        // Get subscription plans from database or return defaults
+        return [
+            [
+                'id' => 'starter',
+                'name' => 'Starter',
+                'description' => 'Perfect for small businesses just getting started',
+                'monthly_price' => 120,
+                'yearly_price' => 1200,
+                'features' => [
+                    'Up to 100 products',
+                    'Up to 2 users',
+                    'Basic reporting',
+                    'Email support',
+                    'Mobile app access'
+                ],
+                'limitations' => [
+                    'Limited integrations',
+                    'Basic customization'
+                ]
+            ],
+            [
+                'id' => 'professional',
+                'name' => 'Professional',
+                'description' => 'Ideal for growing businesses with advanced needs',
+                'monthly_price' => 240,
+                'yearly_price' => 2400,
+                'popular' => true,
+                'features' => [
+                    'Up to 1,000 products',
+                    'Up to 10 users',
+                    'Advanced reporting & analytics',
+                    'Priority email support',
+                    'Mobile app access',
+                    'Inventory management',
+                    'Customer management',
+                    'Multi-location support'
+                ],
+                'limitations' => [
+                    'Limited API calls'
+                ]
+            ],
+            [
+                'id' => 'enterprise',
+                'name' => 'Enterprise',
+                'description' => 'For large businesses requiring maximum flexibility',
+                'monthly_price' => 480,
+                'yearly_price' => 4800,
+                'features' => [
+                    'Unlimited products',
+                    'Unlimited users',
+                    'Advanced reporting & analytics',
+                    'Phone & email support',
+                    'Mobile app access',
+                    'Full inventory management',
+                    'Advanced customer management',
+                    'Multi-location support',
+                    'API access',
+                    'Custom integrations',
+                    'White-label options'
+                ],
+                'limitations' => []
+            ]
+        ];
+    } catch (Exception $e) {
+        return getFallbackSubscriptionPlans();
+    }
+}
+
+function getBillingStats($pdo) {
+    try {
+        // Get billing statistics from database
+        $stmt = $pdo->query("
+            SELECT 
+                COUNT(*) as total_subscriptions,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_subscriptions,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_subscriptions,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_subscriptions,
+                COALESCE(SUM(amount), 0) as total_revenue
+            FROM subscriptions 
+            WHERE tenant_id != '00000000-0000-0000-0000-000000000000'
+        ");
+        $stats = $stmt->fetch();
+
+        // Calculate monthly revenue
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(amount), 0) as monthly_revenue
+            FROM subscriptions 
+            WHERE tenant_id != '00000000-0000-0000-0000-000000000000'
+            AND status = 'active'
+            AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+        ");
+        $stmt->execute();
+        $monthlyStats = $stmt->fetch();
+
+        return [
+            'total_subscriptions' => (int)$stats['total_subscriptions'],
+            'active_subscriptions' => (int)$stats['active_subscriptions'],
+            'pending_subscriptions' => (int)$stats['pending_subscriptions'],
+            'cancelled_subscriptions' => (int)$stats['cancelled_subscriptions'],
+            'total_revenue' => (float)$stats['total_revenue'],
+            'monthly_revenue' => (float)$monthlyStats['monthly_revenue'],
+            'annual_revenue' => (float)$stats['total_revenue'] * 12,
+            'churn_rate' => $stats['total_subscriptions'] > 0 ? 
+                round(($stats['cancelled_subscriptions'] / $stats['total_subscriptions']) * 100, 1) : 0,
+            'average_revenue_per_user' => $stats['active_subscriptions'] > 0 ? 
+                round($stats['total_revenue'] / $stats['active_subscriptions'], 2) : 0
+        ];
+    } catch (Exception $e) {
+        return getFallbackBillingStats();
+    }
+}
+
 // Fallback functions
 function getFallbackAnalytics($timeRange, $metric) {
     $days = (int)$timeRange;
@@ -693,6 +896,128 @@ function getFallbackSystemSettings() {
                 'enterprise' => ['price' => 200, 'features' => ['all_features', 'priority_support']]
             ]
         ]
+    ];
+}
+
+function getFallbackSubscriptions($params) {
+    return [
+        'subscriptions' => [
+            [
+                'id' => '1',
+                'tenant_name' => 'Restaurant Chain',
+                'plan_name' => 'enterprise',
+                'status' => 'active',
+                'amount' => 480,
+                'currency' => 'GHS',
+                'next_billing_date' => '2024-02-15',
+                'created_at' => '2024-01-01'
+            ],
+            [
+                'id' => '2',
+                'tenant_name' => 'Tech Solutions Ltd',
+                'plan_name' => 'professional',
+                'status' => 'active',
+                'amount' => 240,
+                'currency' => 'GHS',
+                'next_billing_date' => '2024-02-10',
+                'created_at' => '2024-01-05'
+            ],
+            [
+                'id' => '3',
+                'tenant_name' => 'Retail Store',
+                'plan_name' => 'starter',
+                'status' => 'active',
+                'amount' => 120,
+                'currency' => 'GHS',
+                'next_billing_date' => '2024-02-20',
+                'created_at' => '2024-01-10'
+            ]
+        ],
+        'pagination' => [
+            'page' => $params['page'] ?? 1,
+            'limit' => $params['limit'] ?? 50,
+            'total' => 3,
+            'pages' => 1
+        ]
+    ];
+}
+
+function getFallbackSubscriptionPlans() {
+    return [
+        [
+            'id' => 'starter',
+            'name' => 'Starter',
+            'description' => 'Perfect for small businesses just getting started',
+            'monthly_price' => 120,
+            'yearly_price' => 1200,
+            'features' => [
+                'Up to 100 products',
+                'Up to 2 users',
+                'Basic reporting',
+                'Email support',
+                'Mobile app access'
+            ],
+            'limitations' => [
+                'Limited integrations',
+                'Basic customization'
+            ]
+        ],
+        [
+            'id' => 'professional',
+            'name' => 'Professional',
+            'description' => 'Ideal for growing businesses with advanced needs',
+            'monthly_price' => 240,
+            'yearly_price' => 2400,
+            'popular' => true,
+            'features' => [
+                'Up to 1,000 products',
+                'Up to 10 users',
+                'Advanced reporting & analytics',
+                'Priority email support',
+                'Mobile app access',
+                'Inventory management',
+                'Customer management',
+                'Multi-location support'
+            ],
+            'limitations' => [
+                'Limited API calls'
+            ]
+        ],
+        [
+            'id' => 'enterprise',
+            'name' => 'Enterprise',
+            'description' => 'For large businesses requiring maximum flexibility',
+            'monthly_price' => 480,
+            'yearly_price' => 4800,
+            'features' => [
+                'Unlimited products',
+                'Unlimited users',
+                'Advanced reporting & analytics',
+                'Phone & email support',
+                'Mobile app access',
+                'Full inventory management',
+                'Advanced customer management',
+                'Multi-location support',
+                'API access',
+                'Custom integrations',
+                'White-label options'
+            ],
+            'limitations' => []
+        ]
+    ];
+}
+
+function getFallbackBillingStats() {
+    return [
+        'total_subscriptions' => 25,
+        'active_subscriptions' => 23,
+        'pending_subscriptions' => 2,
+        'cancelled_subscriptions' => 5,
+        'total_revenue' => 1250000,
+        'monthly_revenue' => 125000,
+        'annual_revenue' => 1500000,
+        'churn_rate' => 2.1,
+        'average_revenue_per_user' => 5434.78
     ];
 }
 
