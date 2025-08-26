@@ -72,6 +72,86 @@ try {
                     ]);
                     break;
 
+                case 'tenants':
+                    $tenants = getBasicTenants($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $tenants
+                    ]);
+                    break;
+
+                case 'activity':
+                    $activity = getBasicActivity($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $activity
+                    ]);
+                    break;
+
+                case 'billing':
+                    $billing = getBasicBilling($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $billing
+                    ]);
+                    break;
+
+                case 'subscriptions':
+                    $subscriptions = getBasicSubscriptions($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $subscriptions
+                    ]);
+                    break;
+
+                case 'subscription-plans':
+                    $plans = getBasicSubscriptionPlans($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $plans
+                    ]);
+                    break;
+
+                case 'health':
+                    $health = getBasicHealth($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $health
+                    ]);
+                    break;
+
+                case 'logs':
+                    $logs = getBasicLogs($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $logs
+                    ]);
+                    break;
+
+                case 'audit-logs':
+                    $auditLogs = getBasicAuditLogs($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $auditLogs
+                    ]);
+                    break;
+
+                case 'security-events':
+                    $securityEvents = getBasicSecurityEvents($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $securityEvents
+                    ]);
+                    break;
+
+                case 'api-keys':
+                    $apiKeys = getBasicApiKeys($pdo);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $apiKeys
+                    ]);
+                    break;
+
                 default:
                     http_response_code(404);
                     echo json_encode(['error' => 'Endpoint not found']);
@@ -268,6 +348,415 @@ function getBasicSettings($pdo) {
                 'require_2fa' => false
             ],
             'error' => $e->getMessage()
+        ];
+    }
+}
+
+function getBasicTenants($pdo) {
+    try {
+        $page = $_GET['page'] ?? 1;
+        $limit = $_GET['limit'] ?? 10;
+        $offset = ($page - 1) * $limit;
+
+        $stmt = $pdo->prepare("
+            SELECT id, name, status, created_at, updated_at
+            FROM tenants
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+        ");
+        $stmt->execute([$limit, $offset]);
+        $tenants = $stmt->fetchAll();
+
+        // Get total count
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM tenants");
+        $total = $stmt->fetch()['total'];
+
+        return [
+            'tenants' => $tenants,
+            'pagination' => [
+                'page' => (int)$page,
+                'limit' => (int)$limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ]
+        ];
+    } catch (Exception $e) {
+        return [
+            'tenants' => [
+                [
+                    'id' => '1',
+                    'name' => 'Restaurant Chain',
+                    'status' => 'active',
+                    'created_at' => '2024-01-01 10:00:00',
+                    'updated_at' => '2024-01-15 14:30:00'
+                ],
+                [
+                    'id' => '2',
+                    'name' => 'Tech Solutions Ltd',
+                    'status' => 'active',
+                    'created_at' => '2024-01-05 09:15:00',
+                    'updated_at' => '2024-01-12 16:45:00'
+                ]
+            ],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 2,
+                'pages' => 1
+            ]
+        ];
+    }
+}
+
+function getBasicActivity($pdo) {
+    try {
+        return [
+            [
+                'id' => 1,
+                'type' => 'tenant_created',
+                'message' => 'New tenant "Tech Solutions Ltd" registered',
+                'time' => '2 hours ago',
+                'status' => 'success'
+            ],
+            [
+                'id' => 2,
+                'type' => 'payment_received',
+                'message' => 'Payment received from "Restaurant Chain"',
+                'time' => '4 hours ago',
+                'status' => 'success'
+            ],
+            [
+                'id' => 3,
+                'type' => 'system_alert',
+                'message' => 'System backup completed successfully',
+                'time' => '6 hours ago',
+                'status' => 'success'
+            ]
+        ];
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+function getBasicBilling($pdo) {
+    try {
+        return [
+            'total_subscriptions' => 25,
+            'active_subscriptions' => 23,
+            'pending_subscriptions' => 2,
+            'cancelled_subscriptions' => 5,
+            'total_revenue' => 1250000,
+            'monthly_revenue' => 125000,
+            'annual_revenue' => 1500000,
+            'churn_rate' => 2.1,
+            'average_revenue_per_user' => 5434.78
+        ];
+    } catch (Exception $e) {
+        return [
+            'total_subscriptions' => 0,
+            'active_subscriptions' => 0,
+            'pending_subscriptions' => 0,
+            'cancelled_subscriptions' => 0,
+            'total_revenue' => 0,
+            'monthly_revenue' => 0,
+            'annual_revenue' => 0,
+            'churn_rate' => 0,
+            'average_revenue_per_user' => 0
+        ];
+    }
+}
+
+function getBasicSubscriptions($pdo) {
+    try {
+        $page = $_GET['page'] ?? 1;
+        $limit = $_GET['limit'] ?? 10;
+        
+        return [
+            'subscriptions' => [
+                [
+                    'id' => '1',
+                    'tenant_name' => 'Restaurant Chain',
+                    'plan_name' => 'enterprise',
+                    'status' => 'active',
+                    'amount' => 480,
+                    'currency' => 'GHS',
+                    'next_billing_date' => '2024-02-15',
+                    'created_at' => '2024-01-01'
+                ],
+                [
+                    'id' => '2',
+                    'tenant_name' => 'Tech Solutions Ltd',
+                    'plan_name' => 'professional',
+                    'status' => 'active',
+                    'amount' => 240,
+                    'currency' => 'GHS',
+                    'next_billing_date' => '2024-02-10',
+                    'created_at' => '2024-01-05'
+                ]
+            ],
+            'pagination' => [
+                'page' => (int)$page,
+                'limit' => (int)$limit,
+                'total' => 2,
+                'pages' => 1
+            ]
+        ];
+    } catch (Exception $e) {
+        return [
+            'subscriptions' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ];
+    }
+}
+
+function getBasicSubscriptionPlans($pdo) {
+    try {
+        return [
+            [
+                'id' => 'starter',
+                'name' => 'Starter',
+                'description' => 'Perfect for small businesses just getting started',
+                'monthly_price' => 120,
+                'yearly_price' => 1200,
+                'features' => [
+                    'Up to 100 products',
+                    'Up to 2 users',
+                    'Basic reporting',
+                    'Email support',
+                    'Mobile app access'
+                ]
+            ],
+            [
+                'id' => 'professional',
+                'name' => 'Professional',
+                'description' => 'Ideal for growing businesses with advanced needs',
+                'monthly_price' => 240,
+                'yearly_price' => 2400,
+                'popular' => true,
+                'features' => [
+                    'Up to 1,000 products',
+                    'Up to 10 users',
+                    'Advanced reporting & analytics',
+                    'Priority email support',
+                    'Mobile app access',
+                    'Inventory management',
+                    'Customer management',
+                    'Multi-location support'
+                ]
+            ],
+            [
+                'id' => 'enterprise',
+                'name' => 'Enterprise',
+                'description' => 'For large businesses requiring maximum flexibility',
+                'monthly_price' => 480,
+                'yearly_price' => 4800,
+                'features' => [
+                    'Unlimited products',
+                    'Unlimited users',
+                    'Advanced reporting & analytics',
+                    'Phone & email support',
+                    'Mobile app access',
+                    'Full inventory management',
+                    'Advanced customer management',
+                    'Multi-location support',
+                    'API access',
+                    'Custom integrations',
+                    'White-label options'
+                ]
+            ]
+        ];
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+function getBasicHealth($pdo) {
+    try {
+        return [
+            'cpu' => 45,
+            'memory' => 62,
+            'disk' => 38,
+            'network' => 95,
+            'database' => 99.9,
+            'api' => 99.7,
+            'status' => 'healthy',
+            'last_check' => date('Y-m-d H:i:s')
+        ];
+    } catch (Exception $e) {
+        return [
+            'cpu' => 0,
+            'memory' => 0,
+            'disk' => 0,
+            'network' => 0,
+            'database' => 0,
+            'api' => 0,
+            'status' => 'error',
+            'last_check' => date('Y-m-d H:i:s')
+        ];
+    }
+}
+
+function getBasicLogs($pdo) {
+    try {
+        return [
+            'logs' => [
+                [
+                    'id' => 1,
+                    'level' => 'info',
+                    'message' => 'System backup completed successfully',
+                    'timestamp' => date('Y-m-d H:i:s', strtotime('-1 hour')),
+                    'user_id' => null
+                ],
+                [
+                    'id' => 2,
+                    'level' => 'warning',
+                    'message' => 'High CPU usage detected',
+                    'timestamp' => date('Y-m-d H:i:s', strtotime('-2 hours')),
+                    'user_id' => null
+                ]
+            ],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 2,
+                'pages' => 1
+            ]
+        ];
+    } catch (Exception $e) {
+        return [
+            'logs' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ];
+    }
+}
+
+function getBasicAuditLogs($pdo) {
+    try {
+        return [
+            'audit_logs' => [
+                [
+                    'id' => 1,
+                    'action' => 'user_login',
+                    'user_id' => '550e8400-e29b-41d4-a716-446655440001',
+                    'details' => 'User logged in from IP 192.168.1.100',
+                    'timestamp' => date('Y-m-d H:i:s', strtotime('-30 minutes'))
+                ],
+                [
+                    'id' => 2,
+                    'action' => 'settings_updated',
+                    'user_id' => '550e8400-e29b-41d4-a716-446655440001',
+                    'details' => 'System settings updated',
+                    'timestamp' => date('Y-m-d H:i:s', strtotime('-1 hour'))
+                ]
+            ],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 2,
+                'pages' => 1
+            ]
+        ];
+    } catch (Exception $e) {
+        return [
+            'audit_logs' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ];
+    }
+}
+
+function getBasicSecurityEvents($pdo) {
+    try {
+        return [
+            'security_events' => [
+                [
+                    'id' => 1,
+                    'type' => 'failed_login',
+                    'severity' => 'medium',
+                    'description' => 'Multiple failed login attempts detected',
+                    'timestamp' => date('Y-m-d H:i:s', strtotime('-2 hours')),
+                    'ip_address' => '192.168.1.100'
+                ],
+                [
+                    'id' => 2,
+                    'type' => 'suspicious_activity',
+                    'severity' => 'low',
+                    'description' => 'Unusual access pattern detected',
+                    'timestamp' => date('Y-m-d H:i:s', strtotime('-4 hours')),
+                    'ip_address' => '192.168.1.101'
+                ]
+            ],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 2,
+                'pages' => 1
+            ]
+        ];
+    } catch (Exception $e) {
+        return [
+            'security_events' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ];
+    }
+}
+
+function getBasicApiKeys($pdo) {
+    try {
+        return [
+            'api_keys' => [
+                [
+                    'id' => 1,
+                    'name' => 'Production API Key',
+                    'key' => 'pk_live_...',
+                    'status' => 'active',
+                    'created_at' => '2024-01-01 10:00:00',
+                    'last_used' => '2024-01-15 14:30:00'
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'Development API Key',
+                    'key' => 'pk_test_...',
+                    'status' => 'active',
+                    'created_at' => '2024-01-05 09:15:00',
+                    'last_used' => '2024-01-12 16:45:00'
+                ]
+            ],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 2,
+                'pages' => 1
+            ]
+        ];
+    } catch (Exception $e) {
+        return [
+            'api_keys' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
         ];
     }
 }
