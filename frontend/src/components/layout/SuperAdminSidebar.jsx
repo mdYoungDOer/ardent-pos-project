@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { FiShield, FiUsers, FiSettings, FiBarChart3, FiLogOut } from 'react-icons/fi'
+import { FiShield, FiUsers, FiSettings, FiBarChart2, FiLogOut } from 'react-icons/fi'
 import useSuperAdminAuthStore from '../../stores/superAdminAuthStore'
 import Logo from '../ui/Logo'
 
@@ -11,7 +11,7 @@ const SuperAdminSidebar = () => {
     { name: 'Dashboard', href: '/super-admin/dashboard', icon: FiShield },
     { name: 'Tenant Management', href: '/super-admin/tenants', icon: FiUsers },
     { name: 'System Settings', href: '/super-admin/settings', icon: FiSettings },
-    { name: 'Analytics', href: '/super-admin/analytics', icon: FiBarChart3 },
+    { name: 'Analytics', href: '/super-admin/analytics', icon: FiBarChart2 },
   ]
 
   const isActive = (href) => location.pathname === href
