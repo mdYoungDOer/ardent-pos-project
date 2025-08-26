@@ -28,23 +28,13 @@ const SuperAdminLoginPage = () => {
     setError(null);
 
     try {
+      console.log('=== SUPER ADMIN LOGIN DEBUG START ===');
       console.log('Attempting super admin login with:', formData.email);
+      console.log('Form data:', formData);
       
-      // First, test if the API is accessible
-      const testResponse = await fetch('/test-super-admin-api.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      // Direct login attempt without test API call
+      console.log('Making request to /super-admin-login-final.php...');
       
-      console.log('Test API response status:', testResponse.status);
-      
-      if (!testResponse.ok) {
-        throw new Error('API endpoint not accessible. Please check server configuration.');
-      }
-      
-      // Now try the actual login
       const response = await fetch('/super-admin-login-final.php', {
         method: 'POST',
         headers: {
@@ -53,14 +43,19 @@ const SuperAdminLoginPage = () => {
         body: JSON.stringify(formData)
       });
 
-      console.log('Login response status:', response.status);
+      console.log('Response received:');
+      console.log('- Status:', response.status);
+      console.log('- Status text:', response.statusText);
+      console.log('- Headers:', Object.fromEntries(response.headers.entries()));
       
       let data;
       const responseText = await response.text();
+      console.log('Response text length:', responseText.length);
       console.log('Response text:', responseText);
       
       try {
         data = JSON.parse(responseText);
+        console.log('Parsed JSON data:', data);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
         console.error('Raw response:', responseText);
@@ -70,20 +65,35 @@ const SuperAdminLoginPage = () => {
       console.log('Login response data:', data);
 
       if (data.success) {
+        console.log('Login successful, storing data...');
+        
         // Store token and user data
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('tenant', JSON.stringify(data.tenant));
         
-        console.log('Super admin login successful, redirecting...');
+        console.log('Data stored successfully');
+        
+        // Update auth store state
+        const { initialize } = useAuthStore.getState();
+        initialize();
+        
+        console.log('Auth store updated, redirecting to /app/super-admin...');
         
         // Redirect to super admin dashboard
         navigate('/app/super-admin');
       } else {
+        console.log('Login failed:', data.error);
         setError(data.error || 'Super admin login failed');
       }
+      
+      console.log('=== SUPER ADMIN LOGIN DEBUG END ===');
     } catch (err) {
-      console.error('Super admin login error:', err);
+      console.error('=== SUPER ADMIN LOGIN ERROR ===');
+      console.error('Error type:', err.constructor.name);
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+      console.error('=== END ERROR ===');
       
       // Provide more specific error messages
       if (err.message.includes('Failed to fetch')) {
@@ -94,6 +104,7 @@ const SuperAdminLoginPage = () => {
         setError(err.message || 'Network error. Please try again.');
       }
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };

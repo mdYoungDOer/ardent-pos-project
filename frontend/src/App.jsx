@@ -38,6 +38,7 @@ import TenantManagementPage from './pages/app/TenantManagementPage'
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import RoleProtectedRoute from './components/auth/RoleProtectedRoute'
 
 function App() {
   const { initialize } = useAuthStore()
@@ -69,7 +70,7 @@ function App() {
 
       {/* Protected App Routes - Role-based */}
       <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        {/* Super Admin Routes */}
+        {/* Regular User Routes */}
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="products" element={<ProductsPage />} />
@@ -79,8 +80,10 @@ function App() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="notifications" element={<NotificationSettingsPage />} />
-        <Route path="super-admin" element={<SuperAdminDashboard />} />
-        <Route path="tenant-management" element={<TenantManagementPage />} />
+        
+        {/* Super Admin Routes */}
+        <Route path="super-admin" element={<RoleProtectedRoute requiredRole="super_admin"><SuperAdminDashboard /></RoleProtectedRoute>} />
+        <Route path="tenant-management" element={<RoleProtectedRoute requiredRole="super_admin"><TenantManagementPage /></RoleProtectedRoute>} />
       </Route>
 
       {/* Catch-all route for 404 */}
