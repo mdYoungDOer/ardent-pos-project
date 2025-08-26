@@ -28,10 +28,41 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
     
-    $sqlFile = __DIR__ . '/../../db/store_locations.sql';
+    // Debug: Check various possible paths
+    $possiblePaths = [
+        __DIR__ . '/../../db/store_locations.sql',
+        __DIR__ . '/../db/store_locations.sql',
+        __DIR__ . '/db/store_locations.sql',
+        '/var/www/html/db/store_locations.sql',
+        '/var/www/html/backend/db/store_locations.sql',
+        dirname(__DIR__) . '/db/store_locations.sql',
+        dirname(dirname(__DIR__)) . '/db/store_locations.sql'
+    ];
     
-    if (!file_exists($sqlFile)) {
-        throw new Exception('SQL file not found');
+    $sqlFile = null;
+    $foundPath = null;
+    
+    foreach ($possiblePaths as $path) {
+        if (file_exists($path)) {
+            $sqlFile = $path;
+            $foundPath = $path;
+            break;
+        }
+    }
+    
+    if (!$sqlFile) {
+        // Debug: List directory contents
+        $debugInfo = [
+            'current_dir' => __DIR__,
+            'parent_dir' => dirname(__DIR__),
+            'grandparent_dir' => dirname(dirname(__DIR__)),
+            'possible_paths' => $possiblePaths,
+            'current_dir_contents' => scandir(__DIR__),
+            'parent_dir_contents' => scandir(dirname(__DIR__)),
+            'grandparent_dir_contents' => scandir(dirname(dirname(__DIR__)))
+        ];
+        
+        throw new Exception('SQL file not found. Debug info: ' . json_encode($debugInfo));
     }
     
     $sql = file_get_contents($sqlFile);
@@ -58,14 +89,16 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'Migration completed successfully',
-            'executed_statements' => $executed
+            'executed_statements' => $executed,
+            'file_path' => $foundPath
         ]);
     } else {
         $pdo->rollBack();
         echo json_encode([
             'success' => false,
             'message' => 'Migration failed',
-            'errors' => $errors
+            'errors' => $errors,
+            'file_path' => $foundPath
         ]);
     }
     
