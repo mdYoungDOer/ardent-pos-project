@@ -19,7 +19,9 @@ import {
   FiBell,
   FiTag,
   FiMapPin,
-  FiUserCheck
+  FiUserCheck,
+  FiPercent,
+  FiGift
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -52,10 +54,12 @@ const Sidebar = () => {
     { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 
-  // Admin Navigation (includes User Management)
+  // Admin Navigation (includes User Management, Discounts, and Coupons)
   const adminNavigation = [
     ...regularUserNavigation.slice(0, -1), // All regular items except Settings
     { name: 'User Management', href: '/app/user-management', icon: FiUserCheck },
+    { name: 'Discounts', href: '/app/discounts', icon: FiPercent },
+    { name: 'Coupons', href: '/app/coupons', icon: FiGift },
     { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 

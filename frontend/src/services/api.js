@@ -370,4 +370,27 @@ export const userManagementAPI = {
   sendInvitation: (email, role) => api.post('/user-management.php/invite', { email, role }),
 };
 
+// Discounts API (for admins and managers)
+export const discountsAPI = {
+  getAll: () => api.get('/discounts.php'),
+  create: (discount) => api.post('/discounts.php', discount),
+  update: (discount) => api.put('/discounts.php', discount),
+  delete: (id) => api.delete(`/discounts.php?id=${id}`),
+  getById: (id) => api.get(`/discounts.php?id=${id}`),
+  getActive: () => api.get('/discounts.php?status=active'),
+  getByScope: (scope) => api.get(`/discounts.php?scope=${scope}`),
+};
+
+// Coupons API (for admins and managers)
+export const couponsAPI = {
+  getAll: () => api.get('/coupons.php'),
+  create: (coupon) => api.post('/coupons.php', coupon),
+  update: (coupon) => api.put('/coupons.php', coupon),
+  delete: (id) => api.delete(`/coupons.php?id=${id}`),
+  getById: (id) => api.get(`/coupons.php?id=${id}`),
+  getActive: () => api.get('/coupons.php?status=active'),
+  validate: (code, customerId = null, subtotal = 0) => api.post('/coupons.php/validate', { code, customer_id: customerId, subtotal }),
+  generateCode: () => api.get('/coupons.php/generate-code'),
+};
+
 export default api;
