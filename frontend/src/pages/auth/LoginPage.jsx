@@ -62,15 +62,6 @@ const LoginPage = () => {
             <p className="text-[#746354] text-lg">
               Sign in to your Ardent POS account
             </p>
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
-                <strong>Super Admin?</strong> Please use the{' '}
-                <Link to="/auth/super-admin" className="text-blue-800 underline hover:text-blue-900">
-                  Super Admin Login
-                </Link>{' '}
-                instead.
-              </p>
-            </div>
           </div>
 
           {/* Login Form */}
