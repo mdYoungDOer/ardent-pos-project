@@ -12,6 +12,14 @@ if (file_exists(__DIR__ . '/../.env')) {
     }
 }
 
+// Set database credentials directly since environment variables are not loading properly
+$_ENV['DB_HOST'] = 'db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com';
+$_ENV['DB_PORT'] = '25060';
+$_ENV['DB_NAME'] = 'defaultdb';
+$_ENV['DB_USER'] = 'doadmin';
+// Note: DB_PASS should be set as a secret in Digital Ocean App Platform
+// If it's still not working, you'll need to set the correct password here temporarily
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use ArdentPOS\Core\Config;
