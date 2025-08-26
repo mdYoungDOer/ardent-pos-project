@@ -19,6 +19,7 @@ import AboutPage from './pages/public/AboutPage'
 import ContactPage from './pages/public/ContactPage'
 import FeaturesPage from './pages/public/FeaturesPage'
 import PricingPage from './pages/public/PricingPage'
+import FAQPage from './pages/public/FAQPage'
 
 
 // App Pages - Regular Users
@@ -55,7 +56,7 @@ function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="features" element={<FeaturesPage />} />
         <Route path="pricing" element={<PricingPage />} />
-
+        <Route path="faq" element={<FAQPage />} />
       </Route>
 
       {/* Auth Routes */}

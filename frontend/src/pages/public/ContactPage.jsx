@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi'
 import toast from 'react-hot-toast'
+import StickyHeader from '../../components/layout/StickyHeader'
 
 const ContactPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -29,6 +30,8 @@ const ContactPage = () => {
 
   return (
     <div className="bg-white">
+      <StickyHeader />
+      
       {/* Hero Section */}
       <div className="relative bg-primary-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

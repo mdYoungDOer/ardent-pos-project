@@ -5,9 +5,13 @@ import {
   HiChartBar, 
   HiDeviceMobile,
   HiShieldCheck,
-  HiLightningBolt
+  HiLightningBolt,
+  HiUsers,
+  HiGlobe,
+  HiStar
 } from 'react-icons/hi'
 import Logo from '../../components/ui/Logo'
+import StickyHeader from '../../components/layout/StickyHeader'
 
 const HomePage = () => {
   const features = [
@@ -61,8 +65,10 @@ const HomePage = () => {
 
   return (
     <div>
+      <StickyHeader />
+      
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-50 to-accent-50 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary-50 to-accent-50 overflow-hidden pt-24">
         <div className="max-w-7xl mx-auto">
           <div className="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
             <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
@@ -176,6 +182,81 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mx-auto mb-4">
+                <HiUsers className="h-6 w-6" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">500+</div>
+              <div className="text-sm text-gray-500">Active Businesses</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mx-auto mb-4">
+                <HiGlobe className="h-6 w-6" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">50+</div>
+              <div className="text-sm text-gray-500">Cities Served</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mx-auto mb-4">
+                <HiStar className="h-6 w-6" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">4.9/5</div>
+              <div className="text-sm text-gray-500">Customer Rating</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mx-auto mb-4">
+                <HiLightningBolt className="h-6 w-6" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">99.9%</div>
+              <div className="text-sm text-gray-500">Uptime</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:text-center mb-12">
+            <h2 className="text-base text-primary font-semibold tracking-wide uppercase">Why Choose Ardent POS</h2>
+            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Built for Ghanaian businesses
+            </p>
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+              Designed specifically for the unique needs of businesses in Ghana and West Africa.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mb-4">
+                <HiShieldCheck className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Local Compliance</h3>
+              <p className="text-gray-600">Built to comply with Ghanaian business regulations and tax requirements.</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mb-4">
+                <HiCreditCard className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Local Payments</h3>
+              <p className="text-gray-600">Integrated with popular local payment methods including mobile money.</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mb-4">
+                <HiDeviceMobile className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Offline Support</h3>
+              <p className="text-gray-600">Works even when internet connectivity is unreliable or unavailable.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="bg-primary">
         <div className="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
@@ -186,12 +267,20 @@ const HomePage = () => {
           <p className="mt-4 text-lg leading-6 text-primary-100">
             Join thousands of businesses already using Ardent POS to streamline their operations.
           </p>
-          <Link
-            to="/auth/register"
-            className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-primary-50 sm:w-auto"
-          >
-            Start Free Trial
-          </Link>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/auth/register"
+              className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-primary-50"
+            >
+              Start Free Trial
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-flex items-center justify-center px-5 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-primary"
+            >
+              Contact Sales
+            </Link>
+          </div>
         </div>
       </section>
     </div>

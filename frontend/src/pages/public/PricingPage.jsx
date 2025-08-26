@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
 import { HiCheck, HiX } from 'react-icons/hi'
+import StickyHeader from '../../components/layout/StickyHeader'
 
 const PricingPage = () => {
   const plans = [
     {
       name: 'Free',
-      price: '₦0',
+      price: '₵0',
       period: 'forever',
       description: 'Perfect for getting started',
       features: [
@@ -27,7 +28,7 @@ const PricingPage = () => {
     },
     {
       name: 'Basic',
-      price: '₦5,000',
+      price: '₵50',
       period: 'per month',
       description: 'Great for small businesses',
       features: [
@@ -50,7 +51,7 @@ const PricingPage = () => {
     },
     {
       name: 'Pro',
-      price: '₦15,000',
+      price: '₵150',
       period: 'per month',
       description: 'Perfect for growing businesses',
       features: [
@@ -96,6 +97,8 @@ const PricingPage = () => {
 
   return (
     <div className="bg-white">
+      <StickyHeader />
+      
       {/* Hero Section */}
       <div className="relative bg-primary-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

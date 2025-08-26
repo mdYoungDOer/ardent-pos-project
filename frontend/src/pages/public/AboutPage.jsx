@@ -1,4 +1,5 @@
 import { HiHeart, HiLightBulb, HiShieldCheck } from 'react-icons/hi'
+import StickyHeader from '../../components/layout/StickyHeader'
 
 const AboutPage = () => {
   const values = [
@@ -21,6 +22,8 @@ const AboutPage = () => {
 
   return (
     <div className="bg-white">
+      <StickyHeader />
+      
       {/* Hero Section */}
       <div className="relative py-16 bg-white overflow-hidden">
         <div className="relative px-4 sm:px-6 lg:px-8">
