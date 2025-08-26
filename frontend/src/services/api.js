@@ -127,55 +127,55 @@ export const dashboardAPI = {
 // Super Admin API
 export const superAdminAPI = {
   // Dashboard & Analytics
-  getStats: () => api.get('/super-admin-test.php'),
-  getAnalytics: (params = {}) => api.get('/super-admin-test.php/analytics', { params }),
-  getActivity: () => api.get('/super-admin-test.php/activity'),
+  getStats: () => api.get('/super-admin.php'),
+  getAnalytics: (params = {}) => api.get('/super-admin.php/analytics', { params }),
+  getActivity: () => api.get('/super-admin.php/activity'),
   
   // Tenant Management
-  getTenants: (params = {}) => api.get('/super-admin-test.php/tenants', { params }),
-  createTenant: (data) => api.post('/super-admin-test.php/tenant', data),
-  updateTenant: (id, data) => api.put(`/super-admin-test.php/tenant/${id}`, data),
-  deleteTenant: (id) => api.delete(`/super-admin-test.php/tenant/${id}`),
+  getTenants: (params = {}) => api.get('/super-admin.php/tenants', { params }),
+  createTenant: (data) => api.post('/super-admin.php/tenant', data),
+  updateTenant: (id, data) => api.put(`/super-admin.php/tenant/${id}`, data),
+  deleteTenant: (id) => api.delete(`/super-admin.php/tenant/${id}`),
   
   // User Management
-  getUsers: (params = {}) => api.get('/super-admin-test.php/users', { params }),
-  createUser: (data) => api.post('/super-admin-test.php/user', data),
-  updateUser: (id, data) => api.put(`/super-admin-test.php/user/${id}`, data),
-  deleteUser: (id) => api.delete(`/super-admin-test.php/user/${id}`),
-  bulkUserAction: (userIds, action) => api.post('/super-admin-test.php/users/bulk', { userIds, action }),
+  getUsers: (params = {}) => api.get('/super-admin.php/users', { params }),
+  createUser: (data) => api.post('/super-admin.php/user', data),
+  updateUser: (id, data) => api.put(`/super-admin.php/user/${id}`, data),
+  deleteUser: (id) => api.delete(`/super-admin.php/user/${id}`),
+  bulkUserAction: (userIds, action) => api.post('/super-admin.php/users/bulk', { userIds, action }),
   
   // System Settings
-  getSystemSettings: () => api.get('/super-admin-test.php/settings'),
-  getSettings: () => api.get('/super-admin-test.php/settings'),
-  updateSettings: (category, data) => api.put(`/super-admin-test.php/settings/${category}`, data),
+  getSystemSettings: () => api.get('/super-admin.php/settings'),
+  getSettings: () => api.get('/super-admin.php/settings'),
+  updateSettings: (category, data) => api.put(`/super-admin.php/settings/${category}`, data),
   
   // System Maintenance
-  toggleMaintenanceMode: (enabled) => api.post('/super-admin-test.php/maintenance', { enabled }),
-  createBackup: () => api.post('/super-admin-test.php/backup'),
-  getBackups: () => api.get('/super-admin-test.php/backups'),
+  toggleMaintenanceMode: (enabled) => api.post('/super-admin.php/maintenance', { enabled }),
+  createBackup: () => api.post('/super-admin.php/backup'),
+  getBackups: () => api.get('/super-admin.php/backups'),
   clearAllSessions: () => api.post('/clear-sessions.php'),
   
   // System Health
-  getSystemHealth: () => api.get('/super-admin-test.php/health'),
-  getSystemLogs: (params = {}) => api.get('/super-admin-test.php/logs', { params }),
+  getSystemHealth: () => api.get('/super-admin.php/health'),
+  getSystemLogs: (params = {}) => api.get('/super-admin.php/logs', { params }),
   
   // Billing & Subscriptions
-  getBillingStats: () => api.get('/super-admin-test.php/billing/stats'),
-  getSubscriptions: (params = {}) => api.get('/super-admin-test.php/subscriptions', { params }),
-  updateSubscription: (id, data) => api.put(`/super-admin-test.php/subscription/${id}`, data),
-  createSubscription: (data) => api.post('/super-admin-test.php/subscription', data),
-  cancelSubscription: (id, reason) => api.post(`/super-admin-test.php/subscription/${id}/cancel`, { reason }),
-  getSubscriptionPlans: () => api.get('/super-admin-test.php/subscription-plans'),
-  updateSubscriptionPlan: (id, planData) => api.put(`/super-admin-test.php/subscription/${id}/plan`, planData),
+  getBillingStats: () => api.get('/super-admin.php/billing/stats'),
+  getSubscriptions: (params = {}) => api.get('/super-admin.php/subscriptions', { params }),
+  updateSubscription: (id, data) => api.put(`/super-admin.php/subscription/${id}`, data),
+  createSubscription: (data) => api.post('/super-admin.php/subscription', data),
+  cancelSubscription: (id, reason) => api.post(`/super-admin.php/subscription/${id}/cancel`, { reason }),
+  getSubscriptionPlans: () => api.get('/super-admin.php/subscription-plans'),
+  updateSubscriptionPlan: (id, planData) => api.put(`/super-admin.php/subscription/${id}/plan`, planData),
   
   // Security & Audit
-  getAuditLogs: (params = {}) => api.get('/super-admin-test.php/audit-logs', { params }),
-  getSecurityEvents: (params = {}) => api.get('/super-admin-test.php/security-events', { params }),
+  getAuditLogs: (params = {}) => api.get('/super-admin.php/audit-logs', { params }),
+  getSecurityEvents: (params = {}) => api.get('/super-admin.php/security-events', { params }),
   
   // API Management
-  getApiKeys: () => api.get('/super-admin-test.php/api-keys'),
-  createApiKey: (data) => api.post('/super-admin-test.php/api-key', data),
-  revokeApiKey: (id) => api.delete(`/super-admin-test.php/api-key/${id}`)
+  getApiKeys: () => api.get('/super-admin.php/api-keys'),
+  createApiKey: (data) => api.post('/super-admin.php/api-key', data),
+  revokeApiKey: (id) => api.delete(`/super-admin.php/api-key/${id}`)
 };
 
 // Products API
