@@ -30,7 +30,22 @@ const SuperAdminLoginPage = () => {
     try {
       console.log('Attempting super admin login with:', formData.email);
       
-      const response = await fetch('/super-admin-login-debug.php', {
+      // First, test if the API is accessible
+      const testResponse = await fetch('/test-super-admin-api.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('Test API response status:', testResponse.status);
+      
+      if (!testResponse.ok) {
+        throw new Error('API endpoint not accessible. Please check server configuration.');
+      }
+      
+      // Now try the actual login
+      const response = await fetch('/super-admin-login-final.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,7 +53,7 @@ const SuperAdminLoginPage = () => {
         body: JSON.stringify(formData)
       });
 
-      console.log('Response status:', response.status);
+      console.log('Login response status:', response.status);
       
       let data;
       const responseText = await response.text();
@@ -48,10 +63,11 @@ const SuperAdminLoginPage = () => {
         data = JSON.parse(responseText);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
-        throw new Error('Invalid response from server');
+        console.error('Raw response:', responseText);
+        throw new Error('Invalid response from server. Please check server logs.');
       }
       
-      console.log('Login response:', data);
+      console.log('Login response data:', data);
 
       if (data.success) {
         // Store token and user data
@@ -68,7 +84,15 @@ const SuperAdminLoginPage = () => {
       }
     } catch (err) {
       console.error('Super admin login error:', err);
-      setError(err.message || 'Network error. Please try again.');
+      
+      // Provide more specific error messages
+      if (err.message.includes('Failed to fetch')) {
+        setError('Network error: Unable to connect to server. Please check your internet connection.');
+      } else if (err.message.includes('API endpoint not accessible')) {
+        setError('Server error: API endpoint not accessible. Please contact support.');
+      } else {
+        setError(err.message || 'Network error. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
