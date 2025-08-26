@@ -100,12 +100,50 @@ export const dashboardAPI = {
 
 // Super Admin API
 export const superAdminAPI = {
-  getStats: () => api.get('/super-admin.php'),
-  getTenants: (params = {}) => api.get('/super-admin.php/tenants', { params }),
+  // Dashboard & Analytics
+  getStats: () => api.get('/super-admin-enhanced.php'),
+  getAnalytics: (params = {}) => api.get('/super-admin-enhanced.php/analytics', { params }),
   getActivity: () => api.get('/super-admin.php/activity'),
+  
+  // Tenant Management
+  getTenants: (params = {}) => api.get('/super-admin.php/tenants', { params }),
   createTenant: (data) => api.post('/super-admin.php/tenant', data),
-  updateTenant: (id, data) => api.put(`/super-admin.php/${id}`, data),
-  deleteTenant: (id) => api.delete(`/super-admin.php/${id}`)
+  updateTenant: (id, data) => api.put(`/super-admin.php/tenant/${id}`, data),
+  deleteTenant: (id) => api.delete(`/super-admin.php/tenant/${id}`),
+  
+  // User Management
+  getUsers: (params = {}) => api.get('/super-admin-enhanced.php/users', { params }),
+  createUser: (data) => api.post('/super-admin.php/user', data),
+  updateUser: (id, data) => api.put(`/super-admin-enhanced.php/user/${id}`, data),
+  deleteUser: (id) => api.delete(`/super-admin-enhanced.php/user/${id}`),
+  bulkUserAction: (userIds, action) => api.post('/super-admin-enhanced.php/users/bulk', { userIds, action }),
+  
+  // System Settings
+  getSettings: () => api.get('/super-admin-enhanced.php/settings'),
+  updateSettings: (category, data) => api.put(`/super-admin-enhanced.php/settings/${category}`, data),
+  
+  // System Maintenance
+  toggleMaintenanceMode: (enabled) => api.post('/super-admin.php/maintenance', { enabled }),
+  createBackup: () => api.post('/super-admin.php/backup'),
+  getBackups: () => api.get('/super-admin.php/backups'),
+  
+  // System Health
+  getSystemHealth: () => api.get('/super-admin.php/health'),
+  getSystemLogs: (params = {}) => api.get('/super-admin.php/logs', { params }),
+  
+  // Billing & Subscriptions
+  getBillingStats: () => api.get('/super-admin.php/billing/stats'),
+  getSubscriptions: (params = {}) => api.get('/super-admin.php/subscriptions', { params }),
+  updateSubscription: (id, data) => api.put(`/super-admin.php/subscription/${id}`, data),
+  
+  // Security & Audit
+  getAuditLogs: (params = {}) => api.get('/super-admin.php/audit-logs', { params }),
+  getSecurityEvents: (params = {}) => api.get('/super-admin.php/security-events', { params }),
+  
+  // API Management
+  getApiKeys: () => api.get('/super-admin.php/api-keys'),
+  createApiKey: (data) => api.post('/super-admin.php/api-key', data),
+  revokeApiKey: (id) => api.delete(`/super-admin.php/api-key/${id}`)
 };
 
 // Products API

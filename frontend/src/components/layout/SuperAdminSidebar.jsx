@@ -8,11 +8,12 @@ const SuperAdminSidebar = () => {
   const { logout, user } = useSuperAdminAuthStore()
 
   const navigation = [
-    { name: 'Dashboard', href: '/super-admin/dashboard', icon: FiShield },
-    { name: 'Tenant Management', href: '/super-admin/tenants', icon: FiUsers },
-    { name: 'System Settings', href: '/super-admin/settings', icon: FiSettings },
-    { name: 'Analytics', href: '/super-admin/analytics', icon: FiBarChart2 },
-  ]
+  { name: 'Dashboard', href: '/super-admin/dashboard', icon: FiShield },
+  { name: 'Analytics', href: '/super-admin/analytics', icon: FiBarChart2 },
+  { name: 'Tenant Management', href: '/super-admin/tenants', icon: FiUsers },
+  { name: 'User Management', href: '/super-admin/users', icon: FiUserCheck },
+  { name: 'System Settings', href: '/super-admin/settings', icon: FiSettings },
+]
 
   const isActive = (href) => location.pathname === href
 

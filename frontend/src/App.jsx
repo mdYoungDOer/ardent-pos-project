@@ -36,6 +36,9 @@ import NotificationSettingsPage from './pages/app/NotificationSettingsPage';
 // Super Admin Pages
 import SuperAdminDashboard from './pages/app/SuperAdminDashboard'
 import TenantManagementPage from './pages/app/TenantManagementPage'
+import SuperAdminAnalyticsPage from './pages/app/SuperAdminAnalyticsPage'
+import SuperAdminUserManagementPage from './pages/app/SuperAdminUserManagementPage'
+import SuperAdminSettingsPage from './pages/app/SuperAdminSettingsPage'
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -87,8 +90,9 @@ function App() {
         <Route index element={<SuperAdminDashboard />} />
         <Route path="dashboard" element={<SuperAdminDashboard />} />
         <Route path="tenants" element={<TenantManagementPage />} />
-        <Route path="settings" element={<div>Super Admin Settings</div>} />
-        <Route path="analytics" element={<div>Super Admin Analytics</div>} />
+        <Route path="users" element={<SuperAdminUserManagementPage />} />
+        <Route path="analytics" element={<SuperAdminAnalyticsPage />} />
+        <Route path="settings" element={<SuperAdminSettingsPage />} />
       </Route>
 
       {/* Catch-all route for 404 */}
