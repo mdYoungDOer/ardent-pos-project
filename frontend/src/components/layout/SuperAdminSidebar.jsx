@@ -52,40 +52,46 @@ const SuperAdminSidebar = () => {
       status: 'active'
     },
     { 
-      path: '/super-admin/settings', 
-      name: 'System Settings', 
-      icon: FiSettings,
+      path: '/super-admin/contact-submissions', 
+      name: 'Contact Submissions', 
+      icon: FiFileText,
+      status: 'active'
+    },
+    { 
+      path: '/super-admin/api-keys', 
+      name: 'API Keys Management', 
+      icon: FiKey,
       status: 'active'
     },
     { 
       path: '/super-admin/billing', 
       name: 'Billing & Payments', 
       icon: FiActivity,
-      status: 'coming-soon'
+      status: 'active'
     },
     { 
       path: '/super-admin/security', 
-      name: 'Security', 
+      name: 'Security Management', 
       icon: FiShield,
-      status: 'coming-soon'
+      status: 'active'
+    },
+    { 
+      path: '/super-admin/health', 
+      name: 'System Health', 
+      icon: FiTrendingUp,
+      status: 'active'
     },
     { 
       path: '/super-admin/logs', 
       name: 'System Logs', 
       icon: FiFileText,
-      status: 'coming-soon'
+      status: 'active'
     },
     { 
-      path: '/super-admin/api-keys', 
-      name: 'API Keys', 
-      icon: FiKey,
-      status: 'coming-soon'
-    },
-    { 
-      path: '/super-admin/monitoring', 
-      name: 'System Health', 
-      icon: FiTrendingUp,
-      status: 'coming-soon'
+      path: '/super-admin/settings', 
+      name: 'System Settings', 
+      icon: FiSettings,
+      status: 'active'
     }
   ];
 
