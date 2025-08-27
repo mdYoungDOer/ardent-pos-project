@@ -390,176 +390,155 @@ const ProductsPage = () => {
       {/* Add/Edit Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-semibold text-[#2c2c2c] mb-4">
-              {editingProduct ? 'Edit Product' : 'Add Product'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Product Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Description
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  rows="3"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Price (GHS)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Stock Quantity
-                </label>
-                <input
-                  type="number"
-                  required
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Category
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  value={formData.category_id}
-                  onChange={(e) => {
-                    setFormData({ ...formData, category_id: e.target.value, sub_category_id: '' });
-                    if (e.target.value) {
-                      fetchSubCategories(e.target.value);
-                    } else {
-                      fetchSubCategories();
-                    }
-                  }}
-                >
-                  <option value="">Select a category</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Sub-Category
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  value={formData.sub_category_id}
-                  onChange={(e) => setFormData({ ...formData, sub_category_id: e.target.value })}
-                  disabled={!formData.category_id}
-                >
-                  <option value="">Select a sub-category (optional)</option>
-                  {subCategories.map(subCategory => (
-                    <option key={subCategory.id} value={subCategory.id}>{subCategory.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  SKU
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Barcode
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
-                  value={formData.barcode}
-                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
-                  Product Image
-                </label>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload"
-                  />
-                  <label
-                    htmlFor="image-upload"
-                    className="flex items-center px-4 py-2 bg-gray-100 text-[#2c2c2c] rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
-                  >
-                    <FiUpload className="h-5 w-5 mr-2" />
-                    Upload Image
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-[#2c2c2c] mb-4">
+                {editingProduct ? 'Edit Product' : 'Add Product'}
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                    Product Name
                   </label>
-                  {imagePreview && (
-                    <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#746354]/20">
-                      <img src={imagePreview} alt="Product Preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
                 </div>
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-[#e41e5b] text-white py-2 rounded-lg hover:bg-[#9a0864] transition-colors"
-                >
-                  {editingProduct ? 'Update' : 'Add'} Product
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setEditingProduct(null);
-                    setFormData({
-                      name: '',
-                      description: '',
-                      price: '',
-                      stock: '',
-                      category_id: '',
-                      sku: '',
-                      barcode: '',
-                      image_url: ''
-                    });
-                    setImageFile(null);
-                    setImagePreview(null);
-                  }}
-                  className="flex-1 bg-gray-200 text-[#2c2c2c] py-2 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                    rows="3"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                      Price (GHS)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                      Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                    Category
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                    value={formData.category_id}
+                    onChange={(e) => {
+                      setFormData({ ...formData, category_id: e.target.value, sub_category_id: '' });
+                      if (e.target.value) {
+                        fetchSubCategories(e.target.value);
+                      } else {
+                        fetchSubCategories();
+                      }
+                    }}
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                    Sub-Category
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                    value={formData.sub_category_id}
+                    onChange={(e) => setFormData({ ...formData, sub_category_id: e.target.value })}
+                    disabled={!formData.category_id}
+                  >
+                    <option value="">Select a sub-category (optional)</option>
+                    {subCategories.map(subCategory => (
+                      <option key={subCategory.id} value={subCategory.id}>{subCategory.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                      SKU
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#2c2c2c] mb-2">
+                      Barcode
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-[#746354]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e41e5b] focus:border-[#e41e5b]"
+                      value={formData.barcode}
+                      onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-[#e41e5b] text-white py-2 px-4 rounded-lg hover:bg-[#9a0864] transition-colors"
+                  >
+                    {editingProduct ? 'Update' : 'Add'} Product
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setEditingProduct(null);
+                      setFormData({
+                        name: '',
+                        description: '',
+                        price: '',
+                        stock: '',
+                        category_id: '',
+                        sub_category_id: '',
+                        sku: '',
+                        barcode: '',
+                        image_url: ''
+                      });
+                    }}
+                    className="flex-1 bg-gray-200 text-[#2c2c2c] py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

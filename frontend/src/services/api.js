@@ -132,8 +132,22 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      authAPI.logout();
-      window.location.href = '/auth/login';
+      console.error('401 Unauthorized - Token may be invalid or expired');
+      
+      // Only redirect if we're not already on an auth page
+      const currentPath = window.location.pathname;
+      const isAuthPage = currentPath.includes('/auth/') || currentPath.includes('/login') || currentPath.includes('/register');
+      
+      if (!isAuthPage) {
+        authAPI.logout();
+        // Use the correct route based on the current user type
+        const user = authAPI.getUser();
+        if (user && user.role === 'super_admin') {
+          window.location.href = '/super-admin/login';
+        } else {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -383,6 +397,17 @@ export const superAdminAPI = {
   
   createApiKey: (data) => api.post('/super-admin.php/api-key', data),
   revokeApiKey: (id) => api.delete(`/super-admin.php/api-key/${id}`)
+};
+
+// Users API
+export const usersAPI = {
+  getAll: (params = {}) => api.get('/users.php', { params }),
+  create: (user) => api.post('/users.php', user),
+  update: (user) => api.put(`/users.php?id=${user.id}`, user),
+  delete: (id) => api.delete(`/users.php?id=${id}`),
+  getById: (id) => api.get(`/users.php?id=${id}`),
+  search: (query) => api.get(`/users.php?search=${encodeURIComponent(query)}`),
+  changePassword: (id, password) => api.post(`/users.php?id=${id}/change-password`, { password }),
 };
 
 // Products API

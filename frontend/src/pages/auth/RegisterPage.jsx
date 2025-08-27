@@ -80,7 +80,7 @@ const RegisterPage = () => {
 
       const result = await register(registrationData);
       
-      if (result.success) {
+    if (result.success) {
         // Clear stored plan data
         localStorage.removeItem('selectedPlan');
         
@@ -128,8 +128,8 @@ const RegisterPage = () => {
             </h2>
             <p className="text-[#746354] text-lg">
               Join thousands of businesses using Ardent POS
-            </p>
-          </div>
+        </p>
+      </div>
 
           {/* Selected Plan Display */}
           {selectedPlan && (
@@ -164,18 +164,18 @@ const RegisterPage = () => {
 
               {/* Personal Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+          <div>
                   <label htmlFor="first_name" className="block text-sm font-semibold text-[#2c2c2c] mb-2">
                     First Name
-                  </label>
+            </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <FiUser className="h-5 w-5 text-[#746354]" />
                     </div>
-                    <input
-                      id="first_name"
+            <input
+              id="first_name"
                       name="first_name"
-                      type="text"
+              type="text"
                       required
                       value={formData.first_name}
                       onChange={handleInputChange}
@@ -183,20 +183,20 @@ const RegisterPage = () => {
                       placeholder="Enter your first name"
                     />
                   </div>
-                </div>
+          </div>
 
-                <div>
+          <div>
                   <label htmlFor="last_name" className="block text-sm font-semibold text-[#2c2c2c] mb-2">
                     Last Name
-                  </label>
+            </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <FiUser className="h-5 w-5 text-[#746354]" />
                     </div>
-                    <input
-                      id="last_name"
+            <input
+              id="last_name"
                       name="last_name"
-                      type="text"
+              type="text"
                       required
                       value={formData.last_name}
                       onChange={handleInputChange}
@@ -204,22 +204,22 @@ const RegisterPage = () => {
                       placeholder="Enter your last name"
                     />
                   </div>
-                </div>
-              </div>
+          </div>
+        </div>
 
               {/* Email */}
-              <div>
+        <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-[#2c2c2c] mb-2">
                   Email Address
-                </label>
+          </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <FiMail className="h-5 w-5 text-[#746354]" />
-                  </div>
-                  <input
-                    id="email"
+        </div>
+          <input
+            id="email"
                     name="email"
-                    type="email"
+            type="email"
                     required
                     value={formData.email}
                     onChange={handleInputChange}
@@ -227,40 +227,40 @@ const RegisterPage = () => {
                     placeholder="Enter your email address"
                   />
                 </div>
-              </div>
+        </div>
 
               {/* Passwords */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+        <div>
                   <label htmlFor="password" className="block text-sm font-semibold text-[#2c2c2c] mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
+            Password
+          </label>
+          <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <FiLock className="h-5 w-5 text-[#746354]" />
                     </div>
-                    <input
-                      id="password"
+            <input
+              id="password"
                       name="password"
-                      type={showPassword ? 'text' : 'password'}
+              type={showPassword ? 'text' : 'password'}
                       required
                       value={formData.password}
                       onChange={handleInputChange}
                       className="block w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl placeholder-[#746354] focus:outline-none focus:ring-2 focus:ring-[#E72F7C] focus:border-[#E72F7C] transition-all duration-200 text-[#2c2c2c]"
                       placeholder="Create a password"
-                    />
-                    <button
-                      type="button"
+            />
+            <button
+              type="button"
                       className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+              onClick={() => setShowPassword(!showPassword)}
+            >
                       {showPassword ? (
                         <FiEyeOff className="h-5 w-5 text-[#746354] hover:text-[#2c2c2c]" />
                       ) : (
                         <FiEye className="h-5 w-5 text-[#746354] hover:text-[#2c2c2c]" />
                       )}
-                    </button>
-                  </div>
+            </button>
+          </div>
                 </div>
 
                 <div>
@@ -405,17 +405,17 @@ const RegisterPage = () => {
                         placeholder="Enter your city"
                       />
                     </div>
-                  </div>
+        </div>
 
-                  <div>
+        <div>
                     <label htmlFor="address" className="block text-sm font-semibold text-[#2c2c2c] mb-2">
                       Address
-                    </label>
+          </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <FiMapPin className="h-5 w-5 text-[#746354]" />
                       </div>
-                      <input
+          <input
                         id="address"
                         name="address"
                         type="text"
@@ -428,16 +428,16 @@ const RegisterPage = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+        </div>
 
               {/* Terms and Conditions */}
               <div className="mt-6">
                 <div className="flex items-start">
                   <div className="flex items-center h-5">
-                    <input
+          <input
                       id="accept-terms"
                       name="accept-terms"
-                      type="checkbox"
+            type="checkbox"
                       checked={acceptTerms}
                       onChange={(e) => setAcceptTerms(e.target.checked)}
                       className="h-4 w-4 text-[#E72F7C] focus:ring-[#E72F7C] border-gray-300 rounded"
@@ -445,7 +445,7 @@ const RegisterPage = () => {
                   </div>
                   <div className="ml-3 text-sm">
                     <label htmlFor="accept-terms" className="text-[#746354]">
-                      I agree to the{' '}
+            I agree to the{' '}
                       <Link
                         to="/terms-of-use"
                         target="_blank"
@@ -459,16 +459,16 @@ const RegisterPage = () => {
                         target="_blank"
                         className="text-[#E72F7C] hover:text-[#9a0864] underline"
                       >
-                        Privacy Policy
+              Privacy Policy
                       </Link>
-                    </label>
-                  </div>
+          </label>
+        </div>
                 </div>
               </div>
 
               {/* Submit Button */}
-              <button
-                type="submit"
+          <button
+            type="submit"
                 disabled={loading || !acceptTerms}
                 className="w-full bg-gradient-to-r from-[#E72F7C] to-[#9a0864] text-white py-3 px-4 rounded-xl font-semibold hover:from-[#d61f6b] hover:to-[#8a0759] focus:outline-none focus:ring-2 focus:ring-[#E72F7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
@@ -482,8 +482,8 @@ const RegisterPage = () => {
                     Create Account
                     <FiArrowRight className="ml-2 h-5 w-5" />
                   </>
-                )}
-              </button>
+            )}
+          </button>
             </form>
 
             {/* Links */}
