@@ -66,6 +66,16 @@ export const authAPI = {
       return response.data;
     } catch (error) {
       console.error('Token verification error:', error);
+      // Return a more graceful fallback
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const parsedUser = JSON.parse(user);
+          return { success: true, user: parsedUser };
+        } catch (parseError) {
+          return { success: false, message: 'Token verification failed' };
+        }
+      }
       return { success: false, message: 'Token verification failed' };
     }
   },

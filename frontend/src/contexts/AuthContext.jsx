@@ -21,19 +21,39 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (token) {
-          // Verify token and get user data
-          const response = await authAPI.verifyToken();
-          if (response.success) {
-            setUser(response.user);
-          } else {
-            // Token is invalid, clear it
-            localStorage.removeItem('token');
+        const user = localStorage.getItem('user');
+        
+        if (token && user) {
+          try {
+            // Try to verify token
+            const response = await authAPI.verifyToken();
+            if (response.success) {
+              setUser(response.user);
+            } else {
+              // Token is invalid, clear it
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              localStorage.removeItem('tenant');
+            }
+          } catch (error) {
+            console.error('Token verification failed:', error);
+            // If verification fails, try to use stored user data
+            try {
+              const parsedUser = JSON.parse(user);
+              setUser(parsedUser);
+            } catch (parseError) {
+              console.error('Failed to parse stored user:', parseError);
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              localStorage.removeItem('tenant');
+            }
           }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('tenant');
       } finally {
         setLoading(false);
       }

@@ -12,6 +12,7 @@ const SuperAdminRoutes = () => {
   return (
     <SuperAdminLayout>
       <Routes>
+        <Route path="/" element={<SuperAdminDashboard />} />
         <Route path="/dashboard" element={<SuperAdminDashboard />} />
         <Route path="/analytics" element={<SuperAdminAnalyticsPage />} />
         <Route path="/tenants" element={<SuperAdminTenants />} />
