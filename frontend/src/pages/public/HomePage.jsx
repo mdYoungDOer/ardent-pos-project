@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { 
   FiCheck, 
   FiCreditCard, 
@@ -13,8 +14,23 @@ import {
 import Logo from '../../components/ui/Logo'
 import StickyHeader from '../../components/layout/StickyHeader'
 import Footer from '../../components/layout/Footer'
+import Preloader from '../../components/ui/Preloader'
 
 const HomePage = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time for consistency
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Preloader />;
+  }
+
   const features = [
     {
       icon: FiMonitor,
@@ -68,7 +84,7 @@ const HomePage = () => {
     <div>
       <StickyHeader />
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-50 to-accent-50 overflow-hidden pt-24">
+      <section className="relative bg-gradient-to-br from-primary-50 to-accent-50 overflow-hidden pt-24 mt-16">
         <div className="max-w-7xl mx-auto">
           <div className="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
             <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">

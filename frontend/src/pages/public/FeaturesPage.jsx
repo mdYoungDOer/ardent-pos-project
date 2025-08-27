@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { 
   FiMonitor, 
   FiCreditCard, 
@@ -12,8 +13,23 @@ import {
 } from 'react-icons/fi'
 import StickyHeader from '../../components/layout/StickyHeader'
 import Footer from '../../components/layout/Footer'
+import Preloader from '../../components/ui/Preloader'
 
 const FeaturesPage = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time for consistency
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Preloader />;
+  }
+
   const features = [
     {
       category: 'Sales & Checkout',
@@ -101,7 +117,7 @@ const FeaturesPage = () => {
     <div className="bg-white">
       <StickyHeader />
       {/* Hero Section */}
-      <div className="relative bg-primary-50 py-16">
+      <div className="relative bg-primary-50 py-16 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">

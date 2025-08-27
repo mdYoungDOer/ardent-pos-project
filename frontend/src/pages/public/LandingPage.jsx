@@ -4,6 +4,7 @@ import { FiCheck, FiStar, FiArrowRight, FiUsers, FiShield, FiZap, FiHeadphones, 
 import { authAPI } from '../../services/api';
 import StickyHeader from '../../components/layout/StickyHeader';
 import Footer from '../../components/layout/Footer';
+import Preloader from '../../components/ui/Preloader';
 
 const LandingPage = () => {
   const [plans, setPlans] = useState([]);
@@ -110,11 +111,7 @@ const LandingPage = () => {
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <Preloader />;
   }
 
   return (
@@ -122,8 +119,8 @@ const LandingPage = () => {
       {/* Navigation */}
       <StickyHeader />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary to-accent text-white py-20">
+             {/* Hero Section */}
+       <section className="bg-gradient-to-br from-primary to-accent text-white py-20 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-5xl font-bold mb-6">
             Transform Your Business with

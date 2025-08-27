@@ -1,8 +1,24 @@
+import { useState, useEffect } from 'react'
 import { HiHeart, HiLightBulb, HiShieldCheck } from 'react-icons/hi'
 import StickyHeader from '../../components/layout/StickyHeader'
 import Footer from '../../components/layout/Footer'
+import Preloader from '../../components/ui/Preloader'
 
 const AboutPage = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time for consistency
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Preloader />;
+  }
+
   const values = [
     {
       icon: HiHeart,
@@ -25,7 +41,7 @@ const AboutPage = () => {
     <div className="bg-white">
       <StickyHeader />
       {/* Hero Section */}
-      <div className="relative py-16 bg-white overflow-hidden">
+      <div className="relative py-16 bg-white overflow-hidden mt-16">
         <div className="relative px-4 sm:px-6 lg:px-8">
           <div className="text-lg max-w-prose mx-auto">
             <h1>

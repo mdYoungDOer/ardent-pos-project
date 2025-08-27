@@ -1,12 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi'
 import toast from 'react-hot-toast'
 import StickyHeader from '../../components/layout/StickyHeader'
 import Footer from '../../components/layout/Footer'
+import Preloader from '../../components/ui/Preloader'
 
 const ContactPage = () => {
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    // Simulate loading time for consistency
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Preloader />;
+  }
   
   const {
     register,
@@ -33,7 +47,7 @@ const ContactPage = () => {
     <div className="bg-white">
       <StickyHeader />
       {/* Hero Section */}
-      <div className="relative bg-primary-50 py-16">
+      <div className="relative bg-primary-50 py-16 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
@@ -77,7 +91,7 @@ const ContactPage = () => {
                   </div>
                   <div className="ml-3 text-base text-gray-500">
                     <p>Call us at</p>
-                    <p className="font-medium text-gray-900">+234 (0) 123 456 7890</p>
+                    <p className="font-medium text-gray-900">+233 (0) 302 527 484</p>
                   </div>
                 </div>
                 
@@ -88,8 +102,8 @@ const ContactPage = () => {
                   <div className="ml-3 text-base text-gray-500">
                     <p>Visit us at</p>
                     <p className="font-medium text-gray-900">
-                      Lagos, Nigeria<br />
-                      Victoria Island
+                      Mother Love St., Adenta<br />
+                      Accra, Ghana
                     </p>
                   </div>
                 </div>
@@ -98,8 +112,8 @@ const ContactPage = () => {
               <div className="mt-8 p-6 bg-gray-50 rounded-lg">
                 <h3 className="text-lg font-medium text-gray-900">Business Hours</h3>
                 <div className="mt-3 space-y-1 text-sm text-gray-500">
-                  <p>Monday - Friday: 9:00 AM - 6:00 PM WAT</p>
-                  <p>Saturday: 10:00 AM - 4:00 PM WAT</p>
+                  <p>Monday - Friday: 9:00 AM - 6:00 PM GMT</p>
+                  <p>Saturday: 10:00 AM - 4:00 PM GMT</p>
                   <p>Sunday: Closed</p>
                 </div>
               </div>
