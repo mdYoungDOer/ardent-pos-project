@@ -133,21 +133,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.error('401 Unauthorized - Token may be invalid or expired');
-      
-      // Only redirect if we're not already on an auth page
-      const currentPath = window.location.pathname;
-      const isAuthPage = currentPath.includes('/auth/') || currentPath.includes('/login') || currentPath.includes('/register');
-      
-      if (!isAuthPage) {
-        authAPI.logout();
-        // Use the correct route based on the current user type
-        const user = authAPI.getUser();
-        if (user && user.role === 'super_admin') {
-          window.location.href = '/super-admin/login';
-        } else {
-          window.location.href = '/login';
-        }
-      }
+      // Don't automatically redirect - let components handle this
     }
     return Promise.reject(error);
   }
