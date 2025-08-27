@@ -2,6 +2,12 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import LandingPage from './pages/public/LandingPage';
+import HomePage from './pages/public/HomePage';
+import FeaturesPage from './pages/public/FeaturesPage';
+import PricingPage from './pages/public/PricingPage';
+import AboutPage from './pages/public/AboutPage';
+import ContactPage from './pages/public/ContactPage';
+import FAQPage from './pages/public/FAQPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import SuperAdminLoginPage from './pages/auth/SuperAdminLoginPage';
@@ -39,9 +45,15 @@ function App() {
   return (
     <AuthProvider>
       <div className="App">
-        <Routes>
+                  <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/faq" element={<FAQPage />} />
             <Route path="/auth/login" element={<LoginPage />} />
             <Route path="/auth/register" element={<RegisterPage />} />
             <Route path="/auth/super-admin" element={<SuperAdminLoginPage />} />

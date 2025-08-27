@@ -1,41 +1,41 @@
 import { Link } from 'react-router-dom'
 import { 
-  HiCheckCircle, 
-  HiCreditCard, 
-  HiChartBar, 
-  HiDeviceMobile,
-  HiShieldCheck,
-  HiLightningBolt,
-  HiUsers,
-  HiGlobe,
-  HiStar
-} from 'react-icons/hi'
+  FiCheck, 
+  FiCreditCard, 
+  FiBarChart2, 
+  FiSmartphone,
+  FiShield,
+  FiZap,
+  FiUsers,
+  FiGlobe,
+  FiStar
+} from 'react-icons/fi'
 import Logo from '../../components/ui/Logo'
 
 const HomePage = () => {
   const features = [
     {
-      icon: HiDeviceMobile,
+      icon: FiSmartphone,
       title: 'Mobile-First Design',
       description: 'Optimized for touch interfaces and mobile devices with responsive design.'
     },
     {
-      icon: HiCreditCard,
+      icon: FiCreditCard,
       title: 'Secure Payments',
       description: 'Integrated with Paystack for secure payment processing and subscriptions.'
     },
     {
-      icon: HiChartBar,
+      icon: FiBarChart2,
       title: 'Real-time Analytics',
       description: 'Get insights into your business with comprehensive reporting and analytics.'
     },
     {
-      icon: HiShieldCheck,
+      icon: FiShield,
       title: 'Multi-tenant Security',
       description: 'Enterprise-grade security with isolated tenant data and role-based access.'
     },
     {
-      icon: HiLightningBolt,
+      icon: FiZap,
       title: 'Lightning Fast',
       description: 'Built for performance with optimized loading times and smooth interactions.'
     }

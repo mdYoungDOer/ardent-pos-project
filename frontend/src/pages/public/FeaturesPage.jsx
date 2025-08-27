@@ -1,15 +1,15 @@
 import { 
-  HiDeviceMobile, 
-  HiCreditCard, 
-  HiChartBar, 
-  HiClipboardList,
-  HiUsers,
-  HiShieldCheck,
-  HiCloud,
-  HiLightningBolt,
-  HiGlobe,
-  HiSupport
-} from 'react-icons/hi'
+  FiSmartphone, 
+  FiCreditCard, 
+  FiBarChart2, 
+  FiClipboard,
+  FiUsers,
+  FiShield,
+  FiCloud,
+  FiZap,
+  FiGlobe,
+  FiHeadphones
+} from 'react-icons/fi'
 
 const FeaturesPage = () => {
   const features = [
@@ -17,17 +17,17 @@ const FeaturesPage = () => {
       category: 'Sales & Checkout',
       items: [
         {
-          icon: HiCreditCard,
+          icon: FiCreditCard,
           title: 'Secure Payment Processing',
           description: 'Accept payments via cash, card, and mobile money with Paystack integration.'
         },
         {
-          icon: HiDeviceMobile,
+          icon: FiSmartphone,
           title: 'Mobile-First Interface',
           description: 'Touch-optimized interface designed for tablets and mobile devices.'
         },
         {
-          icon: HiLightningBolt,
+          icon: FiZap,
           title: 'Quick Checkout',
           description: 'Fast barcode scanning and streamlined checkout process.'
         }
@@ -37,17 +37,17 @@ const FeaturesPage = () => {
       category: 'Inventory Management',
       items: [
         {
-          icon: HiClipboardList,
+          icon: FiClipboard,
           title: 'Real-time Stock Tracking',
           description: 'Monitor inventory levels in real-time with automatic low-stock alerts.'
         },
         {
-          icon: HiChartBar,
+          icon: FiBarChart2,
           title: 'Inventory Analytics',
           description: 'Track product performance and optimize your inventory.'
         },
         {
-          icon: HiGlobe,
+          icon: FiGlobe,
           title: 'Multi-location Support',
           description: 'Manage inventory across multiple store locations.'
         }
@@ -57,17 +57,17 @@ const FeaturesPage = () => {
       category: 'Customer Management',
       items: [
         {
-          icon: HiUsers,
+          icon: FiUsers,
           title: 'Customer Database',
           description: 'Maintain detailed customer profiles and purchase history.'
         },
         {
-          icon: HiChartBar,
+          icon: FiBarChart2,
           title: 'Loyalty Programs',
           description: 'Build customer loyalty with points and rewards programs.'
         },
         {
-          icon: HiSupport,
+          icon: FiHeadphones,
           title: 'Customer Support',
           description: 'Track customer interactions and support tickets.'
         }
@@ -77,17 +77,17 @@ const FeaturesPage = () => {
       category: 'Security & Reliability',
       items: [
         {
-          icon: HiShieldCheck,
+          icon: FiShield,
           title: 'Enterprise Security',
           description: 'Bank-level security with encrypted data and secure access controls.'
         },
         {
-          icon: HiCloud,
+          icon: FiCloud,
           title: 'Cloud-Based',
           description: 'Access your data from anywhere with automatic backups.'
         },
         {
-          icon: HiLightningBolt,
+          icon: FiZap,
           title: '99.9% Uptime',
           description: 'Reliable service with minimal downtime and fast performance.'
         }
