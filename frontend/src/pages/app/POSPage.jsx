@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   FiSearch, FiPlus, FiMinus, FiTrash, FiDollarSign, FiCreditCard, 
-  FiUser, FiShoppingCart, FiX, FiPrinter, FiCalculator, FiClock,
+  FiUser, FiShoppingCart, FiX, FiPrinter, FiHash, FiClock,
   FiPackage, FiTag, FiAlertCircle, FiCheck, FiArrowLeft, FiArrowRight,
   FiPercent, FiGift, FiTag as FiCoupon, FiVolume2, FiVolumeX, FiRefreshCw,
-  FiGrid, FiList, FiFilter, FiHash, FiQrCode, FiCamera, FiEye
+  FiGrid, FiList, FiFilter, FiHash, FiCamera, FiEye
 } from 'react-icons/fi';
 import { productsAPI, customersAPI, salesAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';

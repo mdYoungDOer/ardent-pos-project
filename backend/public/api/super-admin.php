@@ -12,14 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Database connection function
 function getDatabaseConnection() {
     try {
-        $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
-        $dbPort = $_ENV['DB_PORT'] ?? '5432';
+        $dbHost = $_ENV['DB_HOST'] ?? 'db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com';
+        $dbPort = $_ENV['DB_PORT'] ?? '25060';
         $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
-        $dbUser = $_ENV['DB_USERNAME'] ?? '';
-        $dbPass = $_ENV['DB_PASSWORD'] ?? '';
+        $dbUser = $_ENV['DB_USER'] ?? $_ENV['DB_USERNAME'] ?? 'doadmin';
+        $dbPass = $_ENV['DB_PASS'] ?? $_ENV['DB_PASSWORD'] ?? '';
 
-        if (empty($dbUser) || empty($dbPass)) {
-            throw new Exception('Database credentials not configured');
+        if (empty($dbPass)) {
+            throw new Exception('Database password not configured');
         }
 
         $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";

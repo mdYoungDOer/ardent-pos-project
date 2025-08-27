@@ -16,17 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    // Load environment variables
-    $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
-    $dbPort = $_ENV['DB_PORT'] ?? '5432';
+    // Load environment variables with fallbacks
+    $dbHost = $_ENV['DB_HOST'] ?? 'db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com';
+    $dbPort = $_ENV['DB_PORT'] ?? '25060';
     $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
-    $dbUser = $_ENV['DB_USERNAME'] ?? '';
-    $dbPass = $_ENV['DB_PASSWORD'] ?? '';
+    $dbUser = $_ENV['DB_USER'] ?? $_ENV['DB_USERNAME'] ?? 'doadmin';
+    $dbPass = $_ENV['DB_PASS'] ?? $_ENV['DB_PASSWORD'] ?? '';
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
 
     // Validate database credentials
-    if (empty($dbUser) || empty($dbPass)) {
-        throw new Exception('Database credentials not configured');
+    if (empty($dbPass)) {
+        throw new Exception('Database password not configured');
     }
 
     // Connect to database
@@ -96,7 +96,8 @@ try {
             __DIR__ . '/../../vendor/autoload.php',
             __DIR__ . '/../vendor/autoload.php',
             '/var/www/html/vendor/autoload.php',
-            '/var/www/html/backend/vendor/autoload.php'
+            '/var/www/html/backend/vendor/autoload.php',
+            dirname(__DIR__, 2) . '/vendor/autoload.php'
         ];
         
         $autoloaderFound = false;
@@ -109,7 +110,14 @@ try {
         }
         
         if (!$autoloaderFound) {
-            throw new Exception('JWT library not found');
+            // Try to find vendor directory
+            $vendorPath = dirname(__DIR__, 2) . '/vendor/autoload.php';
+            if (file_exists($vendorPath)) {
+                require_once $vendorPath;
+                $autoloaderFound = true;
+            } else {
+                throw new Exception('JWT library not found. Vendor directory not accessible.');
+            }
         }
 
         // Generate token
