@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   FiUsers, FiDollarSign, FiTrendingUp, FiTrendingDown, FiAlertCircle,
   FiBarChart2, FiMapPin, FiActivity, FiShield, FiSettings, FiDatabase,
@@ -6,16 +7,19 @@ import {
   FiCalendar, FiClock, FiStar, FiAward, FiTarget, FiPieChart,
   FiGrid, FiList, FiRefreshCw, FiDownload, FiFilter, FiSearch,
   FiGlobe, FiServer, FiCpu, FiHardDrive, FiWifi, FiZap,
-  FiEye, FiEdit, FiTrash, FiPlus, FiCheckCircle, FiXCircle
+  FiEye, FiEdit, FiTrash, FiPlus, FiCheckCircle, FiXCircle,
+  FiFileText, FiKey, FiMonitor
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { superAdminAPI } from '../../services/api';
 import SuperAdminNotificationSystem from '../../components/SuperAdminNotificationSystem';
 
 const SuperAdminDashboard = () => {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState([]);
   const [topTenants, setTopTenants] = useState([]);
   const [systemHealth, setSystemHealth] = useState({});
@@ -25,6 +29,72 @@ const SuperAdminDashboard = () => {
   const [timeRange, setTimeRange] = useState('30');
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [debugInfo, setDebugInfo] = useState({});
+
+  // Check if this is a placeholder route
+  const placeholderRoutes = {
+    '/super-admin/billing': {
+      title: 'Billing & Payments',
+      description: 'Manage billing, invoices, and payment processing',
+      icon: FiActivity,
+      color: 'text-blue-500'
+    },
+    '/super-admin/security': {
+      title: 'Security Management',
+      description: 'Security settings, access controls, and audit logs',
+      icon: FiShield,
+      color: 'text-red-500'
+    },
+    '/super-admin/logs': {
+      title: 'System Logs',
+      description: 'View and manage system activity logs',
+      icon: FiFileText,
+      color: 'text-green-500'
+    },
+    '/super-admin/api-keys': {
+      title: 'API Keys Management',
+      description: 'Generate and manage API keys for integrations',
+      icon: FiKey,
+      color: 'text-purple-500'
+    },
+    '/super-admin/monitoring': {
+      title: 'System Health Monitoring',
+      description: 'Real-time system performance and health metrics',
+      icon: FiMonitor,
+      color: 'text-orange-500'
+    }
+  };
+
+  const currentPlaceholder = placeholderRoutes[location.pathname];
+  if (currentPlaceholder) {
+    const Icon = currentPlaceholder.icon;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center">
+          <div className={`mx-auto h-16 w-16 ${currentPlaceholder.color} mb-4`}>
+            <Icon className="h-16 w-16" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{currentPlaceholder.title}</h1>
+          <p className="text-gray-600 mb-6">{currentPlaceholder.description}</p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <FiClock className="h-5 w-5 text-yellow-600 mr-2" />
+              <span className="text-yellow-800 font-medium">Coming Soon</span>
+            </div>
+            <p className="text-yellow-700 text-sm mt-1">
+              This feature is currently under development and will be available soon.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/super-admin/dashboard')}
+            className="mt-6 px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch real data from API
   const fetchSuperAdminData = React.useCallback(async () => {

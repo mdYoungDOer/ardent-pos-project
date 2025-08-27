@@ -109,6 +109,12 @@ function App() {
               <Route path="users" element={<SuperAdminUsers />} />
               <Route path="subscriptions" element={<SuperAdminSubscriptionPlans />} />
               <Route path="settings" element={<SuperAdminSettings />} />
+              {/* Add placeholder routes for missing pages */}
+              <Route path="billing" element={<SuperAdminDashboard />} />
+              <Route path="security" element={<SuperAdminDashboard />} />
+              <Route path="logs" element={<SuperAdminDashboard />} />
+              <Route path="api-keys" element={<SuperAdminDashboard />} />
+              <Route path="monitoring" element={<SuperAdminDashboard />} />
             </Route>
             
             {/* Default redirect */}

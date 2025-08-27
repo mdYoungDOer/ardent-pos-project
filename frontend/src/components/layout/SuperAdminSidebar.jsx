@@ -24,57 +24,68 @@ const SuperAdminSidebar = () => {
     { 
       path: '/super-admin/dashboard', 
       name: 'Dashboard', 
-      icon: FiHome 
+      icon: FiHome,
+      status: 'active'
     },
     { 
       path: '/super-admin/analytics', 
       name: 'Analytics', 
-      icon: FiBarChart2 
+      icon: FiBarChart2,
+      status: 'active'
     },
     { 
       path: '/super-admin/tenants', 
       name: 'Tenant Management', 
-      icon: FiBriefcase 
+      icon: FiBriefcase,
+      status: 'active'
     },
     { 
       path: '/super-admin/users', 
       name: 'User Management', 
-      icon: FiUsers 
+      icon: FiUsers,
+      status: 'active'
     },
     { 
       path: '/super-admin/subscriptions', 
       name: 'Subscription Plans', 
-      icon: FiCreditCard 
-    },
-    { 
-      path: '/super-admin/billing', 
-      name: 'Billing & Payments', 
-      icon: FiActivity 
-    },
-    { 
-      path: '/super-admin/security', 
-      name: 'Security', 
-      icon: FiShield 
-    },
-    { 
-      path: '/super-admin/logs', 
-      name: 'System Logs', 
-      icon: FiFileText 
-    },
-    { 
-      path: '/super-admin/api-keys', 
-      name: 'API Keys', 
-      icon: FiKey 
-    },
-    { 
-      path: '/super-admin/monitoring', 
-      name: 'System Health', 
-      icon: FiTrendingUp 
+      icon: FiCreditCard,
+      status: 'active'
     },
     { 
       path: '/super-admin/settings', 
       name: 'System Settings', 
-      icon: FiSettings 
+      icon: FiSettings,
+      status: 'active'
+    },
+    { 
+      path: '/super-admin/billing', 
+      name: 'Billing & Payments', 
+      icon: FiActivity,
+      status: 'coming-soon'
+    },
+    { 
+      path: '/super-admin/security', 
+      name: 'Security', 
+      icon: FiShield,
+      status: 'coming-soon'
+    },
+    { 
+      path: '/super-admin/logs', 
+      name: 'System Logs', 
+      icon: FiFileText,
+      status: 'coming-soon'
+    },
+    { 
+      path: '/super-admin/api-keys', 
+      name: 'API Keys', 
+      icon: FiKey,
+      status: 'coming-soon'
+    },
+    { 
+      path: '/super-admin/monitoring', 
+      name: 'System Health', 
+      icon: FiTrendingUp,
+      status: 'coming-soon'
     }
   ];
 
@@ -108,6 +119,11 @@ const SuperAdminSidebar = () => {
             >
               <Icon className="h-5 w-5 mr-3" />
               <span className="font-medium">{item.name}</span>
+              {item.status === 'coming-soon' && (
+                <span className="ml-auto text-xs bg-yellow-500 text-white px-2 py-1 rounded-full">
+                  Soon
+                </span>
+              )}
             </Link>
           );
         })}
