@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   FiHome, 
-  FiBarChart3, 
+  FiBarChart2, 
   FiUsers, 
   FiSettings, 
   FiLogOut, 
@@ -29,7 +29,7 @@ const SuperAdminSidebar = () => {
     { 
       path: '/super-admin/analytics', 
       name: 'Analytics', 
-      icon: FiBarChart3 
+      icon: FiBarChart2 
     },
     { 
       path: '/super-admin/tenants', 
