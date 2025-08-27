@@ -4,7 +4,7 @@ import {
   FiUser, FiShoppingCart, FiX, FiPrinter, FiHash, FiClock,
   FiPackage, FiTag, FiAlertCircle, FiCheck, FiArrowLeft, FiArrowRight,
   FiPercent, FiGift, FiTag as FiCoupon, FiVolume2, FiVolumeX, FiRefreshCw,
-  FiGrid, FiList, FiFilter, FiHash, FiCamera, FiEye
+  FiGrid, FiList, FiFilter, FiCamera, FiEye
 } from 'react-icons/fi';
 import { productsAPI, customersAPI, salesAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
