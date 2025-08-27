@@ -30,7 +30,7 @@ try {
     }
     
     // Apply Super Admin middleware
-    $superAdmin = new SuperAdminMiddleware();
+    $superAdmin = new SuperAdminMiddleware($db);
     if (!$superAdmin->isSuperAdmin($user)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Access denied. Super Admin required.']);
@@ -88,6 +88,9 @@ function handleGetRequest($db, $endpoint, $params) {
             break;
         case 'logs':
             getSystemLogs($db, $params);
+            break;
+        case 'security-logs':
+            getSecurityLogs($db, $params);
             break;
         case 'analytics':
             getAnalytics($db, $params);
@@ -431,6 +434,42 @@ function getSystemLogs($db, $params) {
         
     } catch (Exception $e) {
         error_log("System Logs Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'logs' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 50,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ]]);
+    }
+}
+
+function getSecurityLogs($db, $params) {
+    try {
+        $page = isset($params['page']) ? (int)$params['page'] : 1;
+        $limit = isset($params['limit']) ? (int)$params['limit'] : 50;
+        $offset = ($page - 1) * $limit;
+        
+        // Get security logs (if security_logs table exists)
+        $logs = [];
+        
+        // For now, return empty logs with pagination
+        $result = [
+            'logs' => $logs,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ];
+        
+        echo json_encode(['success' => true, 'data' => $result]);
+        
+    } catch (Exception $e) {
+        error_log("Security Logs Error: " . $e->getMessage());
         echo json_encode(['success' => true, 'data' => [
             'logs' => [],
             'pagination' => [

@@ -404,6 +404,9 @@ export const superAdminAPI = {
   // System Logs
   getSystemLogs: (params = {}) => api.get('/super-admin.php/logs', { params }),
 
+  // Security Logs
+  getSecurityLogs: (params = {}) => api.get('/super-admin.php/security-logs', { params }),
+
   // Contact Submissions
   getContactSubmissions: (params = {}) => api.get('/contact-submissions.php', { params }),
   updateContactSubmission: (id, data) => api.put(`/contact-submissions.php?id=${id}`, data),
