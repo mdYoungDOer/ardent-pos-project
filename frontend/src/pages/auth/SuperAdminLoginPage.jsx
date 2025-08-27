@@ -6,7 +6,7 @@ import Logo from '../../components/ui/Logo';
 
 const SuperAdminLoginPage = () => {
   const navigate = useNavigate();
-  const { error, login, clearError } = useAuth();
+  const { error, superAdminLogin, clearError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -30,8 +30,8 @@ const SuperAdminLoginPage = () => {
       console.log('=== SUPER ADMIN LOGIN DEBUG START ===');
       console.log('Attempting super admin login with:', formData.email);
       
-      // Use the Auth context login method
-      const result = await login(formData);
+      // Use the Auth context super admin login method
+      const result = await superAdminLogin(formData);
       
       console.log('Super admin login result:', result);
       

@@ -5,10 +5,10 @@ import {
   FiShoppingCart, FiUserCheck, FiStar, FiActivity, FiAlertCircle, FiRefreshCw
 } from 'react-icons/fi';
 import { dashboardAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DashboardPage = () => {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);

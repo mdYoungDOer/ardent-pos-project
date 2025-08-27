@@ -84,6 +84,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const superAdminLogin = async (credentials) => {
+    try {
+      setError(null);
+      const response = await authAPI.superAdminLogin(credentials);
+      
+      if (response.success) {
+        const { token, user } = response;
+        localStorage.setItem('token', token);
+        setUser(user);
+        return { success: true, user };
+      } else {
+        setError(response.message || 'Super admin login failed');
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      console.error('Super admin login error:', error);
+      const message = error.response?.data?.message || 'Super admin login failed. Please try again.';
+      setError(message);
+      return { success: false, message };
+    }
+  };
+
   const register = async (userData) => {
     try {
       setError(null);
@@ -125,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
+    superAdminLogin,
     register,
     logout,
     updateUser,

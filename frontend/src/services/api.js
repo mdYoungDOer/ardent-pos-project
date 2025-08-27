@@ -40,6 +40,27 @@ export const authAPI = {
     }
   },
 
+  superAdminLogin: async (credentials) => {
+    console.log('Making super admin login request to /auth/super-admin-login.php');
+    console.log('Request data:', { email: credentials.email, password: '***' });
+    
+    try {
+      const response = await authAxios.post('/auth/super-admin-login.php', credentials);
+      console.log('Super admin login response:', response.data);
+      
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('tenant', JSON.stringify(response.data.tenant));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Super admin login API error:', error);
+      console.error('Error response:', error.response?.data);
+      throw error;
+    }
+  },
+
   register: async (userData) => {
     const response = await authAxios.post('/auth/register.php', userData);
     if (response.data.success) {
