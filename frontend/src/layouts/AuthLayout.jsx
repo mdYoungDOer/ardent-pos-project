@@ -1,8 +1,8 @@
-import useAuthStore from '../stores/authStore'
+import { useAuth } from '../contexts/AuthContext'
 import { Navigate, Outlet } from 'react-router-dom'
 
 const AuthLayout = () => {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated } = useAuth()
 
   // Redirect to dashboard if already authenticated
   if (isAuthenticated) {

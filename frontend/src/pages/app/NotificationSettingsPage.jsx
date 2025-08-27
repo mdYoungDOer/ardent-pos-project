@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FiBell, FiMail, FiAlertTriangle, FiCheckCircle, FiSettings, FiSend, FiEye, FiEyeOff } from 'react-icons/fi';
 import { notificationAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 import useNotificationStore from '../../stores/notificationStore';
 import toast from 'react-hot-toast';
 
 const NotificationSettingsPage = () => {
-  const { user, tenant } = useAuthStore();
+  const { user, tenant } = useAuth();
   const { addSystemNotification } = useNotificationStore();
   const [loading, setLoading] = useState(false);
   const [testEmail, setTestEmail] = useState('');

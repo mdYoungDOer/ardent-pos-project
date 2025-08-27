@@ -1,8 +1,8 @@
-import useAuthStore from '../../stores/authStore'
+import { useAuth } from '../../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 
 const RoleProtectedRoute = ({ children, requiredRole = null }) => {
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user } = useAuth()
 
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" replace />

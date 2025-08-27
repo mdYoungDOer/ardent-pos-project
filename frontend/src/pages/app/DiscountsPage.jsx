@@ -5,10 +5,10 @@ import {
   FiEye, FiEyeOff, FiClock, FiTrendingUp, FiUsers, FiGlobe
 } from 'react-icons/fi';
 import { discountsAPI, categoriesAPI, productsAPI, locationsAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DiscountsPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [discounts, setDiscounts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);

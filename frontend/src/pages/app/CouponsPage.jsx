@@ -6,10 +6,10 @@ import {
   FiRefreshCw, FiX, FiGift
 } from 'react-icons/fi';
 import { couponsAPI, categoriesAPI, productsAPI, locationsAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CouponsPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [coupons, setCoupons] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);

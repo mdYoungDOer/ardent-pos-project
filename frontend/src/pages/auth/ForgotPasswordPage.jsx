@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiMail, FiArrowLeft, FiArrowRight } from 'react-icons/fi'
-import useAuthStore from '../../stores/authStore'
+import { useAuth } from '../../contexts/AuthContext'
 import Logo from '../../components/ui/Logo'
 
 const ForgotPasswordPage = () => {

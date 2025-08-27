@@ -1,9 +1,9 @@
-import useAuthStore from '../../stores/authStore'
+import { useAuth } from '../../contexts/AuthContext'
 import { FiMenu, FiUser } from 'react-icons/fi'
 import NotificationBell from '../ui/NotificationBell'
 
 const AppHeader = ({ onMenuClick }) => {
-  const { user, logout } = useAuthStore()
+  const { user, logout } = useAuth()
 
   const handleLogout = () => {
     logout()

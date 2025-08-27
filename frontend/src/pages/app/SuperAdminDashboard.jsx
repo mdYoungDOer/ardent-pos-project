@@ -8,12 +8,12 @@ import {
   FiGlobe, FiServer, FiCpu, FiHardDrive, FiWifi, FiZap,
   FiEye, FiEdit, FiTrash, FiPlus, FiCheckCircle, FiXCircle
 } from 'react-icons/fi';
-import useSuperAdminAuthStore from '../../stores/superAdminAuthStore';
+import { useAuth } from '../../contexts/AuthContext';
 import { superAdminAPI } from '../../services/api';
 import SuperAdminNotificationSystem from '../../components/SuperAdminNotificationSystem';
 
 const SuperAdminDashboard = () => {
-  const { user } = useSuperAdminAuthStore();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);

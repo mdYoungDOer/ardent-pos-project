@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import useAuthStore from '../../stores/authStore'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   FiHome,
   FiPackage,
@@ -27,7 +27,7 @@ import {
 
 const Sidebar = () => {
   const location = useLocation()
-  const { user, logout } = useAuthStore()
+  const { user, logout } = useAuth()
 
   // Super Admin Navigation
   const superAdminNavigation = [

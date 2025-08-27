@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FiBarChart2, FiTrendingUp, FiTrendingDown, FiDollarSign, FiPackage, FiUsers, FiCalendar, FiDownload } from 'react-icons/fi';
 import { dashboardAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ReportsPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

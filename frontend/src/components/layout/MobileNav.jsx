@@ -1,8 +1,8 @@
-import useAuthStore from '../../stores/authStore'
+import { useAuth } from '../../contexts/AuthContext'
 import { FiX } from 'react-icons/fi'
 
 const MobileNav = ({ isOpen, onClose, navigation }) => {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   if (!isOpen) return null
 
