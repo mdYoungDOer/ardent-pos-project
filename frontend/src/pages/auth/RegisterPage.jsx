@@ -27,6 +27,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   useEffect(() => {
     clearError();
@@ -61,6 +62,11 @@ const RegisterPage = () => {
     }
 
     if (formData.password.length < 8) {
+      clearError();
+      return;
+    }
+
+    if (!acceptTerms) {
       clearError();
       return;
     }
@@ -424,10 +430,46 @@ const RegisterPage = () => {
                 </div>
               </div>
 
+              {/* Terms and Conditions */}
+              <div className="mt-6">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="accept-terms"
+                      name="accept-terms"
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="h-4 w-4 text-[#E72F7C] focus:ring-[#E72F7C] border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <label htmlFor="accept-terms" className="text-[#746354]">
+                      I agree to the{' '}
+                      <Link
+                        to="/terms-of-use"
+                        target="_blank"
+                        className="text-[#E72F7C] hover:text-[#9a0864] underline"
+                      >
+                        Terms of Use
+                      </Link>
+                      {' '}and{' '}
+                      <Link
+                        to="/privacy-policy"
+                        target="_blank"
+                        className="text-[#E72F7C] hover:text-[#9a0864] underline"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !acceptTerms}
                 className="w-full bg-gradient-to-r from-[#E72F7C] to-[#9a0864] text-white py-3 px-4 rounded-xl font-semibold hover:from-[#d61f6b] hover:to-[#8a0759] focus:outline-none focus:ring-2 focus:ring-[#E72F7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (

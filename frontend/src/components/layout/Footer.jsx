@@ -82,14 +82,19 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-primary transition-colors">
+                <Link to="/privacy-policy" className="text-gray-300 hover:text-primary transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-primary transition-colors">
-                  Terms of Service
-                </a>
+                <Link to="/terms-of-use" className="text-gray-300 hover:text-primary transition-colors">
+                  Terms of Use
+                </Link>
+              </li>
+              <li>
+                <Link to="/cookie-policy" className="text-gray-300 hover:text-primary transition-colors">
+                  Cookie Policy
+                </Link>
               </li>
             </ul>
           </div>
@@ -98,11 +103,11 @@ const Footer = () => {
         <div className="mt-8 pt-8 border-t border-gray-700">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-300 text-sm">
-              © 2024 Ardent POS. All rights reserved.
+              © 2025 Ardent POS. All rights reserved.
             </p>
             <div className="mt-4 md:mt-0">
               <p className="text-gray-300 text-sm">
-                Made with ❤️ for small businesses
+                Powered by <a href="tel:+233548327906" className="text-primary hover:text-primary-light transition-colors">Mega Web Services</a>
               </p>
             </div>
           </div>
