@@ -3,7 +3,7 @@ import {
   FiCheck, 
   FiCreditCard, 
   FiBarChart2, 
-  FiSmartphone,
+  FiMonitor,
   FiShield,
   FiZap,
   FiUsers,
@@ -15,7 +15,7 @@ import Logo from '../../components/ui/Logo'
 const HomePage = () => {
   const features = [
     {
-      icon: FiSmartphone,
+      icon: FiMonitor,
       title: 'Mobile-First Design',
       description: 'Optimized for touch interfaces and mobile devices with responsive design.'
     },

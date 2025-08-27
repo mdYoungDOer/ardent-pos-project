@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FiEye, FiEyeOff, FiCheck, FiArrowLeft, FiUser, FiMail, FiLock, FiBuilding, FiPhone, FiMapPin, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiCheck, FiArrowLeft, FiUser, FiMail, FiLock, FiBriefcase, FiPhone, FiMapPin, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../../components/ui/Logo';
 
@@ -301,7 +301,7 @@ const RegisterPage = () => {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <FiBuilding className="h-5 w-5 text-[#746354]" />
+                        <FiBriefcase className="h-5 w-5 text-[#746354]" />
                       </div>
                       <input
                         id="business_name"

@@ -1,5 +1,5 @@
 import { 
-  FiSmartphone, 
+  FiMonitor, 
   FiCreditCard, 
   FiBarChart2, 
   FiClipboard,
@@ -22,7 +22,7 @@ const FeaturesPage = () => {
           description: 'Accept payments via cash, card, and mobile money with Paystack integration.'
         },
         {
-          icon: FiSmartphone,
+          icon: FiMonitor,
           title: 'Mobile-First Interface',
           description: 'Touch-optimized interface designed for tablets and mobile devices.'
         },
