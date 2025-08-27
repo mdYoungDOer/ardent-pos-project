@@ -102,13 +102,13 @@ const SuperAdminSidebar = () => {
   return (
     <div className="bg-dark text-white w-64 min-h-screen flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-neutral">
-        <h1 className="text-xl font-bold text-primary">Ardent POS</h1>
-        <p className="text-sm text-neutral mt-1">Super Admin</p>
+      <div className="p-4 border-b border-neutral">
+        <h1 className="text-lg font-bold text-primary">Ardent POS</h1>
+        <p className="text-xs text-neutral mt-1">Super Admin</p>
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral scrollbar-track-dark hover:scrollbar-thumb-primary">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -117,13 +117,13 @@ const SuperAdminSidebar = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+              className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
                 isActive
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-white shadow-lg'
                   : 'text-neutral hover:bg-neutral hover:text-white'
               }`}
             >
-              <Icon className="h-5 w-5 mr-3" />
+              <Icon className="h-4 w-4 mr-2" />
               <span className="font-medium">{item.name}</span>
               {item.status === 'coming-soon' && (
                 <span className="ml-auto text-xs bg-yellow-500 text-white px-2 py-1 rounded-full">
@@ -136,12 +136,12 @@ const SuperAdminSidebar = () => {
       </nav>
 
       {/* Logout Button - Always visible at bottom */}
-      <div className="p-4 border-t border-neutral">
+      <div className="p-3 border-t border-neutral">
         <button
           onClick={handleLogout}
-          className="flex items-center w-full px-4 py-3 text-neutral hover:text-white hover:bg-neutral rounded-lg transition-colors duration-200"
+          className="flex items-center w-full px-3 py-2 text-neutral hover:text-white hover:bg-neutral rounded-lg transition-colors duration-200 text-sm"
         >
-          <FiLogOut className="h-5 w-5 mr-3" />
+          <FiLogOut className="h-4 w-4 mr-2" />
           <span className="font-medium">Logout</span>
         </button>
       </div>
