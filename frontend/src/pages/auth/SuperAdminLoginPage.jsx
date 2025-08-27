@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiShield, FiEye, FiEyeOff, FiAlertCircle, FiLoader, FiArrowRight } from 'react-icons/fi';
-import useSuperAdminAuthStore from '../../stores/superAdminAuthStore';
+import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../../components/ui/Logo';
 
 const SuperAdminLoginPage = () => {
   const navigate = useNavigate();
-  const { error, login, clearError } = useSuperAdminAuthStore();
+  const { error, login, clearError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -30,13 +30,25 @@ const SuperAdminLoginPage = () => {
       console.log('=== SUPER ADMIN LOGIN DEBUG START ===');
       console.log('Attempting super admin login with:', formData.email);
       
-      // Use the Super Admin auth store login method
-      await login(formData.email, formData.password);
+      // Use the Auth context login method
+      const result = await login(formData);
       
-      console.log('Super admin login successful, redirecting...');
+      console.log('Super admin login result:', result);
       
-      // Redirect to super admin dashboard
-      navigate('/super-admin/dashboard');
+      if (result.success) {
+        // Verify this is actually a super admin
+        if (result.user?.role === 'super_admin') {
+          console.log('Super admin login successful, redirecting...');
+          navigate('/super-admin/dashboard');
+        } else {
+          console.error('User is not a super admin');
+          // This should be handled by the backend, but just in case
+          throw new Error('Access denied. Super admin privileges required.');
+        }
+      } else {
+        console.error('Super admin login failed:', result.message);
+        throw new Error(result.message || 'Login failed');
+      }
       
       console.log('=== SUPER ADMIN LOGIN DEBUG END ===');
     } catch (err) {
@@ -98,14 +110,13 @@ const SuperAdminLoginPage = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E72F7C] focus:border-[#E72F7C] transition-all duration-200 text-[#2c2c2c]"
                   placeholder="deyoungdoer@gmail.com"
-                  disabled={loading}
                 />
               </div>
 
               {/* Password Field */}
               <div>
                 <label htmlFor="password" className="block text-sm font-semibold text-[#2c2c2c] mb-2">
-                  Password
+                  Super Admin Password
                 </label>
                 <div className="relative">
                   <input
@@ -117,15 +128,17 @@ const SuperAdminLoginPage = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E72F7C] focus:border-[#E72F7C] transition-all duration-200 text-[#2c2c2c]"
                     placeholder="Enter your password"
-                    disabled={loading}
                   />
                   <button
                     type="button"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#746354] hover:text-[#2c2c2c] transition-colors"
-                    disabled={loading}
                   >
-                    {showPassword ? <FiEyeOff className="h-5 w-5" /> : <FiEye className="h-5 w-5" />}
+                    {showPassword ? (
+                      <FiEyeOff className="h-5 w-5 text-[#746354] hover:text-[#2c2c2c]" />
+                    ) : (
+                      <FiEye className="h-5 w-5 text-[#746354] hover:text-[#2c2c2c]" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -134,97 +147,52 @@ const SuperAdminLoginPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white bg-gradient-to-r from-[#E72F7C] to-[#9a0864] hover:from-[#9a0864] hover:to-[#E72F7C] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E72F7C] transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-[#E72F7C] to-[#9a0864] text-white py-3 px-4 rounded-xl font-semibold hover:from-[#d61f6b] hover:to-[#8a0759] focus:outline-none focus:ring-2 focus:ring-[#E72F7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
                   <>
-                    <FiLoader className="animate-spin -ml-1 mr-3 h-5 w-5" />
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                     Authenticating...
                   </>
                 ) : (
-                  <div className="flex items-center">
-                    Access Super Admin Portal
-                    <FiArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </div>
+                  <>
+                    Access System
+                    <FiArrowRight className="ml-2 h-5 w-5" />
+                  </>
                 )}
               </button>
             </form>
 
-            {/* Security Notice */}
-            <div className="mt-6 p-4 bg-[#a67c00]/5 border-2 border-[#a67c00]/20 rounded-xl">
-              <div className="flex items-start">
-                <FiShield className="h-5 w-5 text-[#a67c00] mt-0.5 mr-3 flex-shrink-0" />
-                <div className="text-sm">
-                  <p className="font-semibold text-[#2c2c2c] mb-1">Security Notice</p>
-                  <p className="text-[#746354]">
-                    This portal provides access to system-wide administration. 
-                    All activities are logged and monitored for security purposes.
-                  </p>
-                </div>
-              </div>
+            {/* Links */}
+            <div className="mt-6 text-center">
+              <p className="text-[#746354] text-sm">
+                Regular user?{' '}
+                <Link
+                  to="/auth/login"
+                  className="font-semibold text-[#E72F7C] hover:text-[#9a0864] transition-colors duration-200"
+                >
+                  Sign in here
+                </Link>
+              </p>
             </div>
-
-
-          </div>
-
-          {/* Footer Links */}
-          <div className="text-center">
-            <Link 
-              to="/auth/login" 
-              className="inline-flex items-center text-sm text-[#E72F7C] hover:text-[#9a0864] font-semibold transition-colors"
-            >
-              ← Back to Business Login
-            </Link>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Decorative */}
+      {/* Right Side - Background Image/Pattern */}
       <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-[#E72F7C] to-[#9a0864] relative overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-10"></div>
         <div className="relative z-10 flex items-center justify-center w-full">
           <div className="text-center text-white px-8">
-            <div className="mb-8">
-              <div className="relative inline-block">
-                <Logo size="xl" className="text-white" />
-                <div className="absolute -top-2 -right-2 bg-white rounded-full p-2">
-                  <FiShield className="h-6 w-6 text-[#E72F7C]" />
-                </div>
-              </div>
+            <div className="mb-6">
+              <FiShield className="h-16 w-16 mx-auto mb-4 text-white opacity-90" />
             </div>
-            <h1 className="text-4xl font-bold mb-4">
-              System Administration
-            </h1>
-            <p className="text-xl opacity-90 max-w-md">
-              Manage the entire Ardent POS ecosystem with powerful administrative tools and comprehensive oversight.
+            <h1 className="text-4xl font-bold mb-4">System Administration</h1>
+            <p className="text-xl opacity-90">
+              Secure access to platform management and configuration
             </p>
-            
-            {/* Admin Features */}
-            <div className="mt-8 text-left max-w-sm mx-auto space-y-3">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
-                <span className="opacity-90">Tenant management</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
-                <span className="opacity-90">System monitoring</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
-                <span className="opacity-90">User administration</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
-                <span className="opacity-90">Security controls</span>
-              </div>
-            </div>
           </div>
         </div>
-        
-        {/* Decorative Elements */}
-        <div className="absolute top-10 right-10 w-32 h-32 bg-white opacity-10 rounded-full"></div>
-        <div className="absolute bottom-20 left-20 w-24 h-24 bg-white opacity-10 rounded-full"></div>
-        <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white opacity-10 rounded-full"></div>
       </div>
     </div>
   );
