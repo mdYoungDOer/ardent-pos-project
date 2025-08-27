@@ -6,13 +6,13 @@ import {
   FiUsers, 
   FiSettings, 
   FiLogOut, 
-  FiBuilding,
+  FiBriefcase,
   FiCreditCard,
   FiActivity,
   FiShield,
   FiFileText,
   FiKey,
-  FiMonitor
+  FiTrendingUp
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -34,7 +34,7 @@ const SuperAdminSidebar = () => {
     { 
       path: '/super-admin/tenants', 
       name: 'Tenant Management', 
-      icon: FiBuilding 
+      icon: FiBriefcase 
     },
     { 
       path: '/super-admin/users', 
@@ -69,7 +69,7 @@ const SuperAdminSidebar = () => {
     { 
       path: '/super-admin/monitoring', 
       name: 'System Health', 
-      icon: FiMonitor 
+      icon: FiTrendingUp 
     },
     { 
       path: '/super-admin/settings', 
