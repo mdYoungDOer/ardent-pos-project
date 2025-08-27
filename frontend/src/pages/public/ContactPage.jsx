@@ -10,6 +10,13 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm()
+
   useEffect(() => {
     // Simulate loading time for consistency
     const timer = setTimeout(() => {
@@ -21,13 +28,6 @@ const ContactPage = () => {
   if (loading) {
     return <Preloader />;
   }
-  
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm()
 
   const onSubmit = async (data) => {
     setIsSubmitting(true)
