@@ -22,7 +22,11 @@ import {
   FiUserCheck,
   FiPercent,
   FiGift,
-  FiFolder
+  FiFolder,
+  FiMail,
+  FiKey,
+  FiDollarSign,
+  FiFileText
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -33,9 +37,13 @@ const Sidebar = () => {
   const superAdminNavigation = [
     { name: 'Super Admin Dashboard', href: '/app/super-admin', icon: FiShield },
     { name: 'Tenant Management', href: '/app/tenants', icon: FiUsers },
+    { name: 'Contact Submissions', href: '/app/contact-submissions', icon: FiMail },
+    { name: 'API Keys Management', href: '/app/api-keys', icon: FiKey },
     { name: 'System Analytics', href: '/app/analytics', icon: FiBarChart2 },
     { name: 'System Health', href: '/app/health', icon: FiActivity },
-    { name: 'Revenue Overview', href: '/app/revenue', icon: FiTrendingUp },
+    { name: 'Billing & Payments', href: '/app/billing', icon: FiDollarSign },
+    { name: 'Security Management', href: '/app/security', icon: FiShield },
+    { name: 'System Logs', href: '/app/logs', icon: FiFileText },
     { name: 'Database Management', href: '/app/database', icon: FiDatabase },
     { name: 'Global Settings', href: '/app/global-settings', icon: FiSettings },
   ]
@@ -99,8 +107,8 @@ const Sidebar = () => {
               {user?.first_name?.[0]}{user?.last_name?.[0]}
             </span>
           </div>
-          <div className="ml-3 flex-1">
-            <p className="text-sm font-semibold text-[#2c2c2c]">
+          <div className="ml-3 flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#2c2c2c] truncate">
               {user?.first_name} {user?.last_name}
             </p>
             <div className="flex items-center">
@@ -117,38 +125,40 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="mt-8 flex-1 px-3 space-y-1">
-        {navigation.map((item) => {
-          const isActive = location.pathname === item.href
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-colors ${
-                isActive
-                  ? 'bg-[#e41e5b] text-white shadow-sm'
-                  : 'text-[#746354] hover:bg-[#e41e5b]/5 hover:text-[#e41e5b]'
-              }`}
-            >
-              <item.icon
-                className={`mr-3 h-5 w-5 ${
-                  isActive ? 'text-white' : 'text-[#746354] group-hover:text-[#e41e5b]'
+      <nav className="mt-6 flex-1 px-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+        <div className="space-y-1">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-[#e41e5b] text-white shadow-sm'
+                    : 'text-[#746354] hover:bg-[#e41e5b]/5 hover:text-[#e41e5b]'
                 }`}
-              />
-              {item.name}
-            </Link>
-          )
-        })}
+              >
+                <item.icon
+                  className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                    isActive ? 'text-white' : 'text-[#746354] group-hover:text-[#e41e5b]'
+                  }`}
+                />
+                <span className="truncate">{item.name}</span>
+              </Link>
+            )
+          })}
+        </div>
       </nav>
 
       {/* Logout */}
-      <div className="px-3 pb-4">
+      <div className="px-3 mt-6">
         <button
           onClick={handleLogout}
-          className="group flex items-center w-full px-3 py-3 text-sm font-medium text-[#746354] rounded-xl hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="group flex items-center w-full px-3 py-2.5 text-sm font-medium text-[#746354] rounded-xl hover:bg-red-50 hover:text-red-600 transition-all duration-200"
         >
-          <FiLogOut className="mr-3 h-5 w-5 text-[#746354] group-hover:text-red-600" />
-          Logout
+          <FiLogOut className="mr-3 h-5 w-5 flex-shrink-0 text-[#746354] group-hover:text-red-600" />
+          <span>Logout</span>
         </button>
       </div>
     </div>

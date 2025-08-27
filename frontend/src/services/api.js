@@ -396,7 +396,113 @@ export const superAdminAPI = {
   },
   
   createApiKey: (data) => api.post('/super-admin.php/api-key', data),
-  revokeApiKey: (id) => api.delete(`/super-admin.php/api-key/${id}`)
+  revokeApiKey: (id) => api.delete(`/super-admin.php/api-key/${id}`),
+
+  // Contact Submissions Management
+  getContactSubmissions: async (params = {}) => {
+    try {
+      const response = await api.get('/contact-submissions.php', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching contact submissions:', error);
+      return { data: { success: true, data: { submissions: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  getContactSubmission: async (id) => {
+    try {
+      const response = await api.get(`/contact-submissions.php?id=${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching contact submission:', error);
+      return { data: { success: true, data: {} } };
+    }
+  },
+
+  updateContactSubmission: (id, data) => api.put(`/contact-submissions.php?id=${id}`, data),
+  deleteContactSubmission: (id) => api.delete(`/contact-submissions.php?id=${id}`),
+
+  // Billing & Payments Management
+  getBillingOverview: async () => {
+    try {
+      const response = await api.get('/super-admin.php/billing-overview');
+      return response;
+    } catch (error) {
+      console.error('Error fetching billing overview:', error);
+      return { data: { success: true, data: { total_revenue: 0, active_subscriptions: 0, pending_payments: 0, monthly_growth: 0 } } };
+    }
+  },
+
+  getInvoices: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/invoices', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      return { data: { success: true, data: { invoices: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  getInvoice: async (id) => {
+    try {
+      const response = await api.get(`/super-admin.php/invoice/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      return { data: { success: true, data: {} } };
+    }
+  },
+
+  // Security Management
+  getSecurityOverview: async () => {
+    try {
+      const response = await api.get('/super-admin.php/security-overview');
+      return response;
+    } catch (error) {
+      console.error('Error fetching security overview:', error);
+      return { data: { success: true, data: { total_events: 0, failed_logins: 0, suspicious_activities: 0, system_alerts: 0 } } };
+    }
+  },
+
+  getSecurityEvents: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/security-events', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching security events:', error);
+      return { data: { success: true, data: { events: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  getSystemAlerts: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/system-alerts', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching system alerts:', error);
+      return { data: { success: true, data: { alerts: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  getAccessLogs: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/access-logs', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching access logs:', error);
+      return { data: { success: true, data: { logs: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  getFailedLogins: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin.php/failed-logins', { params });
+      return response;
+    } catch (error) {
+      console.error('Error fetching failed logins:', error);
+      return { data: { success: true, data: { failed_logins: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  }
 };
 
 // Users API

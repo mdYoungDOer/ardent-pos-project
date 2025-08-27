@@ -44,6 +44,10 @@ import SuperAdminTenants from './pages/app/TenantManagementPage';
 import SuperAdminUsers from './pages/app/SuperAdminUserManagementPage';
 import SuperAdminSettings from './pages/app/SuperAdminSettingsPage';
 import SuperAdminSubscriptionPlans from './pages/app/SuperAdminSubscriptionPlansPage';
+import SuperAdminBillingPage from './pages/app/SuperAdminBillingPage';
+import SuperAdminSecurityPage from './pages/app/SuperAdminSecurityPage';
+import SuperAdminContactSubmissionsPage from './pages/app/SuperAdminContactSubmissionsPage';
+import SuperAdminAPIKeysPage from './pages/app/SuperAdminAPIKeysPage';
 
 function App() {
   return (
@@ -109,11 +113,12 @@ function App() {
               <Route path="users" element={<SuperAdminUsers />} />
               <Route path="subscriptions" element={<SuperAdminSubscriptionPlans />} />
               <Route path="settings" element={<SuperAdminSettings />} />
-              {/* Add placeholder routes for missing pages */}
-              <Route path="billing" element={<SuperAdminDashboard />} />
-              <Route path="security" element={<SuperAdminDashboard />} />
+              <Route path="billing" element={<SuperAdminBillingPage />} />
+              <Route path="security" element={<SuperAdminSecurityPage />} />
+              <Route path="contact-submissions" element={<SuperAdminContactSubmissionsPage />} />
+              <Route path="api-keys" element={<SuperAdminAPIKeysPage />} />
+              {/* Add placeholder routes for remaining pages */}
               <Route path="logs" element={<SuperAdminDashboard />} />
-              <Route path="api-keys" element={<SuperAdminDashboard />} />
               <Route path="monitoring" element={<SuperAdminDashboard />} />
             </Route>
             

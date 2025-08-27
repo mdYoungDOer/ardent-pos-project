@@ -32,11 +32,33 @@ const ContactPage = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true)
     try {
-      // TODO: Implement contact form submission with SendGrid
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      toast.success('Message sent successfully! We\'ll get back to you soon.')
-      reset()
+      // Submit to API endpoint
+      const response = await fetch('/api/contact-submissions.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone: data.phone || null,
+          company: data.company || null,
+          subject: data.subject,
+          message: data.message
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Message sent successfully! We\'ll get back to you soon.')
+        reset()
+      } else {
+        throw new Error(result.error || 'Failed to send message')
+      }
     } catch (error) {
+      console.error('Contact form error:', error);
       toast.error('Failed to send message. Please try again.')
     } finally {
       setIsSubmitting(false)

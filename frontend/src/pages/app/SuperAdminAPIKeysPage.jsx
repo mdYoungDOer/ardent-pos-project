@@ -9,7 +9,7 @@ import {
   FaEdit,
   FaCheck,
   FaTimes,
-  FaRefresh,
+  FaRedo,
   FaDownload,
   FaUpload,
   FaShieldAlt,
@@ -425,7 +425,7 @@ const SuperAdminAPIKeysPage = () => {
                           className="text-blue-400 hover:text-blue-600"
                           title="Regenerate Key"
                         >
-                          <FaRefresh size={14} />
+                          <FaRedo size={14} />
                         </button>
                         
                         <button
