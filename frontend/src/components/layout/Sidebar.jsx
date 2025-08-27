@@ -35,17 +35,17 @@ const Sidebar = () => {
 
   // Super Admin Navigation
   const superAdminNavigation = [
-    { name: 'Super Admin Dashboard', href: '/app/super-admin', icon: FiShield },
-    { name: 'Tenant Management', href: '/app/tenants', icon: FiUsers },
-    { name: 'Contact Submissions', href: '/app/contact-submissions', icon: FiMail },
-    { name: 'API Keys Management', href: '/app/api-keys', icon: FiKey },
-    { name: 'System Analytics', href: '/app/analytics', icon: FiBarChart2 },
-    { name: 'System Health', href: '/app/health', icon: FiActivity },
-    { name: 'Billing & Payments', href: '/app/billing', icon: FiDollarSign },
-    { name: 'Security Management', href: '/app/security', icon: FiShield },
-    { name: 'System Logs', href: '/app/logs', icon: FiFileText },
-    { name: 'Database Management', href: '/app/database', icon: FiDatabase },
-    { name: 'Global Settings', href: '/app/global-settings', icon: FiSettings },
+    { name: 'Super Admin Dashboard', href: '/super-admin/dashboard', icon: FiShield },
+    { name: 'Tenant Management', href: '/super-admin/tenants', icon: FiUsers },
+    { name: 'Contact Submissions', href: '/super-admin/contact-submissions', icon: FiMail },
+    { name: 'API Keys Management', href: '/super-admin/api-keys', icon: FiKey },
+    { name: 'System Analytics', href: '/super-admin/analytics', icon: FiBarChart2 },
+    { name: 'Billing & Payments', href: '/super-admin/billing', icon: FiDollarSign },
+    { name: 'Security Management', href: '/super-admin/security', icon: FiShield },
+    { name: 'System Health', href: '/super-admin/health', icon: FiActivity },
+    { name: 'System Logs', href: '/super-admin/logs', icon: FiFileText },
+    { name: 'Database Management', href: '/super-admin/database', icon: FiDatabase },
+    { name: 'Global Settings', href: '/super-admin/settings', icon: FiSettings },
   ]
 
   // Regular User Navigation

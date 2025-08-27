@@ -215,7 +215,7 @@ const SuperAdminBillingPage = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(billingData.revenue.monthly)}
+                  {formatCurrency(billingData.revenue?.monthly || billingData.monthly_revenue || 0)}
                 </p>
               </div>
             </div>
@@ -229,7 +229,7 @@ const SuperAdminBillingPage = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Annual Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(billingData.revenue.annual)}
+                  {formatCurrency(billingData.revenue?.annual || billingData.total_revenue || 0)}
                 </p>
               </div>
             </div>
@@ -243,7 +243,7 @@ const SuperAdminBillingPage = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {billingData.revenue.active_subscriptions}
+                  {billingData.revenue?.active_subscriptions || billingData.active_subscriptions || 0}
                 </p>
               </div>
             </div>
@@ -257,7 +257,7 @@ const SuperAdminBillingPage = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Pending Payments</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {billingData.revenue.pending_payments}
+                  {billingData.revenue?.pending_payments || billingData.pending_subscriptions || 0}
                 </p>
               </div>
             </div>

@@ -48,6 +48,8 @@ import SuperAdminBillingPage from './pages/app/SuperAdminBillingPage';
 import SuperAdminSecurityPage from './pages/app/SuperAdminSecurityPage';
 import SuperAdminContactSubmissionsPage from './pages/app/SuperAdminContactSubmissionsPage';
 import SuperAdminAPIKeysPage from './pages/app/SuperAdminAPIKeysPage';
+import SuperAdminSystemHealthPage from './pages/app/SuperAdminSystemHealthPage';
+import SuperAdminSystemLogsPage from './pages/app/SuperAdminSystemLogsPage';
 
 function App() {
   return (
@@ -117,8 +119,9 @@ function App() {
               <Route path="security" element={<SuperAdminSecurityPage />} />
               <Route path="contact-submissions" element={<SuperAdminContactSubmissionsPage />} />
               <Route path="api-keys" element={<SuperAdminAPIKeysPage />} />
+              <Route path="health" element={<SuperAdminSystemHealthPage />} />
+              <Route path="logs" element={<SuperAdminSystemLogsPage />} />
               {/* Add placeholder routes for remaining pages */}
-              <Route path="logs" element={<SuperAdminDashboard />} />
               <Route path="monitoring" element={<SuperAdminDashboard />} />
             </Route>
             

@@ -398,6 +398,17 @@ export const superAdminAPI = {
   createApiKey: (data) => api.post('/super-admin.php/api-key', data),
   revokeApiKey: (id) => api.delete(`/super-admin.php/api-key/${id}`),
 
+  // System Health
+  getSystemHealth: () => api.get('/super-admin.php/health'),
+
+  // System Logs
+  getSystemLogs: (params = {}) => api.get('/super-admin.php/logs', { params }),
+
+  // Contact Submissions
+  getContactSubmissions: (params = {}) => api.get('/contact-submissions.php', { params }),
+  updateContactSubmission: (id, data) => api.put(`/contact-submissions.php?id=${id}`, data),
+  deleteContactSubmission: (id) => api.delete(`/contact-submissions.php?id=${id}`),
+
   // Contact Submissions Management
   getContactSubmissions: async (params = {}) => {
     try {

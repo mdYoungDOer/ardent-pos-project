@@ -2,548 +2,516 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
+require_once '../config/database.php';
+require_once '../middleware/AuthMiddleware.php';
+require_once '../middleware/SuperAdminMiddleware.php';
+
+// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
-    exit;
+    exit();
 }
 
-// Database connection function
-function getDatabaseConnection() {
-    try {
-        $dbHost = $_ENV['DB_HOST'] ?? 'db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com';
-        $dbPort = $_ENV['DB_PORT'] ?? '25060';
-        $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
-        $dbUser = $_ENV['DB_USER'] ?? $_ENV['DB_USERNAME'] ?? 'doadmin';
-        $dbPass = $_ENV['DB_PASS'] ?? $_ENV['DB_PASSWORD'] ?? '';
+try {
+    // Initialize database connection
+    $database = new Database();
+    $db = $database->getConnection();
+    
+    // Apply authentication middleware
+    $auth = new AuthMiddleware($db);
+    $user = $auth->authenticate();
+    
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    // Apply Super Admin middleware
+    $superAdmin = new SuperAdminMiddleware();
+    if (!$superAdmin->isSuperAdmin($user)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Access denied. Super Admin required.']);
+        exit();
+    }
+    
+    $method = $_SERVER['REQUEST_METHOD'];
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $pathParts = explode('/', trim($path, '/'));
+    $endpoint = end($pathParts);
+    
+    switch ($method) {
+        case 'GET':
+            handleGetRequest($db, $endpoint, $_GET);
+            break;
+        case 'POST':
+            handlePostRequest($db, $endpoint, $_POST);
+            break;
+        case 'PUT':
+            handlePutRequest($db, $endpoint, $_POST);
+            break;
+        case 'DELETE':
+            handleDeleteRequest($db, $endpoint, $_GET);
+            break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    }
+    
+} catch (Exception $e) {
+    error_log("Super Admin API Error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Internal server error']);
+}
 
-        if (empty($dbPass)) {
-            throw new Exception('Database password not configured');
-        }
-
-        $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
-        $pdo = new PDO($dsn, $dbUser, $dbPass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]);
-        
-        return $pdo;
-    } catch (Exception $e) {
-        error_log("Database connection error: " . $e->getMessage());
-        return null;
+function handleGetRequest($db, $endpoint, $params) {
+    switch ($endpoint) {
+        case 'billing':
+            getBillingStats($db);
+            break;
+        case 'subscriptions':
+            getSubscriptions($db, $params);
+            break;
+        case 'tenants':
+            getTenants($db, $params);
+            break;
+        case 'users':
+            getUsers($db, $params);
+            break;
+        case 'activity':
+            getActivity($db, $params);
+            break;
+        case 'health':
+            getSystemHealth($db);
+            break;
+        case 'logs':
+            getSystemLogs($db, $params);
+            break;
+        case 'analytics':
+            getAnalytics($db, $params);
+            break;
+        default:
+            // Default dashboard stats
+            getDashboardStats($db);
     }
 }
 
-// Response function
-function sendResponse($data, $status = 200) {
-    http_response_code($status);
-    echo json_encode(['success' => true, 'data' => $data]);
-    exit;
+function getDashboardStats($db) {
+    try {
+        // Get total users
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM users WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $totalUsers = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // Get total tenants
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM tenants WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $totalTenants = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // Get total products
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM products WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $totalProducts = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // Get total sales
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM sales WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $totalSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        $stats = [
+            'total_users' => (int)$totalUsers,
+            'total_tenants' => (int)$totalTenants,
+            'total_products' => (int)$totalProducts,
+            'total_sales' => (int)$totalSales,
+            'system_health' => 'healthy'
+        ];
+        
+        echo json_encode(['success' => true, 'data' => $stats]);
+        
+    } catch (Exception $e) {
+        error_log("Dashboard Stats Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'total_users' => 0,
+            'total_tenants' => 0,
+            'total_products' => 0,
+            'total_sales' => 0,
+            'system_health' => 'error'
+        ]]);
+    }
 }
 
-// Error response function
-function sendError($message, $status = 500) {
-    http_response_code($status);
-    echo json_encode(['success' => false, 'error' => $message]);
-    exit;
+function getBillingStats($db) {
+    try {
+        // Get subscription stats
+        $stmt = $db->prepare("
+            SELECT 
+                COUNT(*) as total_subscriptions,
+                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_subscriptions,
+                SUM(CASE WHEN status = 'active' THEN amount ELSE 0 END) as total_revenue
+            FROM subscriptions 
+            WHERE deleted_at IS NULL
+        ");
+        $stmt->execute();
+        $billingStats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Get monthly revenue
+        $stmt = $db->prepare("
+            SELECT SUM(amount) as monthly_revenue
+            FROM subscriptions 
+            WHERE status = 'active' 
+            AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND deleted_at IS NULL
+        ");
+        $stmt->execute();
+        $monthlyRevenue = $stmt->fetch(PDO::FETCH_ASSOC)['monthly_revenue'] ?? 0;
+        
+        $stats = [
+            'total_subscriptions' => (int)$billingStats['total_subscriptions'],
+            'active_subscriptions' => (int)$billingStats['active_subscriptions'],
+            'total_revenue' => (float)$billingStats['total_revenue'],
+            'monthly_revenue' => (float)$monthlyRevenue,
+            'revenue' => [
+                'monthly' => (float)$monthlyRevenue,
+                'total' => (float)$billingStats['total_revenue']
+            ]
+        ];
+        
+        echo json_encode(['success' => true, 'data' => $stats]);
+        
+    } catch (Exception $e) {
+        error_log("Billing Stats Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'total_subscriptions' => 0,
+            'active_subscriptions' => 0,
+            'total_revenue' => 0,
+            'monthly_revenue' => 0,
+            'revenue' => [
+                'monthly' => 0,
+                'total' => 0
+            ]
+        ]]);
+    }
 }
 
-// Get endpoint from URL
-$uri = $_SERVER['REQUEST_URI'];
-$path = parse_url($uri, PHP_URL_PATH);
-$segments = explode('/', trim($path, '/'));
-$endpoint = end($segments);
-
-// If endpoint is the file name, default to stats
-if ($endpoint === 'super-admin.php') {
-    $endpoint = 'stats';
+function getSubscriptions($db, $params) {
+    try {
+        $page = isset($params['page']) ? (int)$params['page'] : 1;
+        $limit = isset($params['limit']) ? (int)$params['limit'] : 10;
+        $offset = ($page - 1) * $limit;
+        
+        // Get subscriptions with tenant info
+        $stmt = $db->prepare("
+            SELECT s.*, t.name as tenant_name, t.email as tenant_email
+            FROM subscriptions s
+            LEFT JOIN tenants t ON s.tenant_id = t.id
+            WHERE s.deleted_at IS NULL
+            ORDER BY s.created_at DESC
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Get total count
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM subscriptions WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        $result = [
+            'subscriptions' => $subscriptions,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ]
+        ];
+        
+        echo json_encode(['success' => true, 'data' => $result]);
+        
+    } catch (Exception $e) {
+        error_log("Subscriptions Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'subscriptions' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ]]);
+    }
 }
 
-// Get database connection
-$pdo = getDatabaseConnection();
+function getTenants($db, $params) {
+    try {
+        $page = isset($params['page']) ? (int)$params['page'] : 1;
+        $limit = isset($params['limit']) ? (int)$params['limit'] : 10;
+        $offset = ($page - 1) * $limit;
+        
+        // Get tenants with subscription info
+        $stmt = $db->prepare("
+            SELECT t.*, s.status as subscription_status, s.plan_name
+            FROM tenants t
+            LEFT JOIN subscriptions s ON t.id = s.tenant_id AND s.status = 'active'
+            WHERE t.deleted_at IS NULL
+            ORDER BY t.created_at DESC
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $tenants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Get total count
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM tenants WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        $result = [
+            'tenants' => $tenants,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ]
+        ];
+        
+        echo json_encode(['success' => true, 'data' => $result]);
+        
+    } catch (Exception $e) {
+        error_log("Tenants Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'tenants' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ]]);
+    }
+}
 
-// Route requests
-switch ($endpoint) {
-    case 'stats':
-        try {
-            if ($pdo) {
-                // Get real stats from database
-                $stmt = $pdo->query("SELECT COUNT(*) as total_users FROM users WHERE role != 'super_admin'");
-                $totalUsers = $stmt->fetch()['total_users'];
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as total_tenants FROM tenants");
-                $totalTenants = $stmt->fetch()['total_tenants'];
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as total_products FROM products");
-                $totalProducts = $stmt->fetch()['total_products'];
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as total_sales FROM sales");
-                $totalSales = $stmt->fetch()['total_sales'];
-                
-                $data = [
-                    'total_users' => (int)$totalUsers,
-                    'total_tenants' => (int)$totalTenants,
-                    'total_products' => (int)$totalProducts,
-                    'total_sales' => (int)$totalSales,
-                    'system_health' => 'healthy',
-                    'last_updated' => date('Y-m-d H:i:s')
-                ];
-            } else {
-                // Fallback data
-                $data = [
-                    'total_users' => 25,
-                    'total_tenants' => 5,
-                    'total_products' => 150,
-                    'total_sales' => 1250,
-                    'system_health' => 'healthy',
-                    'last_updated' => date('Y-m-d H:i:s')
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching stats: ' . $e->getMessage());
-        }
-        break;
+function getUsers($db, $params) {
+    try {
+        $page = isset($params['page']) ? (int)$params['page'] : 1;
+        $limit = isset($params['limit']) ? (int)$params['limit'] : 10;
+        $offset = ($page - 1) * $limit;
         
-    case 'analytics':
-        try {
-            if ($pdo) {
-                // Get real analytics from database
-                $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as revenue FROM sales WHERE created_at >= NOW() - INTERVAL '30 days'");
-                $revenue = $stmt->fetch()['revenue'];
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as new_users FROM users WHERE created_at >= NOW() - INTERVAL '30 days' AND role != 'super_admin'");
-                $newUsers = $stmt->fetch()['new_users'];
-                
-                $data = [
-                    'revenue_30_days' => (float)$revenue,
-                    'new_users_30_days' => (int)$newUsers,
-                    'growth_rate' => 15.5,
-                    'active_users' => 85,
-                    'last_updated' => date('Y-m-d H:i:s')
-                ];
-            } else {
-                $data = [
-                    'revenue_30_days' => 125000,
-                    'new_users_30_days' => 15,
-                    'growth_rate' => 15.5,
-                    'active_users' => 85,
-                    'last_updated' => date('Y-m-d H:i:s')
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching analytics: ' . $e->getMessage());
-        }
-        break;
+        // Get users with tenant info
+        $stmt = $db->prepare("
+            SELECT u.*, t.name as tenant_name
+            FROM users u
+            LEFT JOIN tenants t ON u.tenant_id = t.id
+            WHERE u.deleted_at IS NULL
+            ORDER BY u.created_at DESC
+            LIMIT :limit OFFSET :offset
+        ");
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-    case 'tenants':
-        try {
-            if ($pdo) {
-                $page = $_GET['page'] ?? 1;
-                $limit = $_GET['limit'] ?? 10;
-                $offset = ($page - 1) * $limit;
-                
-                $stmt = $pdo->prepare("SELECT id, name, status, created_at, updated_at FROM tenants ORDER BY created_at DESC LIMIT ? OFFSET ?");
-                $stmt->execute([$limit, $offset]);
-                $tenants = $stmt->fetchAll();
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as total FROM tenants");
-                $total = $stmt->fetch()['total'];
-                
-                $data = [
-                    'tenants' => $tenants,
-                    'pagination' => [
-                        'page' => (int)$page,
-                        'limit' => (int)$limit,
-                        'total' => (int)$total,
-                        'pages' => ceil($total / $limit)
-                    ]
-                ];
-            } else {
-                $data = [
-                    'tenants' => [
-                        ['id' => '1', 'name' => 'Restaurant Chain', 'status' => 'active', 'created_at' => '2024-01-01'],
-                        ['id' => '2', 'name' => 'Tech Solutions Ltd', 'status' => 'active', 'created_at' => '2024-01-05']
-                    ],
-                    'pagination' => ['page' => 1, 'limit' => 10, 'total' => 2, 'pages' => 1]
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching tenants: ' . $e->getMessage());
-        }
-        break;
+        // Get total count
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM users WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         
-    case 'users':
-        try {
-            if ($pdo) {
-                $page = $_GET['page'] ?? 1;
-                $limit = $_GET['limit'] ?? 10;
-                $offset = ($page - 1) * $limit;
-                
-                $stmt = $pdo->prepare("
-                    SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.status, u.created_at,
-                           t.name as tenant_name
-                    FROM users u
-                    LEFT JOIN tenants t ON u.tenant_id = t.id
-                    WHERE u.role != 'super_admin'
-                    ORDER BY u.created_at DESC
-                    LIMIT ? OFFSET ?
-                ");
-                $stmt->execute([$limit, $offset]);
-                $users = $stmt->fetchAll();
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE role != 'super_admin'");
-                $total = $stmt->fetch()['total'];
-                
-                $data = [
-                    'users' => $users,
-                    'pagination' => [
-                        'page' => (int)$page,
-                        'limit' => (int)$limit,
-                        'total' => (int)$total,
-                        'pages' => ceil($total / $limit)
-                    ]
-                ];
-            } else {
-                $data = [
-                    'users' => [
-                        ['id' => '1', 'first_name' => 'John', 'last_name' => 'Doe', 'email' => 'john@restaurant.com', 'role' => 'admin', 'status' => 'active'],
-                        ['id' => '2', 'first_name' => 'Jane', 'last_name' => 'Smith', 'email' => 'jane@tech.com', 'role' => 'manager', 'status' => 'active']
-                    ],
-                    'pagination' => ['page' => 1, 'limit' => 10, 'total' => 2, 'pages' => 1]
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching users: ' . $e->getMessage());
-        }
-        break;
+        $result = [
+            'users' => $users,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ]
+        ];
         
-    case 'settings':
-        try {
-            if ($pdo) {
-                // Get system settings from database
-                $stmt = $pdo->query("SELECT key, value FROM system_settings ORDER BY key");
-                $settings = $stmt->fetchAll();
-                
-                $formattedSettings = [];
-                foreach ($settings as $setting) {
-                    $formattedSettings[$setting['key']] = $setting['value'];
-                }
-                
-                $data = [
-                    'general' => [
-                        'site_name' => $formattedSettings['general_site_name'] ?? 'Ardent POS',
-                        'site_description' => $formattedSettings['general_site_description'] ?? 'Enterprise Point of Sale System',
-                        'timezone' => $formattedSettings['general_timezone'] ?? 'UTC',
-                        'maintenance_mode' => ($formattedSettings['general_maintenance_mode'] ?? 'false') === 'true'
-                    ],
-                    'email' => [
-                        'smtp_host' => $formattedSettings['email_smtp_host'] ?? '',
-                        'smtp_port' => $formattedSettings['email_smtp_port'] ?? '587',
-                        'smtp_username' => $formattedSettings['email_smtp_username'] ?? '',
-                        'smtp_password' => $formattedSettings['email_smtp_password'] ?? '',
-                        'from_email' => $formattedSettings['email_from_email'] ?? 'noreply@ardentpos.com',
-                        'from_name' => $formattedSettings['email_from_name'] ?? 'Ardent POS',
-                        'email_verification' => ($formattedSettings['email_email_verification'] ?? 'true') === 'true'
-                    ],
-                    'payment' => [
-                        'paystack_public_key' => $formattedSettings['payment_paystack_public_key'] ?? '',
-                        'paystack_secret_key' => $formattedSettings['payment_paystack_secret_key'] ?? '',
-                        'paystack_webhook_secret' => $formattedSettings['payment_paystack_webhook_secret'] ?? '',
-                        'currency' => $formattedSettings['payment_currency'] ?? 'GHS',
-                        'currency_symbol' => $formattedSettings['payment_currency_symbol'] ?? '₵'
-                    ],
-                    'security' => [
-                        'session_timeout' => (int)($formattedSettings['security_session_timeout'] ?? 3600),
-                        'max_login_attempts' => (int)($formattedSettings['security_max_login_attempts'] ?? 5),
-                        'require_2fa' => ($formattedSettings['security_require_2fa'] ?? 'false') === 'true',
-                        'password_min_length' => (int)($formattedSettings['security_password_min_length'] ?? 8),
-                        'password_require_special' => ($formattedSettings['security_password_require_special'] ?? 'true') === 'true'
-                    ],
-                    'notifications' => [
-                        'email_notifications' => ($formattedSettings['notifications_email_notifications'] ?? 'true') === 'true',
-                        'push_notifications' => ($formattedSettings['notifications_push_notifications'] ?? 'true') === 'true',
-                        'sms_notifications' => ($formattedSettings['notifications_sms_notifications'] ?? 'false') === 'true'
-                    ]
-                ];
-            } else {
-                $data = [
-                    'general' => [
-                        'site_name' => 'Ardent POS',
-                        'site_description' => 'Enterprise Point of Sale System',
-                        'timezone' => 'UTC',
-                        'maintenance_mode' => false
-                    ],
-                    'email' => [
-                        'smtp_host' => '',
-                        'smtp_port' => '587',
-                        'smtp_username' => '',
-                        'smtp_password' => '',
-                        'from_email' => 'noreply@ardentpos.com',
-                        'from_name' => 'Ardent POS',
-                        'email_verification' => true
-                    ],
-                    'payment' => [
-                        'paystack_public_key' => '',
-                        'paystack_secret_key' => '',
-                        'paystack_webhook_secret' => '',
-                        'currency' => 'GHS',
-                        'currency_symbol' => '₵'
-                    ],
-                    'security' => [
-                        'session_timeout' => 3600,
-                        'max_login_attempts' => 5,
-                        'require_2fa' => false,
-                        'password_min_length' => 8,
-                        'password_require_special' => true
-                    ],
-                    'notifications' => [
-                        'email_notifications' => true,
-                        'push_notifications' => true,
-                        'sms_notifications' => false
-                    ]
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching settings: ' . $e->getMessage());
-        }
-        break;
+        echo json_encode(['success' => true, 'data' => $result]);
         
-    case 'activity':
-        try {
-            $data = [
-                ['id' => 1, 'type' => 'tenant_created', 'message' => 'New tenant registered', 'time' => '2 hours ago'],
-                ['id' => 2, 'type' => 'payment_received', 'message' => 'Payment received', 'time' => '4 hours ago']
-            ];
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching activity: ' . $e->getMessage());
-        }
-        break;
+    } catch (Exception $e) {
+        error_log("Users Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'users' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 10,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ]]);
+    }
+}
+
+function getActivity($db, $params) {
+    try {
+        $limit = isset($params['limit']) ? (int)$params['limit'] : 20;
         
-    case 'billing':
-        try {
-            if ($pdo) {
-                // Get real billing data from database
-                $stmt = $pdo->query("SELECT COUNT(*) as total_subscriptions FROM subscriptions");
-                $totalSubscriptions = $stmt->fetch()['total_subscriptions'];
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as active_subscriptions FROM subscriptions WHERE status = 'active'");
-                $activeSubscriptions = $stmt->fetch()['active_subscriptions'];
-                
-                $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total_revenue FROM subscriptions WHERE status = 'active'");
-                $totalRevenue = $stmt->fetch()['total_revenue'];
-                
-                $data = [
-                    'total_subscriptions' => (int)$totalSubscriptions,
-                    'active_subscriptions' => (int)$activeSubscriptions,
-                    'pending_subscriptions' => 2,
-                    'cancelled_subscriptions' => 5,
-                    'total_revenue' => (float)$totalRevenue,
-                    'monthly_revenue' => 125000,
-                    'annual_revenue' => 1500000,
-                    'churn_rate' => 2.1,
-                    'average_revenue_per_user' => 5434.78
-                ];
-            } else {
-                $data = [
-                    'total_subscriptions' => 25,
-                    'active_subscriptions' => 23,
-                    'pending_subscriptions' => 2,
-                    'cancelled_subscriptions' => 5,
-                    'total_revenue' => 1250000,
-                    'monthly_revenue' => 125000,
-                    'annual_revenue' => 1500000,
-                    'churn_rate' => 2.1,
-                    'average_revenue_per_user' => 5434.78
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching billing: ' . $e->getMessage());
-        }
-        break;
+        // Get recent activity (logins, actions, etc.)
+        $stmt = $db->prepare("
+            SELECT 'login' as type, u.email, u.first_name, u.last_name, u.last_login_at as timestamp
+            FROM users u
+            WHERE u.last_login_at IS NOT NULL
+            UNION ALL
+            SELECT 'subscription' as type, t.email, t.name, '', s.created_at as timestamp
+            FROM subscriptions s
+            JOIN tenants t ON s.tenant_id = t.id
+            ORDER BY timestamp DESC
+            LIMIT :limit
+        ");
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $activity = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-    case 'subscriptions':
-        try {
-            if ($pdo) {
-                $page = $_GET['page'] ?? 1;
-                $limit = $_GET['limit'] ?? 10;
-                $offset = ($page - 1) * $limit;
-                
-                $stmt = $pdo->prepare("
-                    SELECT s.id, t.name as tenant_name, s.plan_name, s.status, s.amount, s.currency, s.next_billing_date, s.created_at
-                    FROM subscriptions s
-                    LEFT JOIN tenants t ON s.tenant_id = t.id
-                    ORDER BY s.created_at DESC
-                    LIMIT ? OFFSET ?
-                ");
-                $stmt->execute([$limit, $offset]);
-                $subscriptions = $stmt->fetchAll();
-                
-                $stmt = $pdo->query("SELECT COUNT(*) as total FROM subscriptions");
-                $total = $stmt->fetch()['total'];
-                
-                $data = [
-                    'subscriptions' => $subscriptions,
-                    'pagination' => [
-                        'page' => (int)$page,
-                        'limit' => (int)$limit,
-                        'total' => (int)$total,
-                        'pages' => ceil($total / $limit)
-                    ]
-                ];
-            } else {
-                $data = [
-                    'subscriptions' => [
-                        ['id' => '1', 'tenant_name' => 'Restaurant Chain', 'plan_name' => 'enterprise', 'status' => 'active'],
-                        ['id' => '2', 'tenant_name' => 'Tech Solutions Ltd', 'plan_name' => 'professional', 'status' => 'active']
-                    ],
-                    'pagination' => ['page' => 1, 'limit' => 10, 'total' => 2, 'pages' => 1]
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching subscriptions: ' . $e->getMessage());
-        }
-        break;
+        echo json_encode(['success' => true, 'data' => $activity]);
         
-    case 'subscription-plans':
-        try {
-            if ($pdo) {
-                $stmt = $pdo->query("SELECT * FROM subscription_plans ORDER BY monthly_price ASC");
-                $plans = $stmt->fetchAll();
-                
-                // Format the data for frontend
-                $data = array_map(function($plan) {
-                    return [
-                        'id' => $plan['plan_id'],
-                        'name' => $plan['name'],
-                        'description' => $plan['description'],
-                        'monthly_price' => (float)$plan['monthly_price'],
-                        'yearly_price' => (float)$plan['yearly_price'],
-                        'currency' => $plan['currency'],
-                        'features' => json_decode($plan['features'], true),
-                        'limits' => json_decode($plan['limits'], true),
-                        'is_active' => (bool)$plan['is_active'],
-                        'is_popular' => (bool)$plan['is_popular'],
-                        'created_at' => $plan['created_at']
-                    ];
-                }, $plans);
-            } else {
-                // Fallback data
-                $data = [
-                    [
-                        'id' => 'starter',
-                        'name' => 'Starter',
-                        'description' => 'Perfect for small businesses',
-                        'monthly_price' => 120.00,
-                        'yearly_price' => 1200.00,
-                        'currency' => 'GHS',
-                        'features' => ['Basic POS functionality', 'Up to 2 locations'],
-                        'limits' => ['locations' => 2, 'users' => 3],
-                        'is_active' => true,
-                        'is_popular' => false
-                    ],
-                    [
-                        'id' => 'professional',
-                        'name' => 'Professional',
-                        'description' => 'Ideal for growing businesses',
-                        'monthly_price' => 240.00,
-                        'yearly_price' => 2400.00,
-                        'currency' => 'GHS',
-                        'features' => ['Everything in Starter', 'Up to 5 locations'],
-                        'limits' => ['locations' => 5, 'users' => 10],
-                        'is_active' => true,
-                        'is_popular' => true
-                    ]
-                ];
-            }
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching subscription plans: ' . $e->getMessage());
-        }
-        break;
+    } catch (Exception $e) {
+        error_log("Activity Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => []]);
+    }
+}
+
+function getSystemHealth($db) {
+    try {
+        // Check database connection
+        $db->query("SELECT 1");
+        $dbStatus = 'healthy';
         
-    case 'health':
-        try {
-            $data = [
-                'cpu' => 45, 'memory' => 62, 'disk' => 38, 'network' => 95,
-                'database' => $pdo ? 99.9 : 0, 'api' => 99.7, 'status' => $pdo ? 'healthy' : 'error'
-            ];
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching health: ' . $e->getMessage());
-        }
-        break;
+        // Get basic system info
+        $stmt = $db->prepare("SELECT COUNT(*) as total_users FROM users WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $totalUsers = $stmt->fetch(PDO::FETCH_ASSOC)['total_users'];
         
-    case 'logs':
-        try {
-            $data = [
-                'logs' => [
-                    ['id' => 1, 'level' => 'info', 'message' => 'System backup completed', 'timestamp' => date('Y-m-d H:i:s', strtotime('-1 hour'))],
-                    ['id' => 2, 'level' => 'warning', 'message' => 'High CPU usage detected', 'timestamp' => date('Y-m-d H:i:s', strtotime('-2 hours'))]
-                ],
-                'pagination' => ['page' => 1, 'limit' => 10, 'total' => 2, 'pages' => 1]
-            ];
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching logs: ' . $e->getMessage());
-        }
-        break;
+        $health = [
+            'status' => 'healthy',
+            'database' => $dbStatus,
+            'total_users' => (int)$totalUsers,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
         
-    case 'audit-logs':
-        try {
-            $data = [
-                'audit_logs' => [
-                    ['id' => 1, 'action' => 'user_login', 'details' => 'User logged in', 'timestamp' => date('Y-m-d H:i:s', strtotime('-30 minutes'))],
-                    ['id' => 2, 'action' => 'settings_updated', 'details' => 'Settings updated', 'timestamp' => date('Y-m-d H:i:s', strtotime('-1 hour'))]
-                ],
-                'pagination' => ['page' => 1, 'limit' => 10, 'total' => 2, 'pages' => 1]
-            ];
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching audit logs: ' . $e->getMessage());
-        }
-        break;
+        echo json_encode(['success' => true, 'data' => $health]);
         
-    case 'security-events':
-        try {
-            $data = [
-                'security_events' => [
-                    ['id' => 1, 'type' => 'failed_login', 'severity' => 'medium', 'description' => 'Failed login attempts', 'timestamp' => date('Y-m-d H:i:s', strtotime('-2 hours'))],
-                    ['id' => 2, 'type' => 'suspicious_activity', 'severity' => 'low', 'description' => 'Unusual access pattern', 'timestamp' => date('Y-m-d H:i:s', strtotime('-4 hours'))]
-                ],
-                'pagination' => ['page' => 1, 'limit' => 10, 'total' => 2, 'pages' => 1]
-            ];
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching security events: ' . $e->getMessage());
-        }
-        break;
+    } catch (Exception $e) {
+        error_log("System Health Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'status' => 'error',
+            'database' => 'error',
+            'total_users' => 0,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]]);
+    }
+}
+
+function getSystemLogs($db, $params) {
+    try {
+        $page = isset($params['page']) ? (int)$params['page'] : 1;
+        $limit = isset($params['limit']) ? (int)$params['limit'] : 50;
+        $offset = ($page - 1) * $limit;
         
-    case 'api-keys':
-        try {
-            $data = [
-                'api_keys' => [
-                    ['id' => 1, 'name' => 'Production API Key', 'key' => 'pk_live_...', 'status' => 'active'],
-                    ['id' => 2, 'name' => 'Development API Key', 'key' => 'pk_test_...', 'status' => 'active']
-                ],
-                'pagination' => ['page' => 1, 'limit' => 10, 'total' => 2, 'pages' => 1]
-            ];
-            sendResponse($data);
-        } catch (Exception $e) {
-            sendError('Error fetching API keys: ' . $e->getMessage());
-        }
-        break;
+        // Get system logs (if logs table exists)
+        $logs = [];
         
-    default:
-        sendError('Endpoint not found', 404);
-        break;
+        // For now, return empty logs with pagination
+        $result = [
+            'logs' => $logs,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ];
+        
+        echo json_encode(['success' => true, 'data' => $result]);
+        
+    } catch (Exception $e) {
+        error_log("System Logs Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'logs' => [],
+            'pagination' => [
+                'page' => 1,
+                'limit' => 50,
+                'total' => 0,
+                'pages' => 0
+            ]
+        ]]);
+    }
+}
+
+function getAnalytics($db, $params) {
+    try {
+        // Get analytics data
+        $analytics = [
+            'revenue_30_days' => 0,
+            'new_users_30_days' => 0,
+            'growth_rate' => 0,
+            'active_users' => 0
+        ];
+        
+        // Calculate 30-day revenue
+        $stmt = $db->prepare("
+            SELECT SUM(amount) as revenue
+            FROM subscriptions 
+            WHERE status = 'active' 
+            AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND deleted_at IS NULL
+        ");
+        $stmt->execute();
+        $revenue = $stmt->fetch(PDO::FETCH_ASSOC)['revenue'] ?? 0;
+        $analytics['revenue_30_days'] = (float)$revenue;
+        
+        // Calculate new users in 30 days
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as new_users
+            FROM users 
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND deleted_at IS NULL
+        ");
+        $stmt->execute();
+        $newUsers = $stmt->fetch(PDO::FETCH_ASSOC)['new_users'] ?? 0;
+        $analytics['new_users_30_days'] = (int)$newUsers;
+        
+        // Calculate active users (users with recent login)
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as active_users
+            FROM users 
+            WHERE last_login_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            AND deleted_at IS NULL
+        ");
+        $stmt->execute();
+        $activeUsers = $stmt->fetch(PDO::FETCH_ASSOC)['active_users'] ?? 0;
+        $analytics['active_users'] = (int)$activeUsers;
+        
+        echo json_encode(['success' => true, 'data' => $analytics]);
+        
+    } catch (Exception $e) {
+        error_log("Analytics Error: " . $e->getMessage());
+        echo json_encode(['success' => true, 'data' => [
+            'revenue_30_days' => 0,
+            'new_users_30_days' => 0,
+            'growth_rate' => 0,
+            'active_users' => 0
+        ]]);
+    }
+}
+
+function handlePostRequest($db, $endpoint, $data) {
+    // Handle POST requests for creating new records
+    echo json_encode(['success' => true, 'message' => 'POST endpoint not implemented yet']);
+}
+
+function handlePutRequest($db, $endpoint, $data) {
+    // Handle PUT requests for updating records
+    echo json_encode(['success' => true, 'message' => 'PUT endpoint not implemented yet']);
+}
+
+function handleDeleteRequest($db, $endpoint, $params) {
+    // Handle DELETE requests for removing records
+    echo json_encode(['success' => true, 'message' => 'DELETE endpoint not implemented yet']);
 }
 ?>
