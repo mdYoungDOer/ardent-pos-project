@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiCheck, FiStar, FiArrowRight, FiUsers, FiShield, FiZap, FiHeadphones, FiGlobe } from 'react-icons/fi';
 import { authAPI } from '../../services/api';
+import StickyHeader from '../../components/layout/StickyHeader';
+import Footer from '../../components/layout/Footer';
 
 const LandingPage = () => {
   const [plans, setPlans] = useState([]);
@@ -118,26 +120,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary">Ardent POS</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/auth/login" className="text-gray-600 hover:text-gray-900">
-                Sign In
-              </Link>
-              <Link 
-                to="/auth/register" 
-                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <StickyHeader />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary to-accent text-white py-20">
@@ -326,48 +309,7 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4">Ardent POS</h3>
-              <p className="text-gray-400">
-                The leading point-of-sale solution for Ghanaian businesses.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Features</a></li>
-                <li><a href="#" className="hover:text-white">Pricing</a></li>
-                <li><a href="#" className="hover:text-white">Integrations</a></li>
-                <li><a href="#" className="hover:text-white">API</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Help Center</a></li>
-                <li><a href="#" className="hover:text-white">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white">Training</a></li>
-                <li><a href="#" className="hover:text-white">Status</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">About</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Careers</a></li>
-                <li><a href="#" className="hover:text-white">Privacy</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Ardent POS. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Pricing Modal */}
       {showPricingModal && (

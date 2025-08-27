@@ -11,6 +11,8 @@ import {
   FiStar
 } from 'react-icons/fi'
 import Logo from '../../components/ui/Logo'
+import StickyHeader from '../../components/layout/StickyHeader'
+import Footer from '../../components/layout/Footer'
 
 const HomePage = () => {
   const features = [
@@ -64,6 +66,7 @@ const HomePage = () => {
 
   return (
     <div>
+      <StickyHeader />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary-50 to-accent-50 overflow-hidden pt-24">
         <div className="max-w-7xl mx-auto">
@@ -280,6 +283,8 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+      
+      <Footer />
     </div>
   )
 }

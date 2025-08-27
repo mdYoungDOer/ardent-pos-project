@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiSearch, FiChevronDown, FiChevronUp, FiMail, FiPhone, FiMessageCircle } from 'react-icons/fi';
+import StickyHeader from '../../components/layout/StickyHeader';
+import Footer from '../../components/layout/Footer';
 
 const FAQPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -196,6 +198,7 @@ const FAQPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <StickyHeader />
       {/* Hero Section */}
       <section className="pt-24 pb-16 bg-gradient-to-br from-primary-50 to-accent-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -322,6 +325,8 @@ const FAQPage = () => {
           </div>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };
