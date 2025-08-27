@@ -66,239 +66,50 @@ function App() {
             <Route path="/auth/register" element={<RegisterPage />} />
             <Route path="/auth/super-admin" element={<SuperAdminLoginPage />} />
             
-            {/* Protected App Routes */}
+            {/* Protected App Routes - Using Nested Routing */}
             <Route 
               path="/app" 
               element={
                 <ProtectedRoute>
-                  <AppLayout>
-                    <DashboardPage />
-                  </AppLayout>
+                  <AppLayout />
                 </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <DashboardPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/pos" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <POSPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/products" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ProductsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/categories" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <CategoriesPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/locations" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <LocationsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/inventory" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <InventoryPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/sales" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <SalesPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/customers" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <CustomersPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/reports" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ReportsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/settings" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <SettingsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/notifications" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <NotificationSettingsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/user-management" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <UserManagementPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/sub-categories" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <SubCategoriesPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/discounts" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <DiscountsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/app/coupons" 
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <CouponsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } 
-            />
+              }
+            >
+              <Route index element={<DashboardPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="pos" element={<POSPage />} />
+              <Route path="products" element={<ProductsPage />} />
+              <Route path="categories" element={<CategoriesPage />} />
+              <Route path="locations" element={<LocationsPage />} />
+              <Route path="inventory" element={<InventoryPage />} />
+              <Route path="sales" element={<SalesPage />} />
+              <Route path="customers" element={<CustomersPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="notifications" element={<NotificationSettingsPage />} />
+              <Route path="user-management" element={<UserManagementPage />} />
+              <Route path="sub-categories" element={<SubCategoriesPage />} />
+              <Route path="discounts" element={<DiscountsPage />} />
+              <Route path="coupons" element={<CouponsPage />} />
+            </Route>
             
-            {/* Protected Super Admin Routes */}
+            {/* Protected Super Admin Routes - Using Nested Routing */}
             <Route 
               path="/super-admin" 
               element={
                 <SuperAdminProtectedRoute>
-                  <SuperAdminLayout>
-                    <SuperAdminDashboard />
-                  </SuperAdminLayout>
+                  <SuperAdminLayout />
                 </SuperAdminProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/super-admin/dashboard" 
-              element={
-                <SuperAdminProtectedRoute>
-                  <SuperAdminLayout>
-                    <SuperAdminDashboard />
-                  </SuperAdminLayout>
-                </SuperAdminProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/super-admin/analytics" 
-              element={
-                <SuperAdminProtectedRoute>
-                  <SuperAdminLayout>
-                    <SuperAdminAnalyticsPage />
-                  </SuperAdminLayout>
-                </SuperAdminProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/super-admin/tenants" 
-              element={
-                <SuperAdminProtectedRoute>
-                  <SuperAdminLayout>
-                    <SuperAdminTenants />
-                  </SuperAdminLayout>
-                </SuperAdminProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/super-admin/users" 
-              element={
-                <SuperAdminProtectedRoute>
-                  <SuperAdminLayout>
-                    <SuperAdminUsers />
-                  </SuperAdminLayout>
-                </SuperAdminProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/super-admin/subscriptions" 
-              element={
-                <SuperAdminProtectedRoute>
-                  <SuperAdminLayout>
-                    <SuperAdminSubscriptionPlans />
-                  </SuperAdminLayout>
-                </SuperAdminProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/super-admin/settings" 
-              element={
-                <SuperAdminProtectedRoute>
-                  <SuperAdminLayout>
-                    <SuperAdminSettings />
-                  </SuperAdminLayout>
-                </SuperAdminProtectedRoute>
-              } 
-            />
+              }
+            >
+              <Route index element={<SuperAdminDashboard />} />
+              <Route path="dashboard" element={<SuperAdminDashboard />} />
+              <Route path="analytics" element={<SuperAdminAnalyticsPage />} />
+              <Route path="tenants" element={<SuperAdminTenants />} />
+              <Route path="users" element={<SuperAdminUsers />} />
+              <Route path="subscriptions" element={<SuperAdminSubscriptionPlans />} />
+              <Route path="settings" element={<SuperAdminSettings />} />
+            </Route>
             
             {/* Default redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
