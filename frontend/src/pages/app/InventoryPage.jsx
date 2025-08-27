@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash, FiSearch, FiPackage, FiAlertCircle, FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
 import { productsAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const InventoryPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

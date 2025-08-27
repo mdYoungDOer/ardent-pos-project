@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FiSave, FiUser, FiSettings, FiBell, FiShield, FiCreditCard, FiGlobe } from 'react-icons/fi';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SettingsPage = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });

@@ -7,10 +7,10 @@ import {
   FiGrid, FiList, FiFilter, FiHash, FiQrCode, FiCamera, FiEye
 } from 'react-icons/fi';
 import { productsAPI, customersAPI, salesAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const POSPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [cart, setCart] = useState([]);

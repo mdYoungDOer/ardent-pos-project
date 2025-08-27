@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash, FiSearch, FiUser, FiAlertCircle, FiPhone, FiMail } from 'react-icons/fi';
 import { customersAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CustomersPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

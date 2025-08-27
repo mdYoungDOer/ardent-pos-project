@@ -4,10 +4,10 @@ import {
   FiImage, FiUpload, FiCamera, FiTag, FiDollarSign, FiTrendingUp
 } from 'react-icons/fi';
 import { productsAPI, categoriesAPI, subCategoriesAPI } from '../../services/api';
-import useAuthStore from '../../stores/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ProductsPage = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
