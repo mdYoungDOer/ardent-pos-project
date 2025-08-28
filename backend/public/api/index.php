@@ -151,6 +151,17 @@ try {
         $router->post('/notifications/sale-receipt/{id}', 'NotificationController@sendSaleReceipt');
         $router->get('/notifications/history', 'NotificationController@getNotificationHistory');
         
+        // Support Portal
+        $router->get('/support-portal/knowledgebase', 'SupportPortalController@getKnowledgebase');
+        $router->get('/support-portal/categories', 'SupportPortalController@getCategories');
+        $router->get('/support-portal/search', 'SupportPortalController@searchKnowledgebase');
+        $router->get('/support-portal/tickets', 'SupportPortalController@getTickets');
+        $router->post('/support-portal/tickets', 'SupportPortalController@createTicket');
+        $router->put('/support-portal/tickets/{id}', 'SupportPortalController@updateTicket');
+        $router->delete('/support-portal/tickets/{id}', 'SupportPortalController@deleteTicket');
+        $router->get('/support-portal/chat', 'SupportPortalController@getChatHistory');
+        $router->post('/support-portal/chat', 'SupportPortalController@sendChatMessage');
+        
     }, [AuthMiddleware::class, TenantMiddleware::class]);
     
     // Super admin routes
