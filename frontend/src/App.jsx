@@ -8,6 +8,7 @@ import FeaturesPage from './pages/public/FeaturesPage';
 import PricingPage from './pages/public/PricingPage';
 import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage';
+import SupportPortalPage from './pages/public/SupportPortalPage';
 import FAQPage from './pages/public/FAQPage';
 import PrivacyPolicyPage from './pages/public/PrivacyPolicyPage';
 import TermsOfUsePage from './pages/public/TermsOfUsePage';
@@ -47,6 +48,7 @@ import SuperAdminSubscriptionPlans from './pages/app/SuperAdminSubscriptionPlans
 import SuperAdminBillingPage from './pages/app/SuperAdminBillingPage';
 import SuperAdminSecurityPage from './pages/app/SuperAdminSecurityPage';
 import SuperAdminContactSubmissionsPage from './pages/app/SuperAdminContactSubmissionsPage';
+import SuperAdminSupportPortalPage from './pages/app/SuperAdminSupportPortalPage';
 import SuperAdminAPIKeysPage from './pages/app/SuperAdminAPIKeysPage';
 import SuperAdminSystemHealthPage from './pages/app/SuperAdminSystemHealthPage';
 import SuperAdminSystemLogsPage from './pages/app/SuperAdminSystemLogsPage';
@@ -64,6 +66,7 @@ function App() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+        <Route path="/support" element={<SupportPortalPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-use" element={<TermsOfUsePage />} />
@@ -118,6 +121,7 @@ function App() {
               <Route path="billing" element={<SuperAdminBillingPage />} />
               <Route path="security" element={<SuperAdminSecurityPage />} />
               <Route path="contact-submissions" element={<SuperAdminContactSubmissionsPage />} />
+              <Route path="support-portal" element={<SuperAdminSupportPortalPage />} />
               <Route path="api-keys" element={<SuperAdminAPIKeysPage />} />
               <Route path="health" element={<SuperAdminSystemHealthPage />} />
               <Route path="logs" element={<SuperAdminSystemLogsPage />} />

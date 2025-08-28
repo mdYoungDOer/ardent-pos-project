@@ -58,6 +58,12 @@ const SuperAdminSidebar = () => {
       status: 'active'
     },
     { 
+      path: '/super-admin/support-portal', 
+      name: 'Support Portal', 
+      icon: FiMessageCircle,
+      status: 'active'
+    },
+    { 
       path: '/super-admin/api-keys', 
       name: 'API Keys Management', 
       icon: FiKey,

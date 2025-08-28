@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Sidebar from '../components/layout/Sidebar'
 import MobileNav from '../components/layout/MobileNav'
 import AppHeader from '../components/layout/AppHeader'
+import ChatWidget from '../components/support/ChatWidget'
 
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -43,6 +44,7 @@ const AppLayout = () => {
       <div className="md:hidden">
         <MobileNav />
       </div>
+      <ChatWidget />
     </div>
   )
 }
