@@ -156,14 +156,14 @@ const SupportPage = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Support Center</h1>
+      <div className="mb-6" style={{ paddingTop: '50px' }}>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">How can we help you?</h1>
         <p className="text-gray-600">Find answers, create tickets, and get help with your POS system</p>
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center mb-4">
             <FiBookOpen className="h-8 w-8 text-primary mr-3" />
             <h3 className="text-xl font-semibold">Knowledge Base</h3>
@@ -179,7 +179,7 @@ const SupportPage = () => {
           </button>
         </div>
 
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center mb-4">
             <FiMessageSquare className="h-8 w-8 text-primary mr-3" />
             <h3 className="text-xl font-semibold">Support Tickets</h3>
@@ -195,7 +195,7 @@ const SupportPage = () => {
           </button>
         </div>
 
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center mb-4">
             <FiHelpCircle className="h-8 w-8 text-primary mr-3" />
             <h3 className="text-xl font-semibold">My Tickets</h3>

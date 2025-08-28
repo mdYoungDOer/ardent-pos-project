@@ -168,6 +168,88 @@ class SupportPortalController
             $priority = isset($_GET['priority']) ? $_GET['priority'] : null;
             $offset = ($page - 1) * $limit;
             
+            // Get user from JWT token for filtering user's own tickets
+            $user = $GLOBALS['current_user'] ?? null;
+            
+            $whereConditions = ["1=1"];
+            $bindParams = [];
+            
+            // If user is authenticated, filter by their tickets
+            if ($user) {
+                $whereConditions[] = "t.user_id = :user_id";
+                $bindParams['user_id'] = $user['id'];
+            }
+            
+            if ($status) {
+                $whereConditions[] = "t.status = :status";
+                $bindParams['status'] = $status;
+            }
+            
+            if ($priority) {
+                $whereConditions[] = "t.priority = :priority";
+                $bindParams['priority'] = $priority;
+            }
+            
+            $whereClause = implode(' AND ', $whereConditions);
+            
+            $sql = "
+                SELECT t.*, u.first_name, u.last_name, u.email, u.tenant_id,
+                       tenant.name as tenant_name
+                FROM support_tickets t
+                LEFT JOIN users u ON t.user_id = u.id
+                LEFT JOIN tenants tenant ON u.tenant_id = tenant.id
+                WHERE $whereClause
+                ORDER BY t.updated_at DESC
+                LIMIT :limit OFFSET :offset
+            ";
+            
+            $tickets = Database::fetchAll($sql, array_merge($bindParams, [
+                'limit' => $limit,
+                'offset' => $offset
+            ]));
+            
+            // Get total count
+            $countSql = "
+                SELECT COUNT(*) as total 
+                FROM support_tickets t
+                WHERE $whereClause
+            ";
+            
+            $totalResult = Database::fetch($countSql, $bindParams);
+            $total = $totalResult['total'] ?? 0;
+            
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'tickets' => $tickets,
+                    'pagination' => [
+                        'page' => $page,
+                        'limit' => $limit,
+                        'total' => (int)$total,
+                        'pages' => ceil($total / $limit)
+                    ]
+                ]
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Tickets Error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to fetch tickets'
+            ]);
+        }
+    }
+    
+    public function getAllTickets()
+    {
+        try {
+            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            $priority = isset($_GET['priority']) ? $_GET['priority'] : null;
+            $offset = ($page - 1) * $limit;
+            
             $whereConditions = ["1=1"];
             $bindParams = [];
             
@@ -223,7 +305,7 @@ class SupportPortalController
             ]);
             
         } catch (Exception $e) {
-            error_log("Tickets Error: " . $e->getMessage());
+            error_log("Get All Tickets Error: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -377,7 +459,7 @@ class SupportPortalController
             }
             
             // Increment view count
-            Database::execute("UPDATE knowledgebase SET view_count = view_count + 1 WHERE id = :id", ['id' => $id]);
+            Database::query("UPDATE knowledgebase SET view_count = view_count + 1 WHERE id = :id", ['id' => $id]);
             
             echo json_encode([
                 'success' => true,

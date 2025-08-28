@@ -177,6 +177,11 @@ try {
         $router->put('/tenants/{id}', 'Admin\TenantController@update');
         $router->delete('/tenants/{id}', 'Admin\TenantController@destroy');
         $router->get('/analytics', 'Admin\AnalyticsController@index');
+        
+        // Support Portal Admin Routes
+        $router->get('/support-portal/tickets', 'SupportPortalController@getAllTickets');
+        $router->put('/support-portal/tickets/{id}', 'SupportPortalController@updateTicket');
+        $router->delete('/support-portal/tickets/{id}', 'SupportPortalController@deleteTicket');
     }, [AuthMiddleware::class, 'role:super_admin']);
     
     // Dispatch the request

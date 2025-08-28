@@ -43,7 +43,7 @@ const SuperAdminSupportPortalPage = () => {
         limit: 50
       });
 
-      const response = await fetch(`/api/support-portal.php/tickets?${params}`, {
+      const response = await fetch(`/api/admin/support-portal/tickets?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -63,7 +63,7 @@ const SuperAdminSupportPortalPage = () => {
   const loadKnowledgebase = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/support-portal.php/knowledgebase?limit=50');
+      const response = await fetch('/api/support-portal/knowledgebase?limit=50');
       const data = await response.json();
       
       if (data.success) {
@@ -78,7 +78,7 @@ const SuperAdminSupportPortalPage = () => {
 
   const updateTicketStatus = async (ticketId, status) => {
     try {
-      const response = await fetch('/api/support-portal.php/tickets', {
+      const response = await fetch(`/api/admin/support-portal/tickets/${ticketId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
