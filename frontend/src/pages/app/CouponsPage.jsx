@@ -3,7 +3,7 @@ import {
   FiPlus, FiEdit, FiTrash, FiSearch, FiPercent, FiAlertCircle,
   FiCalendar, FiDollarSign, FiTag, FiMapPin, FiPackage, FiFilter,
   FiEye, FiEyeOff, FiClock, FiTrendingUp, FiUsers, FiGlobe, FiCopy,
-  FiRefreshCw, FiX, FiGift
+  FiRotateCw, FiX, FiGift
 } from 'react-icons/fi';
 import { couponsAPI, categoriesAPI, productsAPI, locationsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -354,7 +354,7 @@ const CouponsPage = () => {
                 onClick={fetchCoupons}
                 className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
               >
-                <FiRefreshCw className="h-4 w-4 mr-2" />
+                <FiRotateCw className="h-4 w-4 mr-2" />
                 Refresh
               </button>
             </div>

@@ -8,7 +8,7 @@ import {
   FiFilter,
   FiEye,
   FiTrash,
-  FiRefreshCw,
+  FiRotateCw,
   FiDownload,
   FiCheckCircle,
   FiXCircle,
@@ -224,7 +224,7 @@ const SuperAdminContactSubmissionsPage = () => {
                 onClick={fetchContactSubmissions}
                 className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center transition-colors"
               >
-                <FiRefreshCw className="mr-2" />
+                <FiRotateCw className="mr-2" />
                 Refresh
               </button>
               <button

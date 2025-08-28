@@ -55,18 +55,25 @@ const ChatWidget = () => {
 
   const initializeChat = async () => {
     try {
-      // Create a new chat session
-      const sessionResponse = await supportAPI.createChatSession();
-      if (sessionResponse && sessionResponse.session_id) {
-        setSessionId(sessionResponse.session_id);
-        
-        // Load previous messages if any
-        if (sessionResponse.messages && sessionResponse.messages.length > 0) {
-          setMessages(sessionResponse.messages);
+      // For public users, just start with welcome messages
+      // Chat sessions are only needed for authenticated users
+      if (user) {
+        // Create a new chat session for authenticated users
+        const sessionResponse = await supportAPI.createChatSession();
+        if (sessionResponse && sessionResponse.session_id) {
+          setSessionId(sessionResponse.session_id);
+          
+          // Load previous messages if any
+          if (sessionResponse.messages && sessionResponse.messages.length > 0) {
+            setMessages(sessionResponse.messages);
+          } else {
+            setMessages(welcomeMessages);
+          }
         } else {
           setMessages(welcomeMessages);
         }
       } else {
+        // Public users start with welcome messages
         setMessages(welcomeMessages);
       }
     } catch (error) {
@@ -77,7 +84,8 @@ const ChatWidget = () => {
 
   const loadKnowledgeBase = async () => {
     try {
-      const articles = await supportAPI.getKnowledgebase();
+      const response = await supportAPI.getKnowledgebase();
+      const articles = response.data?.articles || response.data || [];
       setKnowledgeBase(articles);
       
       // Generate suggested questions based on available articles

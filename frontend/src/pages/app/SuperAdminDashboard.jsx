@@ -5,7 +5,7 @@ import {
   FiBarChart2, FiMapPin, FiActivity, FiShield, FiSettings, FiDatabase,
   FiCreditCard, FiPackage, FiShoppingCart, FiUserCheck, FiUserX,
   FiCalendar, FiClock, FiStar, FiAward, FiTarget, FiPieChart,
-  FiGrid, FiList, FiRefreshCw, FiDownload, FiFilter, FiSearch,
+  FiGrid, FiList, FiRotateCw, FiDownload, FiFilter, FiSearch,
   FiGlobe, FiServer, FiCpu, FiHardDrive, FiWifi, FiZap,
   FiEye, FiEdit, FiTrash, FiPlus, FiCheckCircle, FiXCircle,
   FiFileText, FiKey, FiMonitor
@@ -445,7 +445,7 @@ const SuperAdminDashboard = () => {
                 onClick={fetchSuperAdminData}
                 className="flex items-center px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
               >
-                <FiRefreshCw className="h-4 w-4 mr-2" />
+                <FiRotateCw className="h-4 w-4 mr-2" />
                 Refresh
               </button>
             </div>

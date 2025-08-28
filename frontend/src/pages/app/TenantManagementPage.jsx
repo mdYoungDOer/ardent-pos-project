@@ -3,7 +3,7 @@ import {
   FiUsers, FiPlus, FiEdit, FiTrash, FiSearch, FiFilter, FiEye,
   FiShield, FiShieldOff, FiDollarSign, FiActivity, FiCalendar,
   FiMapPin, FiPhone, FiMail, FiPackage, FiTrendingUp, FiTrendingDown,
-  FiMoreVertical, FiDownload, FiRefreshCw, FiAlertCircle
+  FiMoreVertical, FiDownload, FiRotateCw, FiAlertCircle
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { superAdminAPI } from '../../services/api';
@@ -303,7 +303,7 @@ const TenantManagementPage = () => {
 
           <div className="flex items-center space-x-2">
             <button className="flex items-center px-4 py-3 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors">
-              <FiRefreshCw className="h-4 w-4 mr-2" />
+                              <FiRotateCw className="h-4 w-4 mr-2" />
               Refresh
             </button>
             <button className="flex items-center px-4 py-3 bg-gray-100 text-[#2c2c2c] rounded-lg hover:bg-gray-200 transition-colors">

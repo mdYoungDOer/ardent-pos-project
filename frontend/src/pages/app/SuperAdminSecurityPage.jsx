@@ -14,7 +14,7 @@ import {
   FiSearch,
   FiFilter,
   FiDownload,
-  FiRefreshCw,
+  FiRotateCw,
   FiSettings,
   FiKey,
   FiDatabase,
@@ -249,7 +249,7 @@ const SuperAdminSecurityPage = () => {
                 onClick={fetchSecurityData}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
               >
-                <FiRefreshCw className="mr-2" />
+                <FiRotateCw className="mr-2" />
                 Refresh
               </button>
             </div>

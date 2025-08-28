@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSave, FiRefreshCw, FiMail, FiCreditCard, FiShield, FiBell, FiGlobe } from 'react-icons/fi';
+import { FiSave, FiRotateCw, FiMail, FiCreditCard, FiShield, FiBell, FiGlobe } from 'react-icons/fi';
 import { superAdminAPI } from '../../services/api';
 
 const SuperAdminSettingsPage = () => {
@@ -470,7 +470,7 @@ const SuperAdminSettingsPage = () => {
               onClick={() => loadSettings()}
               className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
-              <FiRefreshCw className="h-4 w-4 inline mr-2" />
+                              <FiRotateCw className="h-4 w-4 inline mr-2" />
               Refresh
             </button>
             <button

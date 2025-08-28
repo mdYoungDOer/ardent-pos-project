@@ -3,7 +3,7 @@ import {
   FiUsers, FiPlus, FiEdit, FiTrash, FiSearch, FiFilter, FiEye,
   FiShield, FiShieldOff, FiDollarSign, FiActivity, FiCalendar,
   FiMapPin, FiPhone, FiMail, FiPackage, FiTrendingUp, FiTrendingDown,
-  FiMoreVertical, FiDownload, FiRefreshCw, FiAlertCircle, FiCheckCircle,
+  FiMoreVertical, FiDownload, FiRotateCw, FiAlertCircle, FiCheckCircle,
   FiXCircle, FiUserCheck, FiUserX, FiLock, FiUnlock
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
@@ -230,7 +230,7 @@ const SuperAdminUserManagementPage = () => {
                 onClick={fetchUsers}
                 className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
               >
-                <FiRefreshCw className="h-4 w-4 mr-2" />
+                <FiRotateCw className="h-4 w-4 mr-2" />
                 Refresh
               </button>
               <button 

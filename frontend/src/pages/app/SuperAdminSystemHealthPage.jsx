@@ -9,7 +9,7 @@ import {
   FiAlertCircle,
   FiCheckCircle,
   FiClock,
-  FiRefreshCw,
+  FiRotateCw,
   FiTrendingUp,
   FiTrendingDown,
   FiAlertTriangle
@@ -177,7 +177,7 @@ const SuperAdminSystemHealthPage = () => {
                 onClick={fetchSystemHealth}
                 className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center transition-colors"
               >
-                <FiRefreshCw className="mr-2" />
+                <FiRotateCw className="mr-2" />
                 Refresh
               </button>
             </div>

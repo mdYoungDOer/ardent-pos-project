@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FiBell, FiX, FiCheck, FiAlertTriangle, FiInfo, FiSettings,
-  FiRefreshCw, FiTrash, FiEye, FiEyeOff, FiVolume2, FiVolumeX
+  FiRotateCw, FiTrash, FiEye, FiEyeOff, FiVolume2, FiVolumeX
 } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -267,7 +267,7 @@ const SuperAdminNotificationSystem = () => {
                 className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
                 title="Refresh"
               >
-                <FiRefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <FiRotateCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={() => setShowSettings(!showSettings)}

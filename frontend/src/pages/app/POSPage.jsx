@@ -3,7 +3,7 @@ import {
   FiSearch, FiPlus, FiMinus, FiTrash, FiDollarSign, FiCreditCard, 
   FiUser, FiShoppingCart, FiX, FiPrinter, FiHash, FiClock,
   FiPackage, FiTag, FiAlertCircle, FiCheck, FiArrowLeft, FiArrowRight,
-  FiPercent, FiGift, FiTag as FiCoupon, FiVolume2, FiVolumeX, FiRefreshCw,
+  FiPercent, FiGift, FiTag as FiCoupon, FiVolume2, FiVolumeX, FiRotateCw,
   FiGrid, FiList, FiFilter, FiCamera, FiEye
 } from 'react-icons/fi';
 import { productsAPI, customersAPI, salesAPI } from '../../services/api';

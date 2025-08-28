@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   FiTrendingUp, FiTrendingDown, FiBarChart2, FiPieChart, FiMapPin,
   FiUsers, FiDollarSign, FiActivity, FiClock, FiAlertCircle,
-  FiDownload, FiFilter, FiRefreshCw, FiCalendar, FiTarget,
+  FiDownload, FiFilter, FiRotateCw, FiCalendar, FiTarget,
   FiDatabase, FiServer, FiCpu, FiHardDrive, FiWifi
 } from 'react-icons/fi';
 import { superAdminAPI } from '../../services/api';
@@ -113,7 +113,7 @@ const SuperAdminAnalyticsPage = () => {
               onClick={fetchAnalytics}
               className="flex items-center px-4 py-2 bg-[#e41e5b] text-white rounded-lg hover:bg-[#9a0864] transition-colors"
             >
-              <FiRefreshCw className="h-4 w-4 mr-2" />
+                              <FiRotateCw className="h-4 w-4 mr-2" />
               Refresh
             </button>
           </div>
