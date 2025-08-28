@@ -215,9 +215,9 @@ If you encounter any issues during setup, contact our support team or check our 
 - Enable receipt auto-printing
 
 ## Troubleshooting
-- If scanner doesn\'t work, check USB connection
+- If scanner doesn''t work, check USB connection
 - If payment fails, verify payment method setup
-- If receipt doesn\'t print, check printer connection', 'sales, transactions, checkout, payment, receipt', true),
+- If receipt doesn''t print, check printer connection', 'sales, transactions, checkout, payment, receipt', true),
 
 (3, 'Managing Your Inventory', '# Inventory Management Guide
 
@@ -300,7 +300,7 @@ If you encounter any issues during setup, contact our support team or check our 
 
 ## Troubleshooting
 - If stock levels are incorrect, check for pending sales
-- If alerts aren\'t working, verify notification settings
+- If alerts aren''t working, verify notification settings
 - If transfers fail, check location permissions', 'inventory, stock, products, management, tracking', true);
 
 -- Create indexes for better performance
