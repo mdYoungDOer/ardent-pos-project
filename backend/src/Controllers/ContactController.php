@@ -4,6 +4,7 @@ namespace ArdentPOS\Controllers;
 
 use ArdentPOS\Core\Database;
 use ArdentPOS\Core\Config;
+use Exception;
 
 class ContactController
 {
