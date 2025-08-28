@@ -67,6 +67,9 @@ try {
     $router->post('/webhooks/paystack', 'PaystackController@webhook');
     $router->get('/health', 'HealthController@check');
     
+    // Contact Submissions (Public)
+    $router->post('/contact-submissions', 'ContactController@submit');
+    
     // Support Portal (public access)
     $router->get('/support-portal/knowledgebase', 'SupportPortalController@getKnowledgebase');
     $router->get('/support-portal/categories', 'SupportPortalController@getCategories');
