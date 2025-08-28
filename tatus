@@ -1,5 +1,0 @@
-[33m38ea464[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Critical fixes: Replace FiRefreshCw with FiRotateCw and fix chat widget authentication issues
-[33m13339c1[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add test endpoint for categories verification
-[33m25e0d7e[m Critical fix: Move support portal endpoints to public routes and create separate public API instance
-[33mffd4bdb[m Fix TenantMiddleware tenant ID issue and make audio element optional to prevent sound file errors
-[33m2d08d66[m Critical fixes: Fix double JSON output in DB test, replace missing FiMessageCircle icons, add API test endpoint
