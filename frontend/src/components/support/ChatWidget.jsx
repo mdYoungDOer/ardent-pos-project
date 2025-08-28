@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FiMessageCircle, 
-  FiX, 
-  FiSend, 
-  FiMinimize2, 
+import { useAuth } from '../../contexts/AuthContext';
+import { supportAPI } from '../../services/api';
+import {
+  FiMessageCircle,
+  FiX,
+  FiSend,
+  FiMinimize2,
   FiMaximize2,
   FiPaperclip,
   FiSmile,
   FiUser,
-  FiHelpCircle
+  FiHelpCircle,
+  FiSearch,
+  FiBookOpen,
+  FiMessageSquare,
+  FiClock,
+  FiCheckCircle,
+  FiAlertCircle
 } from 'react-icons/fi';
-import { useAuth } from '../../contexts/AuthContext';
 
 const ChatWidget = () => {
   const { user } = useAuth();
@@ -19,50 +26,94 @@ const ChatWidget = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId, setSessionId] = useState('');
+  const [sessionId, setSessionId] = useState(null);
+  const [knowledgeBase, setKnowledgeBase] = useState([]);
+  const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
 
-  // Initialize chat session
-  useEffect(() => {
-    if (isOpen && !sessionId) {
-      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      setSessionId(newSessionId);
-      
-      // Add welcome message
-      setMessages([
-        {
-          id: 'welcome',
-          message: `Hello! I'm Ardent POS Assistant. How can I help you today? I can answer questions about our system, help you find articles, or create a support ticket for you.`,
-          sender_type: 'bot',
-          created_at: new Date().toISOString()
-        }
-      ]);
+  // Pre-defined welcome messages and suggested questions
+  const welcomeMessages = [
+    {
+      id: 'welcome-1',
+      type: 'bot',
+      content: `👋 Hi there! I'm your Ardent POS assistant. How can I help you today?`,
+      timestamp: new Date()
     }
-  }, [isOpen, sessionId]);
+  ];
 
-  // Auto-scroll to bottom when new messages arrive
+  const defaultSuggestions = [
+    "How do I set up my POS system?",
+    "How to process a sale?",
+    "How to manage inventory?",
+    "How to create a support ticket?",
+    "How to view sales reports?",
+    "How to add new products?",
+    "How to manage customers?",
+    "How to configure payment methods?"
+  ];
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Initialize chat session
+    initializeChat();
+    loadKnowledgeBase();
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
-  // Focus input when chat opens
-  useEffect(() => {
-    if (isOpen && !isMinimized) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+  const initializeChat = async () => {
+    try {
+      // Create a new chat session
+      const sessionResponse = await supportAPI.createChatSession();
+      if (sessionResponse && sessionResponse.session_id) {
+        setSessionId(sessionResponse.session_id);
+        
+        // Load previous messages if any
+        if (sessionResponse.messages && sessionResponse.messages.length > 0) {
+          setMessages(sessionResponse.messages);
+        } else {
+          setMessages(welcomeMessages);
+        }
+      } else {
+        setMessages(welcomeMessages);
+      }
+    } catch (error) {
+      console.error('Error initializing chat:', error);
+      setMessages(welcomeMessages);
     }
-  }, [isOpen, isMinimized]);
+  };
 
-  const sendMessage = async (message = inputMessage) => {
-    if (!message.trim() || !sessionId) return;
+  const loadKnowledgeBase = async () => {
+    try {
+      const articles = await supportAPI.getKnowledgebase();
+      setKnowledgeBase(articles);
+      
+      // Generate suggested questions based on available articles
+      const suggestions = articles
+        .slice(0, 8)
+        .map(article => article.title.replace(/^#\s*/, '').replace(/\?$/, '?'))
+        .filter(title => title.length < 50);
+      
+      setSuggestedQuestions(suggestions.length > 0 ? suggestions : defaultSuggestions);
+    } catch (error) {
+      console.error('Error loading knowledge base:', error);
+      setSuggestedQuestions(defaultSuggestions);
+    }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleSendMessage = async (message = inputMessage) => {
+    if (!message.trim()) return;
 
     const userMessage = {
-      id: `user_${Date.now()}`,
-      message: message.trim(),
-      sender_type: 'user',
-      created_at: new Date().toISOString()
+      id: Date.now(),
+      type: 'user',
+      content: message,
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -70,92 +121,125 @@ const ChatWidget = () => {
     setIsTyping(true);
 
     try {
-      const response = await fetch('/api/support-portal.php/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(user && { 'Authorization': `Bearer ${localStorage.getItem('token')}` })
-        },
-        body: JSON.stringify({
-          session_id: sessionId,
-          message: message.trim(),
-          sender_type: 'user'
-        })
-      });
-
-      const data = await response.json();
+      // First, try to find a relevant knowledge base article
+      const relevantArticle = findRelevantArticle(message);
       
-      if (data.success) {
-        // Load updated chat history
-        loadChatHistory();
+      let botResponse;
+      
+      if (relevantArticle) {
+        // Provide answer based on knowledge base
+        botResponse = {
+          id: Date.now() + 1,
+          type: 'bot',
+          content: generateArticleResponse(relevantArticle, message),
+          timestamp: new Date(),
+          article: relevantArticle
+        };
+      } else {
+        // Send to chat API for general response
+        const response = await supportAPI.sendChatMessage(sessionId, message);
+        botResponse = {
+          id: Date.now() + 1,
+          type: 'bot',
+          content: response.message || "I'm here to help! Could you please provide more details about your question?",
+          timestamp: new Date()
+        };
       }
+
+      setMessages(prev => [...prev, botResponse]);
     } catch (error) {
       console.error('Error sending message:', error);
-      
-      // Add error message
-      setMessages(prev => [...prev, {
-        id: `error_${Date.now()}`,
-        message: 'Sorry, I encountered an error. Please try again or create a support ticket.',
-        sender_type: 'bot',
-        created_at: new Date().toISOString()
-      }]);
+      const errorResponse = {
+        id: Date.now() + 1,
+        type: 'bot',
+        content: "I'm having trouble connecting right now. Please try again or create a support ticket for immediate assistance.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorResponse]);
     } finally {
       setIsTyping(false);
     }
   };
 
-  const loadChatHistory = async () => {
-    if (!sessionId) return;
+  const findRelevantArticle = (query) => {
+    const searchTerms = query.toLowerCase().split(' ');
+    
+    // Find the most relevant article based on title and content
+    let bestMatch = null;
+    let bestScore = 0;
 
-    try {
-      const response = await fetch(`/api/support-portal.php/chat?session_id=${sessionId}&limit=50`);
-      const data = await response.json();
+    knowledgeBase.forEach(article => {
+      const title = article.title.toLowerCase();
+      const content = article.content.toLowerCase();
+      const tags = article.tags.toLowerCase();
       
-      if (data.success) {
-        setMessages(data.data);
+      let score = 0;
+      
+      searchTerms.forEach(term => {
+        if (title.includes(term)) score += 3;
+        if (content.includes(term)) score += 1;
+        if (tags.includes(term)) score += 2;
+      });
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = article;
       }
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-    }
+    });
+
+    return bestScore > 2 ? bestMatch : null;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    sendMessage();
+  const generateArticleResponse = (article, query) => {
+    const title = article.title.replace(/^#\s*/, '');
+    
+    // Extract a relevant excerpt from the article content
+    const content = article.content
+      .replace(/#{1,6}\s+/g, '') // Remove headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/\n+/g, ' ') // Replace newlines with spaces
+      .trim();
+
+    const excerpt = content.length > 200 ? content.substring(0, 200) + '...' : content;
+
+    return `📚 **${title}**\n\n${excerpt}\n\n💡 This should help answer your question about "${query}". Would you like me to provide more details or help you with something else?`;
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    handleSendMessage(suggestion);
   };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSendMessage();
     }
   };
 
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+  const toggleChat = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setIsMinimized(false);
+    }
   };
 
-  const quickReplies = [
-    'How do I set up my POS?',
-    'I need help with inventory',
-    'How do I generate reports?',
-    'Create a support ticket'
-  ];
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
+  };
 
-  const handleQuickReply = (reply) => {
-    sendMessage(reply);
+  const formatTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (!isOpen) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
         <button
-          onClick={() => setIsOpen(true)}
-          className="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-200 transform hover:scale-105"
-          aria-label="Open chat"
+          onClick={toggleChat}
+          className="bg-primary hover:bg-accent-1 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          data-chat-trigger
         >
           <FiMessageCircle className="h-6 w-6" />
         </button>
@@ -165,27 +249,25 @@ const ChatWidget = () => {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className={`bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 ${
+      <div className={`bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300 ${
         isMinimized ? 'w-80 h-12' : 'w-96 h-[500px]'
       }`}>
         {/* Header */}
-        <div className="bg-primary text-white p-4 rounded-t-lg flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-                            <FiHelpCircle className="h-5 w-5" />
-            <span className="font-semibold">Ardent POS Assistant</span>
+        <div className="bg-gradient-to-r from-primary to-accent-1 text-white p-4 rounded-t-lg flex items-center justify-between">
+          <div className="flex items-center">
+            <FiHelpCircle className="h-5 w-5 mr-2" />
+            <span className="font-semibold">Ardent POS Support</span>
           </div>
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setIsMinimized(!isMinimized)}
+              onClick={toggleMinimize}
               className="text-white hover:text-gray-200 transition-colors"
-              aria-label={isMinimized ? 'Maximize' : 'Minimize'}
             >
               {isMinimized ? <FiMaximize2 className="h-4 w-4" /> : <FiMinimize2 className="h-4 w-4" />}
             </button>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={toggleChat}
               className="text-white hover:text-gray-200 transition-colors"
-              aria-label="Close chat"
             >
               <FiX className="h-4 w-4" />
             </button>
@@ -195,73 +277,75 @@ const ChatWidget = () => {
         {!isMinimized && (
           <>
             {/* Messages */}
-            <div className="flex-1 h-80 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`flex items-start space-x-2 max-w-[80%] ${
-                    message.sender_type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                  }`}>
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      message.sender_type === 'user' 
-                        ? 'bg-primary text-white' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {message.sender_type === 'user' ? (
-                        <FiUser className="h-4 w-4" />
-                      ) : (
-                        <FiHelpCircle className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div className={`px-3 py-2 rounded-lg ${
-                      message.sender_type === 'user'
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}>
-                      <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                      <p className={`text-xs mt-1 ${
-                        message.sender_type === 'user' ? 'text-primary-100' : 'text-gray-500'
+            <div className="flex-1 p-4 h-[380px] overflow-y-auto">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] p-3 rounded-lg ${
+                        message.type === 'user'
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-start space-x-2">
+                        {message.type === 'bot' && (
+                          <FiHelpCircle className="h-4 w-4 mt-1 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+                          {message.article && (
+                            <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                              <div className="flex items-center text-xs text-blue-700">
+                                <FiBookOpen className="h-3 w-3 mr-1" />
+                                Knowledge Base Article
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`text-xs mt-1 ${
+                        message.type === 'user' ? 'text-white/70' : 'text-gray-500'
                       }`}>
-                        {formatTime(message.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="flex items-start space-x-2">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
-                      <FiHelpCircle className="h-4 w-4" />
-                    </div>
-                    <div className="bg-gray-100 text-gray-900 px-3 py-2 rounded-lg">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        {formatTime(message.timestamp)}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-              
+                ))}
+                
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 text-gray-800 p-3 rounded-lg">
+                      <div className="flex items-center space-x-1">
+                        <FiHelpCircle className="h-4 w-4" />
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Replies */}
+            {/* Suggested Questions */}
             {messages.length === 1 && (
               <div className="px-4 pb-2">
-                <div className="grid grid-cols-2 gap-2">
-                  {quickReplies.map((reply, index) => (
+                <div className="text-xs text-gray-500 mb-2">Quick questions:</div>
+                <div className="flex flex-wrap gap-1">
+                  {suggestedQuestions.slice(0, 4).map((question, index) => (
                     <button
                       key={index}
-                      onClick={() => handleQuickReply(reply)}
-                      className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md transition-colors text-left"
+                      onClick={() => handleSuggestionClick(question)}
+                      className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded-full transition-colors"
                     >
-                      {reply}
+                      {question}
                     </button>
                   ))}
                 </div>
@@ -269,29 +353,45 @@ const ChatWidget = () => {
             )}
 
             {/* Input */}
-            <div className="border-t border-gray-200 p-4">
-              <form onSubmit={handleSubmit} className="flex items-end space-x-2">
+            <div className="p-4 border-t border-gray-200">
+              <div className="flex items-center space-x-2">
                 <div className="flex-1 relative">
                   <textarea
-                    ref={inputRef}
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Type your message..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     rows="1"
-                    style={{ minHeight: '40px', maxHeight: '120px' }}
+                    style={{ minHeight: '40px', maxHeight: '100px' }}
                   />
                 </div>
                 <button
-                  type="submit"
+                  onClick={() => handleSendMessage()}
                   disabled={!inputMessage.trim() || isTyping}
-                  className="bg-primary text-white p-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Send message"
+                  className="bg-primary hover:bg-accent-1 disabled:bg-gray-300 text-white p-2 rounded-lg transition-colors disabled:cursor-not-allowed"
                 >
                   <FiSend className="h-4 w-4" />
                 </button>
-              </form>
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                <div className="flex items-center space-x-3">
+                  <button className="flex items-center hover:text-primary transition-colors">
+                    <FiPaperclip className="h-3 w-3 mr-1" />
+                    Attach
+                  </button>
+                  <button className="flex items-center hover:text-primary transition-colors">
+                    <FiSmile className="h-3 w-3 mr-1" />
+                    Emoji
+                  </button>
+                </div>
+                <div className="flex items-center">
+                  <FiClock className="h-3 w-3 mr-1" />
+                  <span>24/7 Support</span>
+                </div>
+              </div>
             </div>
           </>
         )}

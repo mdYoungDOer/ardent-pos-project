@@ -749,4 +749,19 @@ export const couponsAPI = {
   generateCode: () => api.get('/coupons.php/generate-code'),
 };
 
+// Support Portal API methods
+export const supportAPI = {
+  getKnowledgebase: () => api.get('/support-portal/knowledgebase'),
+  getCategories: () => api.get('/support-portal/categories'),
+  getTickets: () => api.get('/support-portal/tickets'),
+  createTicket: (ticketData) => api.post('/support-portal/tickets', ticketData),
+  updateTicket: (ticketId, updateData) => api.put(`/support-portal/tickets/${ticketId}`, updateData),
+  deleteTicket: (ticketId) => api.delete(`/support-portal/tickets/${ticketId}`),
+  getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
+  sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message }),
+  searchKnowledgebase: (query) => api.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
+  createChatSession: () => api.post('/support-portal/chat/session'),
+  markArticleHelpful: (articleId, helpful) => api.post(`/support-portal/knowledgebase/${articleId}/helpful`, { helpful })
+};
+
 export default api;

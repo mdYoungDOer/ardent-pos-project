@@ -1,201 +1,234 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { 
-  FiSearch, 
-  FiBookOpen, 
-  FiMessageCircle, 
-  FiFileText, 
-  FiArrowRight,
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { supportAPI } from '../../services/api';
+import {
+  FiSearch,
+  FiBookOpen,
+  FiMessageCircle,
+  FiPlus,
   FiFilter,
   FiGrid,
   FiList,
-  FiChevronRight,
+  FiEye,
+  FiThumbsUp,
+  FiThumbsDown,
   FiClock,
   FiUser,
-  FiTag
+  FiTag,
+  FiArrowRight,
+  FiHelpCircle,
+  FiFileText,
+  FiSettings,
+  FiTruck,
+  FiShield,
+  FiTool,
+  FiCreditCard,
+  FiShoppingCart,
+  FiUsers,
+  FiBarChart2,
+  FiMonitor
 } from 'react-icons/fi';
-import { useAuth } from '../../contexts/AuthContext';
-import ChatWidget from '../../components/support/ChatWidget';
 import TicketModal from '../../components/support/TicketModal';
 import KnowledgebaseArticle from '../../components/support/KnowledgebaseArticle';
 
 const SupportPortalPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('knowledgebase');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [viewMode, setViewMode] = useState('grid');
-  const [showTicketModal, setShowTicketModal] = useState(false);
-  
-  // Data states
   const [articles, setArticles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 12,
-    total: 0,
-    pages: 0
-  });
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [viewMode, setViewMode] = useState('grid');
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [filteredArticles, setFilteredArticles] = useState([]);
+  const [activeTab, setActiveTab] = useState('knowledgebase');
 
-  // Load categories on mount
+  // Category icons mapping
+  const categoryIcons = {
+    1: FiHelpCircle, // Getting Started
+    2: FiShoppingCart, // Sales & Transactions
+    3: FiTruck, // Inventory Management
+    4: FiUsers, // Customer Management
+    5: FiBarChart2, // Reports & Analytics
+    6: FiMonitor, // Hardware & Setup
+    7: FiSettings, // Integrations
+    8: FiShield, // Security & Permissions
+    9: FiTool // Troubleshooting
+  };
+
   useEffect(() => {
-    loadCategories();
+    loadData();
   }, []);
 
-  // Load data based on active tab
   useEffect(() => {
-    if (activeTab === 'knowledgebase') {
-      loadKnowledgebase();
-    } else if (activeTab === 'tickets') {
-      loadTickets();
-    }
-  }, [activeTab, searchQuery, selectedCategory, pagination.page]);
+    filterArticles();
+  }, [articles, searchTerm, selectedCategory]);
 
-  const loadCategories = async () => {
+  const loadData = async () => {
     try {
-      const response = await fetch('/api/support-portal.php/categories');
-      const data = await response.json();
-      if (data.success) {
-        setCategories(data.data);
+      setLoading(true);
+      const [articlesData, categoriesData] = await Promise.all([
+        supportAPI.getKnowledgebase(),
+        supportAPI.getCategories()
+      ]);
+
+      setArticles(articlesData);
+      setCategories(categoriesData);
+      setFilteredArticles(articlesData);
+
+      if (user) {
+        const ticketsData = await supportAPI.getTickets();
+        setTickets(ticketsData);
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
-    }
-  };
-
-  const loadKnowledgebase = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: pagination.page,
-        limit: pagination.limit,
-        ...(searchQuery && { search: searchQuery }),
-        ...(selectedCategory && { category: selectedCategory })
-      });
-
-      const response = await fetch(`/api/support-portal.php/knowledgebase?${params}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setArticles(data.data.articles);
-        setPagination(data.data.pagination);
-      }
-    } catch (error) {
-      console.error('Error loading knowledgebase:', error);
+      console.error('Error loading support data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadTickets = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: pagination.page,
-        limit: pagination.limit
-      });
+  const filterArticles = () => {
+    let filtered = articles;
 
-      const response = await fetch(`/api/support-portal.php/tickets?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        setTickets(data.data.tickets);
-        setPagination(data.data.pagination);
-      }
-    } catch (error) {
-      console.error('Error loading tickets:', error);
-    } finally {
-      setLoading(false);
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(article =>
+        article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        article.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        article.tags.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(article => article.category_id === parseInt(selectedCategory));
+    }
+
+    setFilteredArticles(filtered);
   };
 
   const handleSearch = (e) => {
-    e.preventDefault();
-    setPagination(prev => ({ ...prev, page: 1 }));
-    loadKnowledgebase();
+    setSearchTerm(e.target.value);
   };
 
   const handleCategoryChange = (categoryId) => {
-    setSelectedCategory(categoryId === selectedCategory ? '' : categoryId);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setSelectedCategory(categoryId);
   };
 
-  const handlePageChange = (page) => {
-    setPagination(prev => ({ ...prev, page }));
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'urgent': return 'text-red-600 bg-red-50';
-      case 'high': return 'text-orange-600 bg-orange-50';
-      case 'medium': return 'text-yellow-600 bg-yellow-50';
-      case 'low': return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category ? category.name : 'Unknown';
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'open': return 'text-blue-600 bg-blue-50';
-      case 'in_progress': return 'text-purple-600 bg-purple-50';
-      case 'waiting_for_customer': return 'text-yellow-600 bg-yellow-50';
-      case 'resolved': return 'text-green-600 bg-green-50';
-      case 'closed': return 'text-gray-600 bg-gray-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
+  const getCategoryIcon = (categoryId) => {
+    const IconComponent = categoryIcons[categoryId] || FiFileText;
+    return <IconComponent className="h-5 w-5" />;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Support Portal
-              </h1>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Find answers to your questions, get help with Ardent POS, or create a support ticket
-              </p>
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-primary to-accent-1 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              How can we help you?
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 text-white/90">
+              Find answers, get support, and make the most of your Ardent POS system
+            </p>
+            
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative">
+                <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder="Search for help articles, guides, and solutions..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="w-full pl-12 pr-4 py-4 text-lg text-gray-900 bg-white rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-white/20"
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Bar */}
-        <div className="mb-8">
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-            <div className="relative">
-              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Search knowledgebase articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Search
-              </button>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center mb-4">
+              <FiBookOpen className="h-8 w-8 text-primary mr-3" />
+              <h3 className="text-xl font-semibold">Knowledge Base</h3>
             </div>
-          </form>
+            <p className="text-gray-600 mb-4">
+              Browse our comprehensive collection of guides, tutorials, and FAQs
+            </p>
+            <button
+              onClick={() => setActiveTab('knowledgebase')}
+              className="text-primary hover:text-accent-1 font-medium flex items-center"
+            >
+              Browse Articles <FiArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center mb-4">
+              <FiMessageCircle className="h-8 w-8 text-primary mr-3" />
+              <h3 className="text-xl font-semibold">Support Tickets</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Create a ticket for personalized support from our team
+            </p>
+            <button
+              onClick={() => setShowTicketModal(true)}
+              className="text-primary hover:text-accent-1 font-medium flex items-center"
+            >
+              Create Ticket <FiArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center mb-4">
+              <FiHelpCircle className="h-8 w-8 text-primary mr-3" />
+              <h3 className="text-xl font-semibold">Live Chat</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Get instant help from our AI assistant or human support team
+            </p>
+            <button
+              onClick={() => {
+                // Trigger chat widget
+                const chatButton = document.querySelector('[data-chat-trigger]');
+                if (chatButton) chatButton.click();
+              }}
+              className="text-primary hover:text-accent-1 font-medium flex items-center"
+            >
+              Start Chat <FiArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Tabs */}
         <div className="mb-8">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
@@ -207,7 +240,7 @@ const SupportPortalPage = () => {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <FiBookOpen className="inline mr-2 h-4 w-4" />
+                <FiBookOpen className="inline h-4 w-4 mr-2" />
                 Knowledge Base
               </button>
               {user && (
@@ -219,219 +252,157 @@ const SupportPortalPage = () => {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <FiFileText className="inline mr-2 h-4 w-4" />
-                  My Tickets
+                  <FiMessageCircle className="inline h-4 w-4 mr-2" />
+                  My Tickets ({tickets.length})
                 </button>
               )}
-              <button
-                onClick={() => setShowTicketModal(true)}
-                className="ml-auto bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                <FiMessageCircle className="inline mr-2 h-4 w-4" />
-                Create Ticket
-              </button>
             </nav>
           </div>
         </div>
 
-        {/* Content */}
+        {/* Knowledge Base Tab */}
         {activeTab === 'knowledgebase' && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Categories Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <FiFilter className="mr-2 h-5 w-5" />
-                  Categories
-                </h3>
-                <div className="space-y-2">
+          <div>
+            {/* Filters and Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+              {/* Category Filter */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleCategoryChange('all')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    selectedCategory === 'all'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  All Categories
+                </button>
+                {categories.map((category) => (
                   <button
-                    onClick={() => handleCategoryChange('')}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                      !selectedCategory
+                    key={category.id}
+                    onClick={() => handleCategoryChange(category.id.toString())}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${
+                      selectedCategory === category.id.toString()
                         ? 'bg-primary text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    All Categories
+                    {getCategoryIcon(category.id)}
+                    <span className="ml-2">{category.name}</span>
                   </button>
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryChange(category.id)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category.id
-                          ? 'bg-primary text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{category.name}</span>
-                        <span className="text-xs opacity-75">({category.article_count})</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                ))}
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">View:</span>
+                <button
+                  onClick={() => handleViewModeChange('grid')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  <FiGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('list')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  <FiList className="h-4 w-4" />
+                </button>
               </div>
             </div>
 
-            {/* Articles Grid */}
-            <div className="lg:col-span-3">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {searchQuery ? `Search Results for "${searchQuery}"` : 'Knowledge Base Articles'}
-                </h2>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-md ${
-                      viewMode === 'grid' ? 'bg-primary text-white' : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <FiGrid className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-md ${
-                      viewMode === 'list' ? 'bg-primary text-white' : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <FiList className="h-4 w-4" />
-                  </button>
-                </div>
+            {/* Search Results Info */}
+            {searchTerm && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <p className="text-blue-800">
+                  Found {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''} for "{searchTerm}"
+                </p>
               </div>
+            )}
 
-              {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-lg shadow-sm border p-6 animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded mb-4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : articles.length > 0 ? (
-                <>
-                  <div className={`grid gap-6 ${
-                    viewMode === 'grid' 
-                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                      : 'grid-cols-1'
-                  }`}>
-                    {articles.map((article) => (
-                      <KnowledgebaseArticle 
-                        key={article.id} 
-                        article={article} 
-                        viewMode={viewMode}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  {pagination.pages > 1 && (
-                    <div className="mt-8 flex items-center justify-center">
-                      <nav className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handlePageChange(pagination.page - 1)}
-                          disabled={pagination.page === 1}
-                          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        
-                        {[...Array(pagination.pages)].map((_, i) => {
-                          const page = i + 1;
-                          return (
-                            <button
-                              key={page}
-                              onClick={() => handlePageChange(page)}
-                              className={`px-3 py-2 text-sm font-medium rounded-md ${
-                                page === pagination.page
-                                  ? 'bg-primary text-white'
-                                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          );
-                        })}
-                        
-                        <button
-                          onClick={() => handlePageChange(pagination.page + 1)}
-                          disabled={pagination.page === pagination.pages}
-                          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </nav>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <FiBookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
-                  <p className="text-gray-500">
-                    {searchQuery 
-                      ? `No articles match your search for "${searchQuery}"`
-                      : 'No articles available in this category'
-                    }
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Articles Grid/List */}
+            {filteredArticles.length > 0 ? (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+                {filteredArticles.map((article) => (
+                  <KnowledgebaseArticle
+                    key={article.id}
+                    article={article}
+                    viewMode={viewMode}
+                    categoryName={getCategoryName(article.category_id)}
+                    categoryIcon={getCategoryIcon(article.category_id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FiSearch className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
+                <p className="text-gray-600">
+                  {searchTerm
+                    ? `No articles match your search for "${searchTerm}". Try different keywords or browse all categories.`
+                    : 'No articles available in this category.'}
+                </p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="mt-4 text-primary hover:text-accent-1 font-medium"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {activeTab === 'tickets' && (
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">My Support Tickets</h2>
+        {/* My Tickets Tab */}
+        {activeTab === 'tickets' && user && (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">My Support Tickets</h2>
+              <button
+                onClick={() => setShowTicketModal(true)}
+                className="bg-primary hover:bg-accent-1 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+              >
+                <FiPlus className="h-4 w-4 mr-2" />
+                New Ticket
+              </button>
             </div>
-            
-            {loading ? (
-              <div className="p-6">
-                <div className="animate-pulse space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="border rounded-lg p-4">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : tickets.length > 0 ? (
-              <div className="divide-y divide-gray-200">
+
+            {tickets.length > 0 ? (
+              <div className="space-y-4">
                 {tickets.map((ticket) => (
-                  <div key={ticket.id} className="p-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-medium text-gray-900">
-                            {ticket.subject}
-                          </h3>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(ticket.priority)}`}>
-                            {ticket.priority}
-                          </span>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(ticket.status)}`}>
-                            {ticket.status.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <p className="text-gray-600 mb-2">{ticket.message}</p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="flex items-center">
-                            <FiClock className="mr-1 h-4 w-4" />
-                            {new Date(ticket.created_at).toLocaleDateString()}
-                          </span>
-                          <span className="flex items-center">
-                            <FiTag className="mr-1 h-4 w-4" />
-                            {ticket.category}
-                          </span>
-                        </div>
+                  <div key={ticket.id} className="bg-white rounded-lg shadow-md p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{ticket.subject}</h3>
+                        <p className="text-gray-600 text-sm">#{ticket.ticket_number}</p>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">#{ticket.ticket_number}</span>
-                        <FiChevronRight className="h-4 w-4 text-gray-400" />
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        ticket.status === 'open' ? 'bg-green-100 text-green-800' :
+                        ticket.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                      </span>
+                    </div>
+                    <p className="text-gray-700 mb-4">{ticket.message}</p>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <FiClock className="h-4 w-4 mr-1" />
+                        Created {new Date(ticket.created_at).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center">
+                        <FiTag className="h-4 w-4 mr-1" />
+                        {ticket.category}
                       </div>
                     </div>
                   </div>
@@ -439,12 +410,14 @@ const SupportPortalPage = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <FiFileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
-                <p className="text-gray-500 mb-4">You haven't created any support tickets yet.</p>
+                <FiMessageCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets yet</h3>
+                <p className="text-gray-600 mb-4">
+                  You haven't created any support tickets yet. Need help? Create your first ticket.
+                </p>
                 <button
                   onClick={() => setShowTicketModal(true)}
-                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                  className="bg-primary hover:bg-accent-1 text-white px-6 py-3 rounded-lg transition-colors"
                 >
                   Create Your First Ticket
                 </button>
@@ -454,19 +427,15 @@ const SupportPortalPage = () => {
         )}
       </div>
 
-      {/* Chat Widget */}
-      <ChatWidget />
-
       {/* Ticket Modal */}
       {showTicketModal && (
         <TicketModal
           isOpen={showTicketModal}
           onClose={() => setShowTicketModal(false)}
-          onSuccess={() => {
+          onSuccess={(newTicket) => {
+            setTickets([newTicket, ...tickets]);
             setShowTicketModal(false);
-            if (activeTab === 'tickets') {
-              loadTickets();
-            }
+            setActiveTab('tickets');
           }}
         />
       )}
