@@ -22,91 +22,98 @@ try {
         exit;
     }
 
-    // First, insert the knowledge base categories
-    $categories = [
-        [
-            'id' => 1,
-            'name' => 'Getting Started',
-            'slug' => 'getting-started',
-            'description' => 'Essential guides for new users to get up and running quickly',
-            'icon' => 'help-circle',
-            'sort_order' => 1
-        ],
-        [
-            'id' => 2,
-            'name' => 'Sales & Transactions',
-            'slug' => 'sales-transactions',
-            'description' => 'Everything you need to know about processing sales and managing transactions',
-            'icon' => 'shopping-cart',
-            'sort_order' => 2
-        ],
-        [
-            'id' => 3,
-            'name' => 'Inventory Management',
-            'slug' => 'inventory-management',
-            'description' => 'Complete guide to managing your product catalog and stock levels',
-            'icon' => 'truck',
-            'sort_order' => 3
-        ],
-        [
-            'id' => 4,
-            'name' => 'Customer Management',
-            'slug' => 'customer-management',
-            'description' => 'Tools and techniques for managing your customer database',
-            'icon' => 'users',
-            'sort_order' => 4
-        ],
-        [
-            'id' => 5,
-            'name' => 'Reports & Analytics',
-            'slug' => 'reports-analytics',
-            'description' => 'Understanding your business data and generating insights',
-            'icon' => 'bar-chart-2',
-            'sort_order' => 5
-        ],
-        [
-            'id' => 6,
-            'name' => 'Hardware & Setup',
-            'slug' => 'hardware-setup',
-            'description' => 'Setting up and configuring POS hardware and devices',
-            'icon' => 'monitor',
-            'sort_order' => 6
-        ],
-        [
-            'id' => 7,
-            'name' => 'Integrations',
-            'slug' => 'integrations',
-            'description' => 'Connecting your POS with payment gateways and e-commerce platforms',
-            'icon' => 'settings',
-            'sort_order' => 7
-        ],
-        [
-            'id' => 8,
-            'name' => 'Security & Permissions',
-            'slug' => 'security-permissions',
-            'description' => 'Managing user access, roles, and system security',
-            'icon' => 'shield',
-            'sort_order' => 8
-        ],
-        [
-            'id' => 9,
-            'name' => 'Troubleshooting',
-            'slug' => 'troubleshooting',
-            'description' => 'Solutions for common issues and system maintenance',
-            'icon' => 'tool',
-            'sort_order' => 9
-        ]
-    ];
+    // Check if categories already exist
+    $stmt = $pdo->query("SELECT COUNT(*) FROM knowledgebase_categories");
+    $categoryCount = $stmt->fetchColumn();
 
-    // Insert categories
-    $categoryStmt = $pdo->prepare("
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order, created_at, updated_at)
-        VALUES (:id, :name, :slug, :description, :icon, :sort_order, NOW(), NOW())
-        ON CONFLICT (id) DO NOTHING
-    ");
+    $categoriesAdded = 0;
+    if ($categoryCount == 0) {
+        // First, insert the knowledge base categories
+        $categories = [
+            [
+                'id' => 1,
+                'name' => 'Getting Started',
+                'slug' => 'getting-started',
+                'description' => 'Essential guides for new users to get up and running quickly',
+                'icon' => 'help-circle',
+                'sort_order' => 1
+            ],
+            [
+                'id' => 2,
+                'name' => 'Sales & Transactions',
+                'slug' => 'sales-transactions',
+                'description' => 'Everything you need to know about processing sales and managing transactions',
+                'icon' => 'shopping-cart',
+                'sort_order' => 2
+            ],
+            [
+                'id' => 3,
+                'name' => 'Inventory Management',
+                'slug' => 'inventory-management',
+                'description' => 'Complete guide to managing your product catalog and stock levels',
+                'icon' => 'truck',
+                'sort_order' => 3
+            ],
+            [
+                'id' => 4,
+                'name' => 'Customer Management',
+                'slug' => 'customer-management',
+                'description' => 'Tools and techniques for managing your customer database',
+                'icon' => 'users',
+                'sort_order' => 4
+            ],
+            [
+                'id' => 5,
+                'name' => 'Reports & Analytics',
+                'slug' => 'reports-analytics',
+                'description' => 'Understanding your business data and generating insights',
+                'icon' => 'bar-chart-2',
+                'sort_order' => 5
+            ],
+            [
+                'id' => 6,
+                'name' => 'Hardware & Setup',
+                'slug' => 'hardware-setup',
+                'description' => 'Setting up and configuring POS hardware and devices',
+                'icon' => 'monitor',
+                'sort_order' => 6
+            ],
+            [
+                'id' => 7,
+                'name' => 'Integrations',
+                'slug' => 'integrations',
+                'description' => 'Connecting your POS with payment gateways and e-commerce platforms',
+                'icon' => 'settings',
+                'sort_order' => 7
+            ],
+            [
+                'id' => 8,
+                'name' => 'Security & Permissions',
+                'slug' => 'security-permissions',
+                'description' => 'Managing user access, roles, and system security',
+                'icon' => 'shield',
+                'sort_order' => 8
+            ],
+            [
+                'id' => 9,
+                'name' => 'Troubleshooting',
+                'slug' => 'troubleshooting',
+                'description' => 'Solutions for common issues and system maintenance',
+                'icon' => 'tool',
+                'sort_order' => 9
+            ]
+        ];
 
-    foreach ($categories as $category) {
-        $categoryStmt->execute($category);
+        // Insert categories
+        $categoryStmt = $pdo->prepare("
+            INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order, created_at, updated_at)
+            VALUES (:id, :name, :slug, :description, :icon, :sort_order, NOW(), NOW())
+        ");
+
+        foreach ($categories as $category) {
+            $categoryStmt->execute($category);
+            $categoriesAdded++;
+        }
     }
 
     // Sample knowledge base articles
@@ -114,7 +121,7 @@ try {
         [
             'category_id' => 1,
             'title' => 'Getting Started with Ardent POS',
-            'content' => "# Welcome to Ardent POS!\n\n## Quick Setup Guide\n\n### 1. Account Registration\n- Visit our website and click \"Get Started\"\n- Choose your business package (Starter, Professional, or Enterprise)\n- Fill in your business details and create your account\n- Verify your email address\n\n### 2. Initial Configuration\n- Set up your business profile with name, address, and contact information\n- Configure your tax settings and currency preferences\n- Add your first products or services\n- Set up payment methods\n\n### 3. Staff Management\n- Invite team members to your account\n- Assign roles and permissions\n- Set up employee PINs for POS access\n\n### 4. First Sale\n- Open the POS interface\n- Add items to cart\n- Process payment\n- Print or email receipt\n\n## Need Help?\nIf you encounter any issues during setup, our support team is available 24/7. You can also use our live chat widget for instant assistance.",
+            'content' => "# Welcome to Ardent POS!\n\n## Quick Setup Guide\n\n### 1. Account Registration\n- Visit our website and click \"Get Started\"\n- Choose your business package (Starter, Professional, Business, Enterprise or Premium)\n- Fill in your business details and create your account\n- Verify your email address\n\n### 2. Initial Configuration\n- Set up your business profile with name, address, and contact information\n- Configure your tax settings and currency preferences\n- Add your first products or services\n- Set up payment methods\n\n### 3. Staff Management\n- Invite team members to your account\n- Assign roles and permissions\n- Set up employee PINs for POS access\n\n### 4. First Sale\n- Open the POS interface\n- Add items to cart\n- Process payment\n- Print or email receipt\n\n## Need Help?\nIf you encounter any issues during setup, our support team is available 24/7. You can also use our live chat widget for instant assistance.",
             'slug' => 'getting-started-with-ardent-pos',
             'excerpt' => 'Complete guide to setting up your Ardent POS account and making your first sale',
             'tags' => 'getting started,setup,first sale,registration',
@@ -250,11 +257,18 @@ try {
         $insertedCount++;
     }
 
+    $message = "Successfully populated knowledge base with $insertedCount articles.";
+    if ($categoriesAdded > 0) {
+        $message .= " Added $categoriesAdded new categories.";
+    } else {
+        $message .= " Categories already existed.";
+    }
+
     echo json_encode([
         'success' => true,
-        'message' => "Successfully populated knowledge base with $insertedCount articles and 9 categories.",
+        'message' => $message,
         'articles_added' => $insertedCount,
-        'categories_added' => 9
+        'categories_added' => $categoriesAdded
     ]);
 
 } catch (Exception $e) {
