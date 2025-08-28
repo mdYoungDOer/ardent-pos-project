@@ -39,10 +39,9 @@ const ContactPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          first_name: data.firstName,
-          last_name: data.lastName,
+          first_name: data.first_name,
+          last_name: data.last_name,
           email: data.email,
-          phone: data.phone || null,
           company: data.company || null,
           subject: data.subject,
           message: data.message
