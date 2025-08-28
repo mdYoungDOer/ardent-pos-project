@@ -19,8 +19,12 @@ try {
     $method = $_SERVER['REQUEST_METHOD'];
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $pathParts = explode('/', trim($path, '/'));
+    
+    // Extract the endpoint from the URL path
+    // URL format: /api/support-portal/knowledgebase -> endpoint = knowledgebase
     $endpoint = end($pathParts);
     
+    // Handle different HTTP methods
     switch ($method) {
         case 'GET':
             handleGetRequest($db, $endpoint, $_GET);
@@ -42,7 +46,7 @@ try {
 } catch (Exception $e) {
     error_log("Support Portal API Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Internal server error']);
+    echo json_encode(['success' => false, 'message' => 'Internal server error: ' . $e->getMessage()]);
 }
 
 function handleGetRequest($db, $endpoint, $params) {
@@ -59,9 +63,12 @@ function handleGetRequest($db, $endpoint, $params) {
         case 'chat':
             getChatHistory($db, $params);
             break;
+        case 'search':
+            searchKnowledgebase($db, $params);
+            break;
         default:
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $endpoint]);
     }
 }
 
@@ -78,7 +85,7 @@ function handlePostRequest($db, $endpoint, $data) {
             break;
         default:
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $endpoint]);
     }
 }
 
@@ -89,7 +96,7 @@ function handlePutRequest($db, $endpoint, $data) {
             break;
         default:
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $endpoint]);
     }
 }
 
@@ -100,7 +107,7 @@ function handleDeleteRequest($db, $endpoint, $params) {
             break;
         default:
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $endpoint]);
     }
 }
 
@@ -172,15 +179,7 @@ function getKnowledgebase($db, $params) {
         
     } catch (Exception $e) {
         error_log("Knowledgebase Error: " . $e->getMessage());
-        echo json_encode(['success' => true, 'data' => [
-            'articles' => [],
-            'pagination' => [
-                'page' => 1,
-                'limit' => 10,
-                'total' => 0,
-                'pages' => 0
-            ]
-        ]]);
+        echo json_encode(['success' => false, 'message' => 'Failed to fetch knowledgebase: ' . $e->getMessage()]);
     }
 }
 
@@ -191,7 +190,7 @@ function getCategories($db) {
             FROM knowledgebase_categories c
             LEFT JOIN knowledgebase kb ON c.id = kb.category_id AND kb.published = true
             GROUP BY c.id
-            ORDER BY c.name ASC
+            ORDER BY c.sort_order ASC, c.name ASC
         ");
         $stmt->execute();
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -200,13 +199,13 @@ function getCategories($db) {
         
     } catch (Exception $e) {
         error_log("Categories Error: " . $e->getMessage());
-        echo json_encode(['success' => true, 'data' => []]);
+        echo json_encode(['success' => false, 'message' => 'Failed to fetch categories: ' . $e->getMessage()]);
     }
 }
 
 function searchKnowledgebase($db, $data) {
     try {
-        $query = isset($data['query']) ? $data['query'] : '';
+        $query = isset($data['query']) ? $data['query'] : (isset($data['q']) ? $data['q'] : '');
         $limit = isset($data['limit']) ? (int)$data['limit'] : 5;
         
         if (empty($query)) {
@@ -240,7 +239,7 @@ function searchKnowledgebase($db, $data) {
         
     } catch (Exception $e) {
         error_log("Search Error: " . $e->getMessage());
-        echo json_encode(['success' => true, 'data' => []]);
+        echo json_encode(['success' => false, 'message' => 'Failed to search knowledgebase: ' . $e->getMessage()]);
     }
 }
 
