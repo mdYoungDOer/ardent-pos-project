@@ -9,6 +9,15 @@ const api = axios.create({
   },
 });
 
+// Public API - for endpoints that don't require authentication
+const publicApi = axios.create({
+  baseURL: '/api',
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Auth API - direct PHP endpoints (no /api prefix)
 const authAxios = axios.create({
   baseURL: '', // No base URL for auth endpoints
@@ -751,15 +760,18 @@ export const couponsAPI = {
 
 // Support Portal API methods
 export const supportAPI = {
-  getKnowledgebase: () => api.get('/support-portal/knowledgebase'),
-  getCategories: () => api.get('/support-portal/categories'),
+  // Public endpoints (no authentication required)
+  getKnowledgebase: () => publicApi.get('/support-portal/knowledgebase'),
+  getCategories: () => publicApi.get('/support-portal/categories'),
+  searchKnowledgebase: (query) => publicApi.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
+  
+  // Authenticated endpoints (require login)
   getTickets: () => api.get('/support-portal/tickets'),
   createTicket: (ticketData) => api.post('/support-portal/tickets', ticketData),
   updateTicket: (ticketId, updateData) => api.put(`/support-portal/tickets/${ticketId}`, updateData),
   deleteTicket: (ticketId) => api.delete(`/support-portal/tickets/${ticketId}`),
   getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
   sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message }),
-  searchKnowledgebase: (query) => api.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
   createChatSession: () => api.post('/support-portal/chat/session'),
   markArticleHelpful: (articleId, helpful) => api.post(`/support-portal/knowledgebase/${articleId}/helpful`, { helpful })
 };

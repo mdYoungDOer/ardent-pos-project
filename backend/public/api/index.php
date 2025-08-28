@@ -67,6 +67,11 @@ try {
     $router->post('/webhooks/paystack', 'PaystackController@webhook');
     $router->get('/health', 'HealthController@check');
     
+    // Support Portal (public access)
+    $router->get('/support-portal/knowledgebase', 'SupportPortalController@getKnowledgebase');
+    $router->get('/support-portal/categories', 'SupportPortalController@getCategories');
+    $router->get('/support-portal/search', 'SupportPortalController@searchKnowledgebase');
+    
     // Paystack configuration (requires auth)
     $router->get('/paystack/config', 'PaystackConfigController@getConfig');
     
@@ -152,9 +157,6 @@ try {
         $router->get('/notifications/history', 'NotificationController@getNotificationHistory');
         
         // Support Portal
-        $router->get('/support-portal/knowledgebase', 'SupportPortalController@getKnowledgebase');
-        $router->get('/support-portal/categories', 'SupportPortalController@getCategories');
-        $router->get('/support-portal/search', 'SupportPortalController@searchKnowledgebase');
         $router->get('/support-portal/tickets', 'SupportPortalController@getTickets');
         $router->post('/support-portal/tickets', 'SupportPortalController@createTicket');
         $router->put('/support-portal/tickets/{id}', 'SupportPortalController@updateTicket');
