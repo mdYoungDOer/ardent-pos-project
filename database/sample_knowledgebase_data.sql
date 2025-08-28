@@ -1,55 +1,25 @@
 -- Sample Knowledge Base Data for Ardent POS Support Portal
 -- This file contains curated articles covering all major platform features
 
--- First, check if categories exist and insert them if they don't
-DO $$
-BEGIN
-    -- Insert categories only if they don't exist (check both ID and slug)
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 1 OR slug = 'getting-started') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (1, 'Getting Started', 'getting-started', 'Essential guides for new users to get up and running quickly', 'help-circle', 1);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 2 OR slug = 'sales-transactions') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (2, 'Sales & Transactions', 'sales-transactions', 'Everything you need to know about processing sales and managing transactions', 'shopping-cart', 2);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 3 OR slug = 'inventory-management') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (3, 'Inventory Management', 'inventory-management', 'Complete guide to managing your product catalog and stock levels', 'truck', 3);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 4 OR slug = 'customer-management') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (4, 'Customer Management', 'customer-management', 'Tools and techniques for managing your customer database', 'users', 4);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 5 OR slug = 'reports-analytics') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (5, 'Reports & Analytics', 'reports-analytics', 'Understanding your business data and generating insights', 'bar-chart-2', 5);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 6 OR slug = 'hardware-setup') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (6, 'Hardware & Setup', 'hardware-setup', 'Setting up and configuring POS hardware and devices', 'monitor', 6);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 7 OR slug = 'integrations') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (7, 'Integrations', 'integrations', 'Connecting your POS with payment gateways and e-commerce platforms', 'settings', 7);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 8 OR slug = 'security-permissions') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (8, 'Security & Permissions', 'security-permissions', 'Managing user access, roles, and system security', 'shield', 8);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM knowledgebase_categories WHERE id = 9 OR slug = 'troubleshooting') THEN
-        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
-        (9, 'Troubleshooting', 'troubleshooting', 'Solutions for common issues and system maintenance', 'tool', 9);
-    END IF;
-END $$;
+-- First, clear any existing data to avoid conflicts
+DELETE FROM knowledgebase;
+DELETE FROM knowledgebase_categories;
+
+-- Reset the sequences to start fresh
+ALTER SEQUENCE knowledgebase_id_seq RESTART WITH 1;
+ALTER SEQUENCE knowledgebase_categories_id_seq RESTART WITH 1;
+
+-- Insert all knowledge base categories fresh
+INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
+(1, 'Getting Started', 'getting-started', 'Essential guides for new users to get up and running quickly', 'help-circle', 1),
+(2, 'Sales & Transactions', 'sales-transactions', 'Everything you need to know about processing sales and managing transactions', 'shopping-cart', 2),
+(3, 'Inventory Management', 'inventory-management', 'Complete guide to managing your product catalog and stock levels', 'truck', 3),
+(4, 'Customer Management', 'customer-management', 'Tools and techniques for managing your customer database', 'users', 4),
+(5, 'Reports & Analytics', 'reports-analytics', 'Understanding your business data and generating insights', 'bar-chart-2', 5),
+(6, 'Hardware & Setup', 'hardware-setup', 'Setting up and configuring POS hardware and devices', 'monitor', 6),
+(7, 'Integrations', 'integrations', 'Connecting your POS with payment gateways and e-commerce platforms', 'settings', 7),
+(8, 'Security & Permissions', 'security-permissions', 'Managing user access, roles, and system security', 'shield', 8),
+(9, 'Troubleshooting', 'troubleshooting', 'Solutions for common issues and system maintenance', 'tool', 9);
 
 -- Insert sample knowledge base articles
 INSERT INTO knowledgebase (category_id, title, content, slug, excerpt, tags, published, helpful_count, not_helpful_count) VALUES
