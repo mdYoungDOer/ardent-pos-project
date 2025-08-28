@@ -289,6 +289,110 @@ class SupportPortalController
             ]);
         }
     }
+
+    public function createPublicTicket()
+    {
+        try {
+            $data = json_decode($GLOBALS['REQUEST_BODY'], true);
+            
+            $requiredFields = ['subject', 'message', 'priority', 'category', 'first_name', 'last_name', 'email'];
+            foreach ($requiredFields as $field) {
+                if (empty($data[$field])) {
+                    http_response_code(400);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => "Missing required field: $field"
+                    ]);
+                    return;
+                }
+            }
+            
+            // Validate email format
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Invalid email format'
+                ]);
+                return;
+            }
+            
+            // Generate ticket number
+            $ticketNumber = 'TKT-' . date('Y') . '-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            
+            $ticketData = [
+                'ticket_number' => $ticketNumber,
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'subject' => $data['subject'],
+                'message' => $data['message'],
+                'priority' => $data['priority'],
+                'category' => $data['category'],
+                'status' => 'open',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            $ticketId = Database::insert('support_tickets', $ticketData);
+            
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'ticket_id' => $ticketId,
+                    'ticket_number' => $ticketNumber
+                ],
+                'message' => 'Support ticket created successfully! We will contact you soon.'
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Create Public Ticket Error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to create ticket. Please try again later.'
+            ]);
+        }
+    }
+
+    public function getKnowledgebaseArticle($id)
+    {
+        try {
+            $sql = "
+                SELECT kb.*, c.name as category_name 
+                FROM knowledgebase kb
+                LEFT JOIN knowledgebase_categories c ON kb.category_id = c.id
+                WHERE kb.id = :id AND kb.published = true
+            ";
+            
+            $article = Database::fetch($sql, ['id' => $id]);
+            
+            if (!$article) {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Article not found'
+                ]);
+                return;
+            }
+            
+            // Increment view count
+            Database::execute("UPDATE knowledgebase SET view_count = view_count + 1 WHERE id = :id", ['id' => $id]);
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $article
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Get Article Error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to fetch article'
+            ]);
+        }
+    }
     
     public function updateTicket($id)
     {

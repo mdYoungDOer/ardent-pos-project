@@ -10,7 +10,7 @@ import {
   FiBookOpen
 } from 'react-icons/fi';
 
-const KnowledgebaseArticle = ({ article, viewMode, categoryName, categoryIcon }) => {
+const KnowledgebaseArticle = ({ article, viewMode, categoryName, categoryIcon, onClick }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const truncateText = (text, maxLength = 150) => {
@@ -77,7 +77,10 @@ const KnowledgebaseArticle = ({ article, viewMode, categoryName, categoryIcon })
                 </span>
               </div>
               
-              <button className="text-primary hover:text-accent-1 font-medium flex items-center">
+              <button 
+                onClick={onClick}
+                className="text-primary hover:text-accent-1 font-medium flex items-center"
+              >
                 Read Article <FiArrowRight className="ml-1 h-4 w-4" />
               </button>
             </div>
@@ -139,7 +142,10 @@ const KnowledgebaseArticle = ({ article, viewMode, categoryName, categoryIcon })
           )}
         </div>
         
-        <button className="text-primary hover:text-accent-1 font-medium text-sm flex items-center">
+        <button 
+          onClick={onClick}
+          className="text-primary hover:text-accent-1 font-medium text-sm flex items-center"
+        >
           Read <FiArrowRight className="ml-1 h-3 w-3" />
         </button>
       </div>

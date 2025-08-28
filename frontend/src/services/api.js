@@ -790,6 +790,8 @@ export const supportAPI = {
   },
   
   searchKnowledgebase: (query) => publicApi.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
+  getKnowledgebaseArticle: (id) => publicApi.get(`/support-portal/knowledgebase/${id}`),
+  createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
   
   // Authenticated endpoints (require login)
   getTickets: () => api.get('/support-portal/tickets'),

@@ -38,6 +38,7 @@ import CouponsPage from './pages/app/CouponsPage';
 import POSPage from './pages/app/POSPage';
 import CategoriesPage from './pages/app/CategoriesPage';
 import LocationsPage from './pages/app/LocationsPage';
+import SupportPage from './pages/app/SupportPage';
 
 // Import all super admin pages
 import SuperAdminDashboard from './pages/app/SuperAdminDashboard';
@@ -105,6 +106,7 @@ function App() {
               <Route path="sub-categories" element={<SubCategoriesPage />} />
               <Route path="discounts" element={<DiscountsPage />} />
               <Route path="coupons" element={<CouponsPage />} />
+              <Route path="support" element={<SupportPage />} />
             </Route>
             
             {/* Protected Super Admin Routes - Using Nested Routing */}

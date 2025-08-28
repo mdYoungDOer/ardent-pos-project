@@ -26,7 +26,8 @@ import {
   FiMail,
   FiKey,
   FiDollarSign,
-  FiFileText
+  FiFileText,
+  FiHelpCircle
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -59,6 +60,7 @@ const Sidebar = () => {
     { name: 'Inventory', href: '/app/inventory', icon: FiClipboard },
     { name: 'Customers', href: '/app/customers', icon: FiUsers },
     { name: 'Reports', href: '/app/reports', icon: FiBarChart2 },
+    { name: 'Support', href: '/app/support', icon: FiHelpCircle },
     { name: 'Notifications', href: '/app/notifications', icon: FiBell },
     { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]

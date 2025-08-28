@@ -27,7 +27,8 @@ import {
   FiShoppingCart,
   FiUsers,
   FiBarChart2,
-  FiMonitor
+  FiMonitor,
+  FiX
 } from 'react-icons/fi';
 import TicketModal from '../../components/support/TicketModal';
 import KnowledgebaseArticle from '../../components/support/KnowledgebaseArticle';
@@ -42,6 +43,8 @@ const SupportPortalPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [showArticleModal, setShowArticleModal] = useState(false);
   const [filteredArticles, setFilteredArticles] = useState([]);
   const [activeTab, setActiveTab] = useState('knowledgebase');
 
@@ -133,6 +136,18 @@ const SupportPortalPage = () => {
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
+  };
+
+  const handleArticleClick = async (articleId) => {
+    try {
+      const response = await supportAPI.getKnowledgebaseArticle(articleId);
+      if (response.data) {
+        setSelectedArticle(response.data);
+        setShowArticleModal(true);
+      }
+    } catch (error) {
+      console.error('Error loading article:', error);
+    }
   };
 
   const getCategoryName = (categoryId) => {
@@ -352,6 +367,7 @@ const SupportPortalPage = () => {
                     viewMode={viewMode}
                     categoryName={getCategoryName(article.category_id)}
                     categoryIcon={getCategoryIcon(article.category_id)}
+                    onClick={() => handleArticleClick(article.id)}
                   />
                 ))}
               </div>
@@ -452,6 +468,54 @@ const SupportPortalPage = () => {
             setActiveTab('tickets');
           }}
         />
+      )}
+
+      {/* Article Modal */}
+      {showArticleModal && selectedArticle && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-3">
+                {getCategoryIcon(selectedArticle.category_id)}
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">{selectedArticle.title}</h2>
+                  <p className="text-sm text-gray-500">{selectedArticle.category_name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowArticleModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FiX className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div 
+                className="prose prose-lg max-w-none"
+                dangerouslySetInnerHTML={{ __html: selectedArticle.content.replace(/\n/g, '<br/>') }}
+              />
+              
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center space-x-4">
+                    <span className="flex items-center">
+                      <FiEye className="mr-1 h-4 w-4" />
+                      {selectedArticle.view_count} views
+                    </span>
+                    <span className="flex items-center">
+                      <FiThumbsUp className="mr-1 h-4 w-4" />
+                      {selectedArticle.helpful_count} helpful
+                    </span>
+                  </div>
+                  <span>
+                    Updated {new Date(selectedArticle.updated_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
