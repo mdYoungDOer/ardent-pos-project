@@ -98,8 +98,15 @@ class Router
                 throw new \Exception("Method {$action} not found in {$controllerClass}");
             }
 
-            // Call the controller method
-            $controller->$action();
+            // Get route parameters
+            $params = $route['params'] ?? [];
+            
+            // Call the controller method with parameters
+            if (!empty($params)) {
+                $controller->$action(...array_values($params));
+            } else {
+                $controller->$action();
+            }
 
         } catch (\Exception $e) {
             error_log("Router Error: " . $e->getMessage());

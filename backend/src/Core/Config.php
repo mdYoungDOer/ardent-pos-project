@@ -13,8 +13,8 @@ class Config
                 'host' => $_ENV['DB_HOST'] ?? 'localhost',
                 'port' => $_ENV['DB_PORT'] ?? '5432',
                 'database' => $_ENV['DB_NAME'] ?? 'defaultdb',
-                'username' => $_ENV['DB_USER'] ?? 'postgres',
-                'password' => $_ENV['DB_PASS'] ?? 'password',
+                'username' => $_ENV['DB_USERNAME'] ?? $_ENV['DB_USER'] ?? 'postgres',
+                'password' => $_ENV['DB_PASSWORD'] ?? $_ENV['DB_PASS'] ?? 'password',
             ],
             'jwt' => [
                 'secret' => $_ENV['JWT_SECRET'] ?? 'your-secret-key-change-in-production',
@@ -31,13 +31,13 @@ class Config
                 'webhook_secret' => $_ENV['PAYSTACK_WEBHOOK_SECRET'] ?? '',
             ],
             'app' => [
-                'url' => $_ENV['APP_URL'] ?? 'https://ardent-pos-app-sdq3t.ondigitalocean.app',
-                'api_url' => $_ENV['API_URL'] ?? 'https://ardent-pos-app-sdq3t.ondigitalocean.app/api',
+                'url' => $_ENV['APP_URL'] ?? 'https://ardentpos.com',
+                'api_url' => $_ENV['API_URL'] ?? 'https://ardentpos.com/api',
                 'env' => $_ENV['APP_ENV'] ?? 'production',
                 'debug' => filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN),
             ],
             'cors' => [
-                'allowed_origins' => explode(',', $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'https://ardent-pos-app-sdq3t.ondigitalocean.app'),
+                'allowed_origins' => explode(',', $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'https://ardentpos.com'),
             ],
             'upload' => [
                 'max_size' => (int)($_ENV['MAX_UPLOAD_SIZE'] ?? 5242880), // 5MB

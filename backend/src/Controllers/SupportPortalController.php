@@ -249,9 +249,8 @@ class SupportPortalController
                 }
             }
             
-            // Get user from JWT token
-            $auth = new AuthMiddleware();
-            $user = $auth->authenticate();
+            // Get user from JWT token - user should already be authenticated by middleware
+            $user = $GLOBALS['current_user'] ?? null;
             
             if (!$user) {
                 http_response_code(401);
@@ -436,8 +435,8 @@ class SupportPortalController
             
             $senderId = null;
             if ($data['sender_type'] === 'user') {
-                $auth = new AuthMiddleware();
-                $user = $auth->authenticate();
+                // Get user from JWT token - user should already be authenticated by middleware
+                $user = $GLOBALS['current_user'] ?? null;
                 if ($user) {
                     $senderId = $user['id'];
                 }
