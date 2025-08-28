@@ -2,7 +2,7 @@
 -- This file contains curated articles covering all major platform features
 
 -- Insert sample knowledge base articles
-INSERT INTO knowledgebase (category_id, title, content, slug, meta_description, tags, is_published, author_id, helpful_count, not_helpful_count) VALUES
+INSERT INTO knowledgebase (category_id, title, content, slug, excerpt, tags, published, helpful_count, not_helpful_count) VALUES
 -- Getting Started Category
 (1, 'Getting Started with Ardent POS', 
 '# Welcome to Ardent POS!
@@ -37,7 +37,7 @@ If you encounter any issues during setup, our support team is available 24/7. Yo
 'getting-started-with-ardent-pos', 
 'Complete guide to setting up your Ardent POS account and making your first sale', 
 'getting started,setup,first sale,registration', 
-true, 1, 45, 2),
+true, 45, 2),
 
 (1, 'Understanding Your Dashboard', 
 '# Dashboard Overview
@@ -70,7 +70,7 @@ You can customize your dashboard layout and choose which metrics to display prom
 'understanding-your-dashboard', 
 'Learn how to navigate and customize your Ardent POS dashboard for optimal business insights', 
 'dashboard,metrics,navigation,overview', 
-true, 1, 32, 1),
+true, 32, 1),
 
 -- Sales & Transactions Category
 (2, 'Processing Sales Transactions', 
@@ -113,7 +113,7 @@ true, 1, 32, 1),
 'processing-sales-transactions', 
 'Complete guide to processing sales transactions in Ardent POS with step-by-step instructions', 
 'sales,transactions,payment,receipt', 
-true, 1, 67, 3),
+true, 67, 3),
 
 (2, 'Managing Refunds and Returns', 
 '# Refunds and Returns
@@ -155,7 +155,7 @@ true, 1, 67, 3),
 'managing-refunds-and-returns', 
 'Learn how to set up and process refunds and returns in Ardent POS', 
 'refunds,returns,policy,refund processing', 
-true, 1, 28, 1),
+true, 28, 1),
 
 -- Inventory Management Category
 (3, 'Adding and Managing Products', 
@@ -201,7 +201,7 @@ true, 1, 28, 1),
 'adding-and-managing-products', 
 'Complete guide to adding and managing products in your Ardent POS inventory system', 
 'products,inventory,SKU,pricing', 
-true, 1, 89, 4),
+true, 89, 4),
 
 (3, 'Inventory Tracking and Alerts', 
 '# Inventory Management
@@ -238,7 +238,7 @@ true, 1, 89, 4),
 'inventory-tracking-and-alerts', 
 'Learn how to track inventory levels and set up automated alerts for low stock', 
 'inventory,tracking,alerts,stock levels', 
-true, 1, 56, 2),
+true, 56, 2),
 
 -- Customer Management Category
 (4, 'Customer Database Management', 
@@ -278,7 +278,7 @@ true, 1, 56, 2),
 'customer-database-management', 
 'Learn how to manage your customer database, add new customers, and segment your customer base', 
 'customers,database,segmentation,communication', 
-true, 1, 43, 1),
+true, 43, 1),
 
 (4, 'Loyalty Programs and Rewards', 
 '# Loyalty System
@@ -309,7 +309,7 @@ true, 1, 43, 1),
 'loyalty-programs-and-rewards', 
 'Set up and manage customer loyalty programs to increase retention and sales', 
 'loyalty,rewards,points,retention', 
-true, 1, 34, 2),
+true, 34, 2),
 
 -- Reports & Analytics Category
 (5, 'Understanding Sales Reports', 
@@ -355,7 +355,7 @@ true, 1, 34, 2),
 'understanding-sales-reports', 
 'Learn how to interpret sales reports and use analytics to improve your business performance', 
 'reports,analytics,sales,performance', 
-true, 1, 78, 3),
+true, 78, 3),
 
 (5, 'Financial Reporting and Tax', 
 '# Financial Management
@@ -392,7 +392,7 @@ true, 1, 78, 3),
 'financial-reporting-and-tax', 
 'Configure tax settings and generate financial reports for compliance and business insights', 
 'financial,tax,reports,compliance', 
-true, 1, 45, 1),
+true, 45, 1),
 
 -- Hardware & Setup Category
 (6, 'POS Hardware Setup', 
@@ -430,7 +430,7 @@ true, 1, 45, 1),
 'pos-hardware-setup', 
 'Complete guide to setting up and configuring POS hardware including printers, scanners, and payment terminals', 
 'hardware,setup,printer,scanner', 
-true, 1, 67, 4),
+true, 67, 4),
 
 (6, 'Mobile POS Configuration', 
 '# Mobile POS
@@ -467,7 +467,7 @@ true, 1, 67, 4),
 'mobile-pos-configuration', 
 'Set up mobile POS devices for on-the-go sales and inventory management', 
 'mobile,tablet,offline,security', 
-true, 1, 38, 2),
+true, 38, 2),
 
 -- Integrations Category
 (7, 'Payment Gateway Integration', 
@@ -506,7 +506,7 @@ true, 1, 38, 2),
 'payment-gateway-integration', 
 'Integrate payment gateways to accept various payment methods securely', 
 'payment,gateway,stripe,security', 
-true, 1, 92, 5),
+true, 92, 5),
 
 (7, 'E-commerce Integration', 
 '# Online Store Integration
@@ -543,7 +543,7 @@ true, 1, 92, 5),
 'e-commerce-integration', 
 'Connect your POS system with e-commerce platforms for seamless online and offline sales', 
 'ecommerce,integration,shopify,woocommerce', 
-true, 1, 41, 2),
+true, 41, 2),
 
 -- Security & Permissions Category
 (8, 'User Roles and Permissions', 
@@ -583,7 +583,7 @@ true, 1, 41, 2),
 'user-roles-and-permissions', 
 'Set up user roles and permissions to control access to different parts of your POS system', 
 'security,roles,permissions,access control', 
-true, 1, 54, 2),
+true, 54, 2),
 
 (8, 'Data Backup and Recovery', 
 '# Data Protection
@@ -620,7 +620,7 @@ true, 1, 54, 2),
 'data-backup-and-recovery', 
 'Implement comprehensive backup and recovery procedures to protect your business data', 
 'backup,recovery,data protection,security', 
-true, 1, 36, 1),
+true, 36, 1),
 
 -- Troubleshooting Category
 (9, 'Common POS Issues and Solutions', 
@@ -664,7 +664,7 @@ true, 1, 36, 1),
 'common-pos-issues-and-solutions', 
 'Quick solutions for common POS system issues and problems', 
 'troubleshooting,issues,solutions,help', 
-true, 1, 156, 8),
+true, 156, 8),
 
 (9, 'System Maintenance and Updates', 
 '# System Maintenance
@@ -701,7 +701,7 @@ true, 1, 156, 8),
 'system-maintenance-and-updates', 
 'Maintain your POS system for optimal performance and reliability', 
 'maintenance,updates,performance,reliability', 
-true, 1, 42, 2);
+true, 42, 2);
 
 -- Update view counts to simulate real usage
 UPDATE knowledgebase SET view_count = FLOOR(RANDOM() * 500) + 50 WHERE id > 0;
