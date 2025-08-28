@@ -63,19 +63,17 @@ function App() {
             {/* Landing Page (Special case - no header/footer) */}
             <Route path="/" element={<LandingPage />} />
             
-            {/* Public Routes with Header/Footer and Chat Widget */}
-            <Route path="/public" element={<PublicLayout />}>
-              <Route path="home" element={<HomePage />} />
-              <Route path="features" element={<FeaturesPage />} />
-              <Route path="pricing" element={<PricingPage />} />
-              <Route path="about" element={<AboutPage />} />
-              <Route path="contact" element={<ContactPage />} />
-              <Route path="support" element={<SupportPortalPage />} />
-              <Route path="faq" element={<FAQPage />} />
-              <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
-              <Route path="terms-of-use" element={<TermsOfUsePage />} />
-              <Route path="cookie-policy" element={<CookiePolicyPage />} />
-            </Route>
+            {/* Public Routes with Header/Footer and Chat Widget - Clean URLs */}
+            <Route path="/home" element={<PublicLayout><HomePage /></PublicLayout>} />
+            <Route path="/features" element={<PublicLayout><FeaturesPage /></PublicLayout>} />
+            <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
+            <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+            <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+            <Route path="/support" element={<PublicLayout><SupportPortalPage /></PublicLayout>} />
+            <Route path="/faq" element={<PublicLayout><FAQPage /></PublicLayout>} />
+            <Route path="/privacy-policy" element={<PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
+            <Route path="/terms-of-use" element={<PublicLayout><TermsOfUsePage /></PublicLayout>} />
+            <Route path="/cookie-policy" element={<PublicLayout><CookiePolicyPage /></PublicLayout>} />
             
             {/* Auth Routes */}
             <Route path="/auth/login" element={<LoginPage />} />
@@ -123,36 +121,22 @@ function App() {
               <Route path="analytics" element={<SuperAdminAnalyticsPage />} />
               <Route path="tenants" element={<SuperAdminTenants />} />
               <Route path="users" element={<SuperAdminUsers />} />
-              <Route path="subscriptions" element={<SuperAdminSubscriptionPlans />} />
               <Route path="settings" element={<SuperAdminSettings />} />
+              <Route path="subscription-plans" element={<SuperAdminSubscriptionPlans />} />
               <Route path="billing" element={<SuperAdminBillingPage />} />
               <Route path="security" element={<SuperAdminSecurityPage />} />
               <Route path="contact-submissions" element={<SuperAdminContactSubmissionsPage />} />
               <Route path="support-portal" element={<SuperAdminSupportPortalPage />} />
               <Route path="api-keys" element={<SuperAdminAPIKeysPage />} />
-              <Route path="health" element={<SuperAdminSystemHealthPage />} />
-              <Route path="logs" element={<SuperAdminSystemLogsPage />} />
-              {/* Add placeholder routes for remaining pages */}
-              <Route path="monitoring" element={<SuperAdminDashboard />} />
+              <Route path="system-health" element={<SuperAdminSystemHealthPage />} />
+              <Route path="system-logs" element={<SuperAdminSystemLogsPage />} />
             </Route>
-            
-            {/* Legacy route redirects for backward compatibility */}
-            <Route path="/home" element={<Navigate to="/public/home" replace />} />
-            <Route path="/features" element={<Navigate to="/public/features" replace />} />
-            <Route path="/pricing" element={<Navigate to="/public/pricing" replace />} />
-            <Route path="/about" element={<Navigate to="/public/about" replace />} />
-            <Route path="/contact" element={<Navigate to="/public/contact" replace />} />
-            <Route path="/support" element={<Navigate to="/public/support" replace />} />
-            <Route path="/faq" element={<Navigate to="/public/faq" replace />} />
-            <Route path="/privacy-policy" element={<Navigate to="/public/privacy-policy" replace />} />
-            <Route path="/terms-of-use" element={<Navigate to="/public/terms-of-use" replace />} />
-            <Route path="/cookie-policy" element={<Navigate to="/public/cookie-policy" replace />} />
             
             {/* Default redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </div>
-      </AuthProvider>
+      </div>
+    </AuthProvider>
   );
 }
 
