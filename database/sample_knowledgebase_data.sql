@@ -1,6 +1,18 @@
 -- Sample Knowledge Base Data for Ardent POS Support Portal
 -- This file contains curated articles covering all major platform features
 
+-- First, insert the knowledge base categories
+INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order) VALUES
+(1, 'Getting Started', 'getting-started', 'Essential guides for new users to get up and running quickly', 'help-circle', 1),
+(2, 'Sales & Transactions', 'sales-transactions', 'Everything you need to know about processing sales and managing transactions', 'shopping-cart', 2),
+(3, 'Inventory Management', 'inventory-management', 'Complete guide to managing your product catalog and stock levels', 'truck', 3),
+(4, 'Customer Management', 'customer-management', 'Tools and techniques for managing your customer database', 'users', 4),
+(5, 'Reports & Analytics', 'reports-analytics', 'Understanding your business data and generating insights', 'bar-chart-2', 5),
+(6, 'Hardware & Setup', 'hardware-setup', 'Setting up and configuring POS hardware and devices', 'monitor', 6),
+(7, 'Integrations', 'integrations', 'Connecting your POS with payment gateways and e-commerce platforms', 'settings', 7),
+(8, 'Security & Permissions', 'security-permissions', 'Managing user access, roles, and system security', 'shield', 8),
+(9, 'Troubleshooting', 'troubleshooting', 'Solutions for common issues and system maintenance', 'tool', 9);
+
 -- Insert sample knowledge base articles
 INSERT INTO knowledgebase (category_id, title, content, slug, excerpt, tags, published, helpful_count, not_helpful_count) VALUES
 -- Getting Started Category

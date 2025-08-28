@@ -22,6 +22,93 @@ try {
         exit;
     }
 
+    // First, insert the knowledge base categories
+    $categories = [
+        [
+            'id' => 1,
+            'name' => 'Getting Started',
+            'slug' => 'getting-started',
+            'description' => 'Essential guides for new users to get up and running quickly',
+            'icon' => 'help-circle',
+            'sort_order' => 1
+        ],
+        [
+            'id' => 2,
+            'name' => 'Sales & Transactions',
+            'slug' => 'sales-transactions',
+            'description' => 'Everything you need to know about processing sales and managing transactions',
+            'icon' => 'shopping-cart',
+            'sort_order' => 2
+        ],
+        [
+            'id' => 3,
+            'name' => 'Inventory Management',
+            'slug' => 'inventory-management',
+            'description' => 'Complete guide to managing your product catalog and stock levels',
+            'icon' => 'truck',
+            'sort_order' => 3
+        ],
+        [
+            'id' => 4,
+            'name' => 'Customer Management',
+            'slug' => 'customer-management',
+            'description' => 'Tools and techniques for managing your customer database',
+            'icon' => 'users',
+            'sort_order' => 4
+        ],
+        [
+            'id' => 5,
+            'name' => 'Reports & Analytics',
+            'slug' => 'reports-analytics',
+            'description' => 'Understanding your business data and generating insights',
+            'icon' => 'bar-chart-2',
+            'sort_order' => 5
+        ],
+        [
+            'id' => 6,
+            'name' => 'Hardware & Setup',
+            'slug' => 'hardware-setup',
+            'description' => 'Setting up and configuring POS hardware and devices',
+            'icon' => 'monitor',
+            'sort_order' => 6
+        ],
+        [
+            'id' => 7,
+            'name' => 'Integrations',
+            'slug' => 'integrations',
+            'description' => 'Connecting your POS with payment gateways and e-commerce platforms',
+            'icon' => 'settings',
+            'sort_order' => 7
+        ],
+        [
+            'id' => 8,
+            'name' => 'Security & Permissions',
+            'slug' => 'security-permissions',
+            'description' => 'Managing user access, roles, and system security',
+            'icon' => 'shield',
+            'sort_order' => 8
+        ],
+        [
+            'id' => 9,
+            'name' => 'Troubleshooting',
+            'slug' => 'troubleshooting',
+            'description' => 'Solutions for common issues and system maintenance',
+            'icon' => 'tool',
+            'sort_order' => 9
+        ]
+    ];
+
+    // Insert categories
+    $categoryStmt = $pdo->prepare("
+        INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_order, created_at, updated_at)
+        VALUES (:id, :name, :slug, :description, :icon, :sort_order, NOW(), NOW())
+        ON CONFLICT (id) DO NOTHING
+    ");
+
+    foreach ($categories as $category) {
+        $categoryStmt->execute($category);
+    }
+
     // Sample knowledge base articles
     $articles = [
         [
@@ -165,8 +252,9 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => "Successfully populated knowledge base with $insertedCount articles.",
-        'articles_added' => $insertedCount
+        'message' => "Successfully populated knowledge base with $insertedCount articles and 9 categories.",
+        'articles_added' => $insertedCount,
+        'categories_added' => 9
     ]);
 
 } catch (Exception $e) {
