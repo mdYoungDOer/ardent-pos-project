@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS knowledgebase (
     title VARCHAR(500) NOT NULL,
     content TEXT NOT NULL,
     tags TEXT,
+    slug VARCHAR(255) UNIQUE NOT NULL,
     published BOOLEAN DEFAULT true,
     view_count INTEGER DEFAULT 0,
     helpful_count INTEGER DEFAULT 0,
@@ -92,7 +93,7 @@ INSERT INTO knowledgebase_categories (name, slug, description, sort_order) VALUE
 ON CONFLICT (slug) DO NOTHING;
 
 -- Insert sample knowledgebase articles
-INSERT INTO knowledgebase (category_id, title, content, tags, published) VALUES
+INSERT INTO knowledgebase (category_id, title, content, tags, published, slug) VALUES
 (1, 'How to Set Up Your Ardent POS System', '# Setting Up Your Ardent POS System
 
 ## Prerequisites
@@ -151,7 +152,7 @@ INSERT INTO knowledgebase (category_id, title, content, tags, published) VALUES
 - Explore reporting features
 
 ## Need Help?
-If you encounter any issues during setup, contact our support team or check our troubleshooting guides.', 'setup, installation, configuration, getting started', true),
+If you encounter any issues during setup, contact our support team or check our troubleshooting guides.', 'setup, installation, configuration, getting started', true, 'how-to-set-up-ardent-pos-system'),
 
 (2, 'How to Process a Sale', '# Processing a Sale with Ardent POS
 
@@ -217,7 +218,7 @@ If you encounter any issues during setup, contact our support team or check our 
 ## Troubleshooting
 - If scanner doesn''t work, check USB connection
 - If payment fails, verify payment method setup
-- If receipt doesn''t print, check printer connection', 'sales, transactions, checkout, payment, receipt', true),
+- If receipt doesn''t print, check printer connection', 'sales, transactions, checkout, payment, receipt', true, 'how-to-process-a-sale'),
 
 (3, 'Managing Your Inventory', '# Inventory Management Guide
 
@@ -301,7 +302,7 @@ If you encounter any issues during setup, contact our support team or check our 
 ## Troubleshooting
 - If stock levels are incorrect, check for pending sales
 - If alerts aren''t working, verify notification settings
-- If transfers fail, check location permissions', 'inventory, stock, products, management, tracking', true);
+- If transfers fail, check location permissions', 'inventory, stock, products, management, tracking', true, 'managing-your-inventory');
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_knowledgebase_category ON knowledgebase(category_id);
