@@ -7,8 +7,8 @@ import {
   FiMaximize2,
   FiPaperclip,
   FiSmile,
-  FiBot,
-  FiUser
+  FiUser,
+  FiHelpCircle
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -171,7 +171,7 @@ const ChatWidget = () => {
         {/* Header */}
         <div className="bg-primary text-white p-4 rounded-t-lg flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <FiBot className="h-5 w-5" />
+                            <FiHelpCircle className="h-5 w-5" />
             <span className="font-semibold">Ardent POS Assistant</span>
           </div>
           <div className="flex items-center space-x-2">
@@ -212,7 +212,7 @@ const ChatWidget = () => {
                       {message.sender_type === 'user' ? (
                         <FiUser className="h-4 w-4" />
                       ) : (
-                        <FiBot className="h-4 w-4" />
+                        <FiHelpCircle className="h-4 w-4" />
                       )}
                     </div>
                     <div className={`px-3 py-2 rounded-lg ${
@@ -235,7 +235,7 @@ const ChatWidget = () => {
                 <div className="flex justify-start">
                   <div className="flex items-start space-x-2">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
-                      <FiBot className="h-4 w-4" />
+                      <FiHelpCircle className="h-4 w-4" />
                     </div>
                     <div className="bg-gray-100 text-gray-900 px-3 py-2 rounded-lg">
                       <div className="flex space-x-1">
