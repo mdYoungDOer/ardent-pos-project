@@ -238,12 +238,12 @@ const ChatWidget = () => {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          onClick={toggleChat}
-          className="bg-primary hover:bg-accent-1 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-          data-chat-trigger
-        >
+             <div className="fixed bottom-4 right-4 z-50">
+         <button
+           onClick={toggleChat}
+           className="bg-gradient-to-br from-primary to-accent-1 hover:from-accent-1 hover:to-primary text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+           data-chat-trigger
+         >
           <FiHelpCircle className="h-6 w-6" />
         </button>
       </div>
@@ -252,11 +252,11 @@ const ChatWidget = () => {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className={`bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300 ${
-        isMinimized ? 'w-80 h-12' : 'w-96 h-[500px]'
-      }`}>
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary to-accent-1 text-white p-4 rounded-t-lg flex items-center justify-between">
+             <div className={`bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200/50 transition-all duration-300 ${
+         isMinimized ? 'w-80 h-12' : 'w-96 h-[500px]'
+       }`}>
+                 {/* Header */}
+         <div className="bg-gradient-to-br from-primary via-primary to-accent-1 text-white p-4 rounded-t-lg flex items-center justify-between">
           <div className="flex items-center">
             <FiHelpCircle className="h-5 w-5 mr-2" />
             <span className="font-semibold">Ardent POS Support</span>
@@ -287,13 +287,13 @@ const ChatWidget = () => {
                     key={message.id}
                     className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div
-                      className={`max-w-[80%] p-3 rounded-lg ${
-                        message.type === 'user'
-                          ? 'bg-primary text-white'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                                         <div
+                       className={`max-w-[80%] p-3 rounded-xl shadow-sm ${
+                         message.type === 'user'
+                           ? 'bg-gradient-to-br from-primary to-accent-1 text-white'
+                           : 'bg-gray-50/80 backdrop-blur-sm text-gray-800 border border-gray-200/50'
+                       }`}
+                     >
                       <div className="flex items-start space-x-2">
                         {message.type === 'bot' && (
                           <FiHelpCircle className="h-4 w-4 mt-1 flex-shrink-0" />
@@ -319,9 +319,9 @@ const ChatWidget = () => {
                   </div>
                 ))}
                 
-                {isTyping && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 text-gray-800 p-3 rounded-lg">
+                                 {isTyping && (
+                   <div className="flex justify-start">
+                     <div className="bg-gray-50/80 backdrop-blur-sm text-gray-800 p-3 rounded-xl border border-gray-200/50">
                       <div className="flex items-center space-x-1">
                         <FiHelpCircle className="h-4 w-4" />
                         <div className="flex space-x-1">
@@ -342,12 +342,12 @@ const ChatWidget = () => {
               <div className="px-4 pb-2">
                 <div className="text-xs text-gray-500 mb-2">Quick questions:</div>
                 <div className="flex flex-wrap gap-1">
-                  {suggestedQuestions.slice(0, 4).map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestionClick(question)}
-                      className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded-full transition-colors"
-                    >
+                                     {suggestedQuestions.slice(0, 4).map((question, index) => (
+                     <button
+                       key={index}
+                       onClick={() => handleSuggestionClick(question)}
+                       className="text-xs bg-white/80 backdrop-blur-sm hover:bg-primary/10 text-gray-700 px-3 py-1.5 rounded-full transition-all duration-200 border border-gray-200/50 hover:border-primary/30 hover:text-primary"
+                     >
                       {question}
                     </button>
                   ))}
@@ -359,21 +359,21 @@ const ChatWidget = () => {
             <div className="p-4 border-t border-gray-200">
               <div className="flex items-center space-x-2">
                 <div className="flex-1 relative">
-                  <textarea
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
-                    className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    rows="1"
-                    style={{ minHeight: '40px', maxHeight: '100px' }}
-                  />
+                                     <textarea
+                     value={inputMessage}
+                     onChange={(e) => setInputMessage(e.target.value)}
+                     onKeyPress={handleKeyPress}
+                     placeholder="Type your message..."
+                     className="w-full p-3 border border-gray-300/50 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 bg-white/80 backdrop-blur-sm transition-all duration-200"
+                     rows="1"
+                     style={{ minHeight: '40px', maxHeight: '100px' }}
+                   />
                 </div>
-                <button
-                  onClick={() => handleSendMessage()}
-                  disabled={!inputMessage.trim() || isTyping}
-                  className="bg-primary hover:bg-accent-1 disabled:bg-gray-300 text-white p-2 rounded-lg transition-colors disabled:cursor-not-allowed"
-                >
+                                 <button
+                   onClick={() => handleSendMessage()}
+                   disabled={!inputMessage.trim() || isTyping}
+                   className="bg-gradient-to-br from-primary to-accent-1 hover:from-accent-1 hover:to-primary disabled:from-gray-300 disabled:to-gray-400 text-white p-3 rounded-xl transition-all duration-200 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                 >
                   <FiSend className="h-4 w-4" />
                 </button>
               </div>

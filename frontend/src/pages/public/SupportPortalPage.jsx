@@ -158,8 +158,8 @@ const SupportPortalPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary to-accent-1 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="bg-gradient-to-br from-primary via-primary to-accent-1 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               How can we help you?
@@ -168,19 +168,19 @@ const SupportPortalPage = () => {
               Find answers, get support, and make the most of your Ardent POS system
             </p>
             
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search for help articles, guides, and solutions..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  className="w-full pl-12 pr-4 py-4 text-lg text-gray-900 bg-white rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-white/20"
-                />
-              </div>
-            </div>
+                         {/* Search Bar */}
+             <div className="max-w-2xl mx-auto">
+               <div className="relative">
+                 <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                 <input
+                   type="text"
+                   placeholder="Search for help articles, guides, and solutions..."
+                   value={searchTerm}
+                   onChange={handleSearch}
+                   className="w-full pl-12 pr-4 py-4 text-lg text-gray-900 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white transition-all duration-200"
+                 />
+               </div>
+             </div>
           </div>
         </div>
       </div>
@@ -188,8 +188,8 @@ const SupportPortalPage = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+           <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center mb-4">
               <FiBookOpen className="h-8 w-8 text-primary mr-3" />
               <h3 className="text-xl font-semibold">Knowledge Base</h3>
@@ -205,41 +205,41 @@ const SupportPortalPage = () => {
             </button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center mb-4">
-              <FiMessageSquare className="h-8 w-8 text-primary mr-3" />
-              <h3 className="text-xl font-semibold">Support Tickets</h3>
-            </div>
-            <p className="text-gray-600 mb-4">
-              Create a ticket for personalized support from our team
-            </p>
-            <button
-              onClick={() => setShowTicketModal(true)}
-              className="text-primary hover:text-accent-1 font-medium flex items-center"
-            >
-              Create Ticket <FiArrowRight className="ml-2 h-4 w-4" />
-            </button>
-          </div>
+                     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+             <div className="flex items-center mb-4">
+               <FiMessageSquare className="h-8 w-8 text-primary mr-3" />
+               <h3 className="text-xl font-semibold">Support Tickets</h3>
+             </div>
+             <p className="text-gray-600 mb-4">
+               Create a ticket for personalized support from our team
+             </p>
+             <button
+               onClick={() => setShowTicketModal(true)}
+               className="text-primary hover:text-accent-1 font-medium flex items-center"
+             >
+               Create Ticket <FiArrowRight className="ml-2 h-4 w-4" />
+             </button>
+           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center mb-4">
-              <FiHelpCircle className="h-8 w-8 text-primary mr-3" />
-              <h3 className="text-xl font-semibold">Live Chat</h3>
-            </div>
-            <p className="text-gray-600 mb-4">
-              Get instant help from our AI assistant or human support team
-            </p>
-            <button
-              onClick={() => {
-                // Trigger chat widget
-                const chatButton = document.querySelector('[data-chat-trigger]');
-                if (chatButton) chatButton.click();
-              }}
-              className="text-primary hover:text-accent-1 font-medium flex items-center"
-            >
-              Start Chat <FiArrowRight className="ml-2 h-4 w-4" />
-            </button>
-          </div>
+                     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+             <div className="flex items-center mb-4">
+               <FiHelpCircle className="h-8 w-8 text-primary mr-3" />
+               <h3 className="text-xl font-semibold">Live Chat</h3>
+             </div>
+             <p className="text-gray-600 mb-4">
+               Get instant help from our AI assistant or human support team
+             </p>
+             <button
+               onClick={() => {
+                 // Trigger chat widget
+                 const chatButton = document.querySelector('[data-chat-trigger]');
+                 if (chatButton) chatButton.click();
+               }}
+               className="text-primary hover:text-accent-1 font-medium flex items-center"
+             >
+               Start Chat <FiArrowRight className="ml-2 h-4 w-4" />
+             </button>
+           </div>
         </div>
 
         {/* Tabs */}
