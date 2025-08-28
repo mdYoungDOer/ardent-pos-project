@@ -71,6 +71,7 @@ try {
     $router->get('/support-portal/knowledgebase', 'SupportPortalController@getKnowledgebase');
     $router->get('/support-portal/categories', 'SupportPortalController@getCategories');
     $router->get('/support-portal/search', 'SupportPortalController@searchKnowledgebase');
+    $router->post('/support-portal/chat/session', 'SupportPortalController@createChatSession');
     
     // Paystack configuration (requires auth)
     $router->get('/paystack/config', 'PaystackConfigController@getConfig');

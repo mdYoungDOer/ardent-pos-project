@@ -761,8 +761,34 @@ export const couponsAPI = {
 // Support Portal API methods
 export const supportAPI = {
   // Public endpoints (no authentication required)
-  getKnowledgebase: () => publicApi.get('/support-portal/knowledgebase'),
-  getCategories: () => publicApi.get('/support-portal/categories'),
+  getKnowledgebase: async () => {
+    try {
+      const response = await publicApi.get('/support-portal/knowledgebase');
+      // Ensure we return the correct data structure
+      return {
+        data: {
+          articles: response.data?.data?.articles || response.data?.articles || []
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching knowledgebase:', error);
+      return { data: { articles: [] } };
+    }
+  },
+  
+  getCategories: async () => {
+    try {
+      const response = await publicApi.get('/support-portal/categories');
+      // Ensure we return the correct data structure
+      return {
+        data: response.data?.data || response.data || []
+      };
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return { data: [] };
+    }
+  },
+  
   searchKnowledgebase: (query) => publicApi.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
   
   // Authenticated endpoints (require login)
@@ -771,8 +797,8 @@ export const supportAPI = {
   updateTicket: (ticketId, updateData) => api.put(`/support-portal/tickets/${ticketId}`, updateData),
   deleteTicket: (ticketId) => api.delete(`/support-portal/tickets/${ticketId}`),
   getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
-  sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message }),
-  createChatSession: () => api.post('/support-portal/chat/session'),
+  sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message, sender_type: 'user' }),
+  createChatSession: () => publicApi.post('/support-portal/chat/session'),
   markArticleHelpful: (articleId, helpful) => api.post(`/support-portal/knowledgebase/${articleId}/helpful`, { helpful })
 };
 

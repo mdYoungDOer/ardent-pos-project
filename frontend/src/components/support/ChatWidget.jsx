@@ -7,7 +7,11 @@ import {
   FiMinimize2,
   FiMaximize2,
   FiHelpCircle,
-  FiMessageSquare
+  FiMessageSquare,
+  FiPaperclip,
+  FiSmile,
+  FiClock,
+  FiBookOpen
 } from 'react-icons/fi';
 
 const ChatWidget = () => {
@@ -60,12 +64,12 @@ const ChatWidget = () => {
       if (user) {
         // Create a new chat session for authenticated users
         const sessionResponse = await supportAPI.createChatSession();
-        if (sessionResponse && sessionResponse.session_id) {
-          setSessionId(sessionResponse.session_id);
+        if (sessionResponse?.data?.session_id) {
+          setSessionId(sessionResponse.data.session_id);
           
           // Load previous messages if any
-          if (sessionResponse.messages && sessionResponse.messages.length > 0) {
-            setMessages(sessionResponse.messages);
+          if (sessionResponse.data.messages && sessionResponse.data.messages.length > 0) {
+            setMessages(sessionResponse.data.messages);
           } else {
             setMessages(welcomeMessages);
           }
@@ -85,14 +89,14 @@ const ChatWidget = () => {
   const loadKnowledgeBase = async () => {
     try {
       const response = await supportAPI.getKnowledgebase();
-      const articles = response.data?.articles || response.data || [];
+      const articles = response.data?.articles || [];
       setKnowledgeBase(articles);
       
       // Generate suggested questions based on available articles
       const suggestions = articles
         .slice(0, 8)
-        .map(article => article.title.replace(/^#\s*/, '').replace(/\?$/, '?'))
-        .filter(title => title.length < 50);
+        .map(article => article.title?.replace(/^#\s*/, '').replace(/\?$/, '?') || 'How can I help you?')
+        .filter(title => title && title.length < 50);
       
       setSuggestedQuestions(suggestions.length > 0 ? suggestions : defaultSuggestions);
     } catch (error) {
@@ -140,7 +144,7 @@ const ChatWidget = () => {
         botResponse = {
           id: Date.now() + 1,
           type: 'bot',
-          content: response.message || "I'm here to help! Could you please provide more details about your question?",
+          content: response.data?.message || response.message || "I'm here to help! Could you please provide more details about your question?",
           timestamp: new Date()
         };
       }

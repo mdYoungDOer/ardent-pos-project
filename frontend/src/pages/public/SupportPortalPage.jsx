@@ -69,21 +69,35 @@ const SupportPortalPage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [articlesData, categoriesData] = await Promise.all([
+      const [articlesResponse, categoriesResponse] = await Promise.all([
         supportAPI.getKnowledgebase(),
         supportAPI.getCategories()
       ]);
+
+      // Handle the data structure correctly
+      const articlesData = articlesResponse.data?.articles || [];
+      const categoriesData = categoriesResponse.data || [];
 
       setArticles(articlesData);
       setCategories(categoriesData);
       setFilteredArticles(articlesData);
 
       if (user) {
-        const ticketsData = await supportAPI.getTickets();
-        setTickets(ticketsData);
+        try {
+          const ticketsResponse = await supportAPI.getTickets();
+          const ticketsData = ticketsResponse.data?.data?.tickets || ticketsResponse.data?.tickets || [];
+          setTickets(ticketsData);
+        } catch (ticketError) {
+          console.error('Error loading tickets:', ticketError);
+          setTickets([]);
+        }
       }
     } catch (error) {
       console.error('Error loading support data:', error);
+      // Set default empty arrays to prevent map errors
+      setArticles([]);
+      setCategories([]);
+      setFilteredArticles([]);
     } finally {
       setLoading(false);
     }

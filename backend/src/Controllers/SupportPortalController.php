@@ -483,6 +483,45 @@ class SupportPortalController
         }
     }
     
+    public function createChatSession()
+    {
+        try {
+            // Generate a unique session ID
+            $sessionId = uniqid('chat_', true);
+            
+            // Get user from JWT token if available (optional for public chat)
+            $user = $GLOBALS['current_user'] ?? null;
+            
+            $sessionData = [
+                'session_id' => $sessionId,
+                'user_id' => $user ? $user['id'] : null,
+                'tenant_id' => $user ? $user['tenant_id'] : null,
+                'status' => 'active',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            // Insert session into database
+            $sessionDbId = Database::insert('support_chat_sessions', $sessionData);
+            
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'session_id' => $sessionId,
+                    'messages' => []
+                ]
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Create Chat Session Error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to create chat session'
+            ]);
+        }
+    }
+    
     private function generateAutoResponse($message)
     {
         try {
