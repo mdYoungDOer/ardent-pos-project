@@ -12,7 +12,7 @@ INSERT INTO knowledgebase_categories (id, name, slug, description, icon, sort_or
 (7, 'Integrations', 'integrations', 'Connecting your POS with payment gateways and e-commerce platforms', 'settings', 7),
 (8, 'Security & Permissions', 'security-permissions', 'Managing user access, roles, and system security', 'shield', 8),
 (9, 'Troubleshooting', 'troubleshooting', 'Solutions for common issues and system maintenance', 'tool', 9)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- Insert sample knowledge base articles
 INSERT INTO knowledgebase (category_id, title, content, slug, excerpt, tags, published, helpful_count, not_helpful_count) VALUES

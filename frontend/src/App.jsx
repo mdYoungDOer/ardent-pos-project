@@ -17,6 +17,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import SuperAdminLoginPage from './pages/auth/SuperAdminLoginPage';
 import AppLayout from './layouts/AppLayout';
+import PublicLayout from './layouts/PublicLayout';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import SuperAdminProtectedRoute from './components/auth/SuperAdminProtectedRoute';
@@ -59,18 +60,24 @@ function App() {
       <div className="App">
         <CookieConsent />
         <Routes>
-            {/* Public Routes */}
+            {/* Landing Page (Special case - no header/footer) */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-        <Route path="/support" element={<SupportPortalPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms-of-use" element={<TermsOfUsePage />} />
-            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+            
+            {/* Public Routes with Header/Footer and Chat Widget */}
+            <Route path="/public" element={<PublicLayout />}>
+              <Route path="home" element={<HomePage />} />
+              <Route path="features" element={<FeaturesPage />} />
+              <Route path="pricing" element={<PricingPage />} />
+              <Route path="about" element={<AboutPage />} />
+              <Route path="contact" element={<ContactPage />} />
+              <Route path="support" element={<SupportPortalPage />} />
+              <Route path="faq" element={<FAQPage />} />
+              <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route path="terms-of-use" element={<TermsOfUsePage />} />
+              <Route path="cookie-policy" element={<CookiePolicyPage />} />
+            </Route>
+            
+            {/* Auth Routes */}
             <Route path="/auth/login" element={<LoginPage />} />
             <Route path="/auth/register" element={<RegisterPage />} />
             <Route path="/auth/super-admin" element={<SuperAdminLoginPage />} />
@@ -128,6 +135,18 @@ function App() {
               {/* Add placeholder routes for remaining pages */}
               <Route path="monitoring" element={<SuperAdminDashboard />} />
             </Route>
+            
+            {/* Legacy route redirects for backward compatibility */}
+            <Route path="/home" element={<Navigate to="/public/home" replace />} />
+            <Route path="/features" element={<Navigate to="/public/features" replace />} />
+            <Route path="/pricing" element={<Navigate to="/public/pricing" replace />} />
+            <Route path="/about" element={<Navigate to="/public/about" replace />} />
+            <Route path="/contact" element={<Navigate to="/public/contact" replace />} />
+            <Route path="/support" element={<Navigate to="/public/support" replace />} />
+            <Route path="/faq" element={<Navigate to="/public/faq" replace />} />
+            <Route path="/privacy-policy" element={<Navigate to="/public/privacy-policy" replace />} />
+            <Route path="/terms-of-use" element={<Navigate to="/public/terms-of-use" replace />} />
+            <Route path="/cookie-policy" element={<Navigate to="/public/cookie-policy" replace />} />
             
             {/* Default redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
