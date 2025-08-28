@@ -13,7 +13,6 @@ import {
 } from 'react-icons/fi'
 import Logo from '../../components/ui/Logo'
 import StickyHeader from '../../components/layout/StickyHeader'
-import Footer from '../../components/layout/Footer'
 import Preloader from '../../components/ui/Preloader'
 
 const HomePage = () => {
@@ -299,8 +298,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-      
-      <Footer />
     </div>
   )
 }

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { HiCheck, HiX } from 'react-icons/hi'
 import StickyHeader from '../../components/layout/StickyHeader'
-import Footer from '../../components/layout/Footer'
 import Preloader from '../../components/ui/Preloader'
 
 const PricingPage = () => {
@@ -264,8 +263,6 @@ const PricingPage = () => {
           </Link>
         </div>
       </div>
-      
-      <Footer />
     </div>
   )
 }

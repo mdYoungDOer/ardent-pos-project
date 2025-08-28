@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HiHeart, HiLightBulb, HiShieldCheck } from 'react-icons/hi'
 import StickyHeader from '../../components/layout/StickyHeader'
-import Footer from '../../components/layout/Footer'
 import Preloader from '../../components/ui/Preloader'
 
 const AboutPage = () => {
@@ -172,8 +171,6 @@ const AboutPage = () => {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   )
 }

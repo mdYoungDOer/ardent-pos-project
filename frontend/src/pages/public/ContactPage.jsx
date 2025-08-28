@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form'
 import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi'
 import toast from 'react-hot-toast'
 import StickyHeader from '../../components/layout/StickyHeader'
-import Footer from '../../components/layout/Footer'
 import Preloader from '../../components/ui/Preloader'
 
 const ContactPage = () => {
@@ -33,7 +32,7 @@ const ContactPage = () => {
     setIsSubmitting(true)
     try {
       // Submit to API endpoint
-      const response = await fetch('/api/contact-submissions.php', {
+      const response = await fetch('/api/contact-submissions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -314,8 +313,6 @@ const ContactPage = () => {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   )
 }

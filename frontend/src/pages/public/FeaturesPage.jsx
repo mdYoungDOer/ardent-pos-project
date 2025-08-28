@@ -12,7 +12,6 @@ import {
   FiHeadphones
 } from 'react-icons/fi'
 import StickyHeader from '../../components/layout/StickyHeader'
-import Footer from '../../components/layout/Footer'
 import Preloader from '../../components/ui/Preloader'
 
 const FeaturesPage = () => {
@@ -228,8 +227,6 @@ const FeaturesPage = () => {
           </a>
         </div>
       </div>
-      
-      <Footer />
     </div>
   )
 }

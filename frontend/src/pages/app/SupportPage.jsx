@@ -45,21 +45,31 @@ const SupportPage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [articlesResponse, categoriesResponse, ticketsResponse] = await Promise.all([
+      
+      // Load articles and categories (public endpoints)
+      const [articlesResponse, categoriesResponse] = await Promise.all([
         supportAPI.getKnowledgebase(),
-        supportAPI.getCategories(),
-        supportAPI.getTickets()
+        supportAPI.getCategories()
       ]);
 
       // Handle the data structure correctly
       const articlesData = articlesResponse.data?.articles || articlesResponse.data || [];
       const categoriesData = categoriesResponse.data?.categories || categoriesResponse.data || [];
-      const ticketsData = ticketsResponse.data?.tickets || ticketsResponse.data || [];
 
       setArticles(Array.isArray(articlesData) ? articlesData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      setTickets(Array.isArray(ticketsData) ? ticketsData : []);
       setFilteredArticles(Array.isArray(articlesData) ? articlesData : []);
+      
+      // Try to load tickets (authenticated endpoint) - handle gracefully if not authenticated
+      try {
+        const ticketsResponse = await supportAPI.getTickets();
+        const ticketsData = ticketsResponse.data?.tickets || ticketsResponse.data || [];
+        setTickets(Array.isArray(ticketsData) ? ticketsData : []);
+      } catch (ticketError) {
+        console.log('User not authenticated for tickets, showing empty list');
+        setTickets([]);
+      }
+      
     } catch (error) {
       console.error('Error loading support data:', error);
       setArticles([]);
