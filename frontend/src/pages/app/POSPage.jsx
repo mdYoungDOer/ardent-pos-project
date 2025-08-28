@@ -396,10 +396,12 @@ const POSPage = () => {
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex overflow-hidden">
-      {/* Audio element for sound effects */}
-      <audio ref={audioRef} preload="auto">
-        <source src="/sounds/add-to-cart.mp3" type="audio/mpeg" />
-      </audio>
+      {/* Audio element for sound effects - only if sound is enabled */}
+      {soundEnabled && (
+        <audio ref={audioRef} preload="auto">
+          <source src="/sounds/add-to-cart.mp3" type="audio/mpeg" />
+        </audio>
+      )}
 
       {/* Left Panel - Products */}
       <div className="flex-1 flex flex-col">

@@ -30,6 +30,7 @@ class TenantMiddleware
 
         // Store tenant data in globals
         $GLOBALS['current_tenant'] = $tenant;
+        $GLOBALS['current_tenant_id'] = $currentUser['tenant_id'];
         
         // Add tenant_id to all database queries automatically
         self::addTenantScope();
