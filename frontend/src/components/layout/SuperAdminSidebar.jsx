@@ -12,7 +12,8 @@ import {
   FiShield,
   FiFileText,
   FiKey,
-  FiTrendingUp
+  FiTrendingUp,
+  FiHelpCircle
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -60,7 +61,7 @@ const SuperAdminSidebar = () => {
     { 
       path: '/super-admin/support-portal', 
       name: 'Support Portal', 
-      icon: FiMessageCircle,
+      icon: FiHelpCircle,
       status: 'active'
     },
     { 

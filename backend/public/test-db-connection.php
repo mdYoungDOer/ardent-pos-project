@@ -10,18 +10,6 @@ try {
     $dbUser = $_ENV['DB_USERNAME'] ?? '';
     $dbPass = $_ENV['DB_PASSWORD'] ?? '';
 
-    echo json_encode([
-        'success' => true,
-        'env_vars' => [
-            'DB_HOST' => $dbHost,
-            'DB_PORT' => $dbPort,
-            'DB_NAME' => $dbName,
-            'DB_USERNAME' => $dbUser ? 'SET' : 'NOT_SET',
-            'DB_PASSWORD' => $dbPass ? 'SET' : 'NOT_SET'
-        ],
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-
     // Test database connection
     if (empty($dbUser) || empty($dbPass)) {
         throw new Exception('Database credentials not configured');
@@ -40,6 +28,13 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Database connection successful',
+        'env_vars' => [
+            'DB_HOST' => $dbHost,
+            'DB_PORT' => $dbPort,
+            'DB_NAME' => $dbName,
+            'DB_USERNAME' => $dbUser ? 'SET' : 'NOT_SET',
+            'DB_PASSWORD' => $dbPass ? 'SET' : 'NOT_SET'
+        ],
         'user_count' => $result['count'],
         'timestamp' => date('Y-m-d H:i:s')
     ]);

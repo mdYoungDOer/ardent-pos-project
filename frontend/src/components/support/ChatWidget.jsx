@@ -2,21 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supportAPI } from '../../services/api';
 import {
-  FiMessageCircle,
   FiX,
   FiSend,
   FiMinimize2,
   FiMaximize2,
-  FiPaperclip,
-  FiSmile,
-  FiUser,
   FiHelpCircle,
-  FiSearch,
-  FiBookOpen,
-  FiMessageSquare,
-  FiClock,
-  FiCheckCircle,
-  FiAlertCircle
+  FiMessageSquare
 } from 'react-icons/fi';
 
 const ChatWidget = () => {
@@ -241,7 +232,7 @@ const ChatWidget = () => {
           className="bg-primary hover:bg-accent-1 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
           data-chat-trigger
         >
-          <FiMessageCircle className="h-6 w-6" />
+          <FiHelpCircle className="h-6 w-6" />
         </button>
       </div>
     );

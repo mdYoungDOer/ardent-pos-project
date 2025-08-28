@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiSearch, FiChevronDown, FiChevronUp, FiMail, FiPhone, FiMessageCircle } from 'react-icons/fi';
+import { FiSearch, FiChevronDown, FiChevronUp, FiMail, FiPhone, FiHelpCircle } from 'react-icons/fi';
 import StickyHeader from '../../components/layout/StickyHeader';
 import Footer from '../../components/layout/Footer';
 import Preloader from '../../components/ui/Preloader';
@@ -328,7 +328,7 @@ const FAQPage = () => {
             
             <div className="flex flex-col items-center">
               <div className="bg-primary-100 p-3 rounded-full mb-4">
-                <FiMessageCircle className="h-6 w-6 text-primary" />
+                <FiHelpCircle className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
               <p className="text-gray-600 mb-4">Chat with us online</p>

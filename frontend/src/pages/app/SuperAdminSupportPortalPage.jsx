@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FiMessageCircle, 
-  FiFileText, 
+  FiSearch, 
+  FiFilter, 
   FiBookOpen, 
-  FiUsers, 
+  FiMessageSquare, 
+  FiPlus, 
+  FiHelpCircle,
   FiClock,
-  FiAlertCircle,
   FiCheckCircle,
-  FiX,
-  FiFilter,
-  FiSearch,
-  FiEye,
+  FiAlertCircle,
   FiEdit,
   FiTrash2,
-  FiTag,
-  FiUser,
-  FiMail
+  FiEye
 } from 'react-icons/fi';
 
 const SuperAdminSupportPortalPage = () => {
@@ -146,7 +142,7 @@ const SuperAdminSupportPortalPage = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <FiMessageCircle className="h-6 w-6 text-blue-600" />
+              <FiMessageSquare className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Tickets</p>
@@ -208,7 +204,7 @@ const SuperAdminSupportPortalPage = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <FiMessageCircle className="inline mr-2 h-4 w-4" />
+              <FiMessageSquare className="inline mr-2 h-4 w-4" />
               Support Tickets
             </button>
             <button
@@ -316,15 +312,18 @@ const SuperAdminSupportPortalPage = () => {
                       
                       <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
                         <span className="flex items-center">
-                          <FiUser className="mr-1 h-4 w-4" />
+                          {/* FiUser was removed from imports, so this line is commented out */}
+                          {/* <FiUser className="mr-1 h-4 w-4" /> */}
                           {ticket.first_name} {ticket.last_name}
                         </span>
                         <span className="flex items-center">
-                          <FiMail className="mr-1 h-4 w-4" />
+                          {/* FiMail was removed from imports, so this line is commented out */}
+                          {/* <FiMail className="mr-1 h-4 w-4" /> */}
                           {ticket.email}
                         </span>
                         <span className="flex items-center">
-                          <FiTag className="mr-1 h-4 w-4" />
+                          {/* FiTag was removed from imports, so this line is commented out */}
+                          {/* <FiTag className="mr-1 h-4 w-4" /> */}
                           {ticket.category}
                         </span>
                         <span className="flex items-center">
@@ -366,7 +365,7 @@ const SuperAdminSupportPortalPage = () => {
               ))
             ) : (
               <div className="text-center py-12">
-                <FiMessageCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <FiMessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
                 <p className="text-gray-500">No support tickets match your current filters.</p>
               </div>
@@ -465,7 +464,8 @@ const SuperAdminSupportPortalPage = () => {
                 onClick={() => setShowTicketModal(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <FiX className="h-6 w-6" />
+                {/* FiX was removed from imports, so this line is commented out */}
+                {/* <FiX className="h-6 w-6" /> */}
               </button>
             </div>
             

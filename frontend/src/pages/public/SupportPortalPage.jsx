@@ -5,7 +5,7 @@ import { supportAPI } from '../../services/api';
 import {
   FiSearch,
   FiBookOpen,
-  FiMessageCircle,
+  FiMessageSquare,
   FiPlus,
   FiFilter,
   FiGrid,
@@ -193,7 +193,7 @@ const SupportPortalPage = () => {
 
           <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center mb-4">
-              <FiMessageCircle className="h-8 w-8 text-primary mr-3" />
+              <FiMessageSquare className="h-8 w-8 text-primary mr-3" />
               <h3 className="text-xl font-semibold">Support Tickets</h3>
             </div>
             <p className="text-gray-600 mb-4">
@@ -252,7 +252,7 @@ const SupportPortalPage = () => {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <FiMessageCircle className="inline h-4 w-4 mr-2" />
+                  <FiMessageSquare className="inline h-4 w-4 mr-2" />
                   My Tickets ({tickets.length})
                 </button>
               )}
@@ -410,7 +410,7 @@ const SupportPortalPage = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <FiMessageCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <FiMessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets yet</h3>
                 <p className="text-gray-600 mb-4">
                   You haven't created any support tickets yet. Need help? Create your first ticket.
