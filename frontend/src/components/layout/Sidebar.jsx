@@ -19,13 +19,13 @@ const Sidebar = () => {
 
   // Regular client navigation
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: FiHome },
-    { name: 'Products', href: '/products', icon: FiPackage },
-    { name: 'Sales', href: '/sales', icon: FiShoppingCart },
-    { name: 'Customers', href: '/customers', icon: FiUsers },
-    { name: 'Analytics', href: '/analytics', icon: FiBarChart2 },
-    { name: 'Reports', href: '/reports', icon: FiClipboard },
-    { name: 'Settings', href: '/settings', icon: FiSettings },
+    { name: 'Dashboard', href: '/app/dashboard', icon: FiHome },
+    { name: 'Products', href: '/app/products', icon: FiPackage },
+    { name: 'Sales', href: '/app/sales', icon: FiShoppingCart },
+    { name: 'Customers', href: '/app/customers', icon: FiUsers },
+    { name: 'Analytics', href: '/app/analytics', icon: FiBarChart2 },
+    { name: 'Reports', href: '/app/reports', icon: FiClipboard },
+    { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 
   const isSuperAdmin = user?.role === 'super_admin'
