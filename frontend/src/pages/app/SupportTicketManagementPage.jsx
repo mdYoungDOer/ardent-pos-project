@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiMessageSquare, FiClock, FiUser, FiMail, FiPhone, FiSearch, FiFilter, FiEye, FiReply, FiCheckCircle, FiXCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiMessageSquare, FiClock, FiUser, FiMail, FiPhone, FiSearch, FiFilter, FiEye, FiSend, FiCheckCircle, FiXCircle, FiAlertCircle } from 'react-icons/fi';
 import { superAdminAPI } from '../../services/api';
 
 const SupportTicketManagementPage = () => {
@@ -374,13 +374,13 @@ const SupportTicketManagementPage = () => {
                         >
                           <FiEye className="inline" />
                         </button>
-                        <button
-                          onClick={() => openReplyModal(ticket)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
-                          title="Reply"
-                        >
-                          <FiReply className="inline" />
-                        </button>
+                                                 <button
+                           onClick={() => openReplyModal(ticket)}
+                           className="text-blue-600 hover:text-blue-900 mr-3"
+                           title="Reply"
+                         >
+                           <FiSend className="inline" />
+                         </button>
                       </td>
                     </tr>
                   ))}
@@ -497,13 +497,13 @@ const SupportTicketManagementPage = () => {
                   </select>
                 </div>
                 
-                <button
-                  onClick={() => openReplyModal(selectedTicket)}
-                  className="px-4 py-2 bg-e41e5b text-white rounded-lg hover:bg-9a0864"
-                >
-                  <FiReply className="inline mr-2" />
-                  Reply
-                </button>
+                                 <button
+                   onClick={() => openReplyModal(selectedTicket)}
+                   className="px-4 py-2 bg-e41e5b text-white rounded-lg hover:bg-9a0864"
+                 >
+                   <FiSend className="inline mr-2" />
+                   Reply
+                 </button>
               </div>
             </div>
           </div>
