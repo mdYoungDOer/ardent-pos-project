@@ -37,10 +37,15 @@ $dbConfig = [
 ];
 
 try {
-    // Get article ID from URL
-    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    $pathParts = explode('/', trim($path, '/'));
-    $articleId = end($pathParts);
+    // Get article ID from query parameter or URL path
+    $articleId = $_GET['id'] ?? null;
+    
+    // If not in query params, try to extract from URL path
+    if (!$articleId) {
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $pathParts = explode('/', trim($path, '/'));
+        $articleId = end($pathParts);
+    }
     
     if (!$articleId || !is_numeric($articleId)) {
         http_response_code(400);
@@ -89,7 +94,7 @@ try {
     }
     
     // Increment view count
-    $updateSql = "UPDATE knowledgebase SET view_count = view_count + 1 WHERE id = :id";
+    $updateSql = "UPDATE knowledgebase SET view_count = COALESCE(view_count, 0) + 1 WHERE id = :id";
     $updateStmt = $pdo->prepare($updateSql);
     $updateStmt->execute(['id' => (int)$articleId]);
     
