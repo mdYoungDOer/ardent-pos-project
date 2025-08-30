@@ -10,7 +10,14 @@ import {
   FiSettings,
   FiClipboard,
   FiTarget,
-  FiLogOut
+  FiLogOut,
+  FiGrid,
+  FiMapPin,
+  FiDatabase,
+  FiUserCheck,
+  FiTag,
+  FiGift,
+  FiHelpCircle
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -20,11 +27,19 @@ const Sidebar = () => {
   // Regular client navigation
   const navigation = [
     { name: 'Dashboard', href: '/app/dashboard', icon: FiHome },
+    { name: 'POS', href: '/app/pos', icon: FiShoppingCart },
     { name: 'Products', href: '/app/products', icon: FiPackage },
-    { name: 'Sales', href: '/app/sales', icon: FiShoppingCart },
+    { name: 'Categories', href: '/app/categories', icon: FiGrid },
+    { name: 'Locations', href: '/app/locations', icon: FiMapPin },
+    { name: 'Inventory', href: '/app/inventory', icon: FiDatabase },
+    { name: 'Sales', href: '/app/sales', icon: FiBarChart2 },
     { name: 'Customers', href: '/app/customers', icon: FiUsers },
-    { name: 'Analytics', href: '/app/analytics', icon: FiBarChart2 },
     { name: 'Reports', href: '/app/reports', icon: FiClipboard },
+    { name: 'User Management', href: '/app/user-management', icon: FiUserCheck },
+    { name: 'Sub-categories', href: '/app/sub-categories', icon: FiGrid },
+    { name: 'Discounts', href: '/app/discounts', icon: FiTag },
+    { name: 'Coupons', href: '/app/coupons', icon: FiGift },
+    { name: 'Support', href: '/app/support', icon: FiHelpCircle },
     { name: 'Settings', href: '/app/settings', icon: FiSettings },
   ]
 
