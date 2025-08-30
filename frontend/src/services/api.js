@@ -405,7 +405,7 @@ export const superAdminAPI = {
   // Contact Submissions
   getContactSubmissions: async (params = {}) => {
     try {
-      const response = await api.get('/contact-submissions-management.php', { params });
+      const response = await api.get('/api/super-admin.php/contact-submissions', { params });
       return response;
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
@@ -415,7 +415,7 @@ export const superAdminAPI = {
 
   getContactSubmission: async (id) => {
     try {
-      const response = await api.get(`/contact-submissions-management.php/${id}`);
+      const response = await api.get(`/api/super-admin.php/contact-submissions/${id}`);
       return response;
     } catch (error) {
       console.error('Error fetching contact submission:', error);
@@ -425,7 +425,7 @@ export const superAdminAPI = {
 
   updateContactSubmission: async (id, data) => {
     try {
-      const response = await api.put(`/contact-submissions-management.php/${id}`, data);
+      const response = await api.put(`/api/super-admin.php/contact-submissions/${id}`, data);
       return response;
     } catch (error) {
       console.error('Error updating contact submission:', error);
@@ -435,7 +435,7 @@ export const superAdminAPI = {
 
   deleteContactSubmission: async (id) => {
     try {
-      const response = await api.delete(`/contact-submissions-management.php/${id}`);
+      const response = await api.delete(`/api/super-admin.php/contact-submissions/${id}`);
       return response;
     } catch (error) {
       console.error('Error deleting contact submission:', error);

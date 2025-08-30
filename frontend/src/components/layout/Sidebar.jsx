@@ -363,16 +363,16 @@ const Sidebar = () => {
   }
 
   return (
-    <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:border-r lg:border-[#746354]/20 lg:bg-white lg:pt-5 lg:pb-4">
+    <div className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:border-r lg:border-[#746354]/20 lg:bg-white lg:pt-4 lg:pb-4">
       {/* Logo */}
-      <div className="flex items-center flex-shrink-0 px-6">
+      <div className="flex items-center flex-shrink-0 px-4">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-[#e41e5b] rounded-lg flex items-center justify-center mr-3">
-            <FiTarget className="h-5 w-5 text-white" />
+          <div className="w-7 h-7 bg-[#e41e5b] rounded-lg flex items-center justify-center mr-2">
+            <FiTarget className="h-4 w-4 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-[#2c2c2c]">Ardent POS</h1>
+          <h1 className="text-lg font-bold text-[#2c2c2c]">Ardent POS</h1>
           {isSuperAdmin && (
-            <div className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+            <div className="ml-2 px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
               Super Admin
             </div>
           )}
@@ -380,19 +380,19 @@ const Sidebar = () => {
       </div>
       
       {/* User info */}
-      <div className="mt-6 px-6">
-        <div className="flex items-center p-3 bg-[#e41e5b]/5 rounded-lg border border-[#e41e5b]/10">
-          <div className="h-10 w-10 rounded-full bg-[#e41e5b] flex items-center justify-center">
-            <span className="text-sm font-medium text-white">
+      <div className="mt-4 px-4">
+        <div className="flex items-center p-2 bg-[#e41e5b]/5 rounded-lg border border-[#e41e5b]/10">
+          <div className="h-8 w-8 rounded-full bg-[#e41e5b] flex items-center justify-center">
+            <span className="text-xs font-medium text-white">
               {user?.first_name?.[0]}{user?.last_name?.[0]}
             </span>
           </div>
-          <div className="ml-3 flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#2c2c2c] truncate">
+          <div className="ml-2 flex-1 min-w-0">
+            <p className="text-xs font-semibold text-[#2c2c2c] truncate">
               {user?.first_name} {user?.last_name}
             </p>
             <div className="flex items-center">
-              <span className={`text-xs px-2 py-1 rounded-full ${
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                 user?.role === 'super_admin' 
                   ? 'bg-purple-100 text-purple-700' 
                   : 'bg-[#a67c00]/10 text-[#a67c00]'
@@ -408,10 +408,10 @@ const Sidebar = () => {
       <nav className="mt-6 flex-1 px-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
         {isSuperAdmin ? (
           // Super Admin Navigation with Categories
-          <div className="space-y-6">
+          <div className="space-y-4">
             {navigation.map((category) => (
               <div key={category.category}>
-                <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                   {category.category}
                 </h3>
                 <div className="space-y-1">
@@ -421,20 +421,20 @@ const Sidebar = () => {
                       <Link
                         key={item.name}
                         to={item.href}
-                        className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                        className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                           isActive
                             ? 'bg-[#e41e5b] text-white shadow-sm'
                             : 'text-[#746354] hover:bg-[#e41e5b]/5 hover:text-[#e41e5b]'
                         }`}
                       >
                         <item.icon
-                          className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                          className={`mr-3 h-4 w-4 flex-shrink-0 ${
                             isActive ? 'text-white' : 'text-[#746354] group-hover:text-[#e41e5b]'
                           }`}
                         />
-                        <span className="truncate flex-1">{item.name}</span>
+                        <span className="truncate flex-1 text-xs">{item.name}</span>
                         {item.badge && (
-                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             {item.badge}
                           </span>
                         )}
@@ -454,18 +454,18 @@ const Sidebar = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     isActive
                       ? 'bg-[#e41e5b] text-white shadow-sm'
                       : 'text-[#746354] hover:bg-[#e41e5b]/5 hover:text-[#e41e5b]'
                   }`}
                 >
                   <item.icon
-                    className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                    className={`mr-3 h-4 w-4 flex-shrink-0 ${
                       isActive ? 'text-white' : 'text-[#746354] group-hover:text-[#e41e5b]'
                     }`}
                   />
-                  <span className="truncate">{item.name}</span>
+                  <span className="truncate text-xs">{item.name}</span>
                 </Link>
               )
             })}
@@ -474,12 +474,12 @@ const Sidebar = () => {
       </nav>
 
       {/* Logout */}
-      <div className="px-3 mt-6">
+      <div className="px-3 mt-4">
         <button
           onClick={handleLogout}
-          className="group flex items-center w-full px-3 py-2.5 text-sm font-medium text-[#746354] rounded-xl hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+          className="group flex items-center w-full px-2 py-2 text-xs font-medium text-[#746354] rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-200"
         >
-          <FiLogOut className="mr-3 h-5 w-5 flex-shrink-0 text-[#746354] group-hover:text-red-600" />
+          <FiLogOut className="mr-2 h-4 w-4 flex-shrink-0 text-[#746354] group-hover:text-red-600" />
           <span>Logout</span>
         </button>
       </div>

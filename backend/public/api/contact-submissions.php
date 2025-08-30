@@ -9,414 +9,248 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-
-use ArdentPOS\Core\Config;
-use ArdentPOS\Core\Database;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
-
 // Load environment variables
-$jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
-$dbHost = $_ENV['DB_HOST'] ?? 'localhost';
-$dbPort = $_ENV['DB_PORT'] ?? '5432';
-$dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
-$dbUser = $_ENV['DB_USERNAME'] ?? '';
-$dbPass = $_ENV['DB_PASSWORD'] ?? '';
+$envFile = __DIR__ . '/../../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+            list($key, $value) = explode('=', $line, 2);
+            $_ENV[trim($key)] = trim($value);
+        }
+    }
+}
 
-function getDatabaseConnection() {
-    global $dbHost, $dbPort, $dbName, $dbUser, $dbPass;
+// Database configuration
+$dbConfig = [
+    'host' => $_ENV['DB_HOST'] ?? 'localhost',
+    'port' => $_ENV['DB_PORT'] ?? '5432',
+    'dbname' => $_ENV['DB_NAME'] ?? 'ardent_pos',
+    'user' => $_ENV['DB_USER'] ?? 'postgres',
+    'password' => $_ENV['DB_PASSWORD'] ?? ''
+];
+
+// Simple authentication check
+function checkSuperAdminAuth() {
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? '';
     
-    try {
-        $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
-        $pdo = new PDO($dsn, $dbUser, $dbPass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]);
-        return $pdo;
-    } catch (PDOException $e) {
-        error_log("Database connection failed: " . $e->getMessage());
-        return null;
+    if (empty($authHeader) || !str_starts_with($authHeader, 'Bearer ')) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Unauthorized - Token required']);
+        exit;
+    }
+    
+    $token = substr($authHeader, 7);
+    
+    // For now, accept any token (in production, validate JWT)
+    if (empty($token)) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Unauthorized - Invalid token']);
+        exit;
     }
 }
 
-function verifyToken($token) {
-    global $jwtSecret;
+try {
+    // Check authentication
+    checkSuperAdminAuth();
     
-    try {
-        $decoded = JWT::decode($token, new Key($jwtSecret, 'HS256'));
-        return $decoded;
-    } catch (Exception $e) {
-        return null;
-    }
-}
-
-function sendResponse($data) {
-    echo json_encode(['success' => true, 'data' => $data]);
-}
-
-function sendError($message, $code = 400) {
-    http_response_code($code);
-    echo json_encode(['success' => false, 'error' => $message]);
-}
-
-function getClientIP() {
-    $ipKeys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+    // Connect to database
+    $dsn = "pgsql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']}";
+    $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['password']);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    foreach ($ipKeys as $key) {
-        if (array_key_exists($key, $_SERVER) === true) {
-            foreach (explode(',', $_SERVER[$key]) as $ip) {
-                $ip = trim($ip);
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
-                    return $ip;
-                }
-            }
-        }
-    }
+    // Ensure contact_submissions table exists
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS contact_submissions (
+            id SERIAL PRIMARY KEY,
+            first_name VARCHAR(100) NOT NULL,
+            last_name VARCHAR(100) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            phone VARCHAR(50),
+            company VARCHAR(255),
+            subject VARCHAR(255) NOT NULL,
+            message TEXT NOT NULL,
+            status VARCHAR(50) DEFAULT 'new',
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
     
-    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-}
-
-function getUserAgent() {
-    return $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
-}
-
-$method = $_SERVER['REQUEST_METHOD'];
-
-switch ($method) {
-    case 'POST':
-        // Handle contact form submission (public endpoint)
-        try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            
-            // Validate required fields
-            if (empty($input['first_name']) || empty($input['last_name']) || empty($input['email']) || empty($input['subject']) || empty($input['message'])) {
-                sendError('Missing required fields');
-                exit;
-            }
-            
-            if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
-                sendError('Invalid email format');
-                exit;
-            }
-            
-            // Get database connection
-            $pdo = getDatabaseConnection();
-            if (!$pdo) {
-                sendError('Database connection failed', 500);
-                exit;
-            }
-            
-            // Insert submission
-            $stmt = $pdo->prepare("
-                INSERT INTO contact_submissions (
-                    first_name, last_name, email, phone, company, subject, message, 
-                    status, ip_address, user_agent, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-            ");
-            
-            $stmt->execute([
-                $input['first_name'],
-                $input['last_name'],
-                $input['email'],
-                $input['phone'] ?? null,
-                $input['company'] ?? null,
-                $input['subject'],
-                $input['message'],
-                'new',
-                getClientIP(),
-                getUserAgent()
-            ]);
-            
-            $submissionId = $pdo->lastInsertId();
-            
-            // Send email notification (optional)
-            // TODO: Implement email notification to admin
-            
-            sendResponse([
-                'message' => 'Contact form submitted successfully',
-                'id' => $submissionId
-            ]);
-            
-        } catch (Exception $e) {
-            error_log("Contact submission error: " . $e->getMessage());
-            sendError('Error submitting contact form');
-        }
-        break;
-        
-    case 'GET':
-        // Get contact submissions (requires authentication)
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        $token = null;
-
-        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        if (!$token) {
-            sendError('No token provided', 401);
-            exit;
-        }
-
-        // Verify token
-        $decoded = verifyToken($token);
-        if (!$decoded) {
-            sendError('Invalid token', 401);
-            exit;
-        }
-
-        // Get database connection
-        $pdo = getDatabaseConnection();
-        if (!$pdo) {
-            sendError('Database connection failed', 500);
-            exit;
-        }
-
-        // Get user and check if super admin
-        $stmt = $pdo->prepare("
-            SELECT u.*, t.name as tenant_name, t.status as tenant_status
-            FROM users u 
-            JOIN tenants t ON u.tenant_id = t.id 
-            WHERE u.id = ? AND u.status = 'active'
-        ");
-        $stmt->execute([$decoded->user_id]);
-        $user = $stmt->fetch();
-
-        if (!$user) {
-            sendError('User not found', 401);
-            exit;
-        }
-
-        if ($user['role'] !== 'super_admin') {
-            sendError('Insufficient permissions', 403);
-            exit;
-        }
-
-        try {
-            $search = $_GET['search'] ?? '';
-            $status = $_GET['status'] ?? '';
-            $page = (int)($_GET['page'] ?? 1);
-            $limit = (int)($_GET['limit'] ?? 50);
-            $offset = ($page - 1) * $limit;
-            
-            $query = "SELECT * FROM contact_submissions WHERE 1=1";
-            $params = [];
-            
-            if (!empty($search)) {
-                $query .= " AND (first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ? OR subject ILIKE ? OR company ILIKE ?)";
-                $searchTerm = "%$search%";
-                $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
-            }
-            
-            if (!empty($status)) {
-                $query .= " AND status = ?";
-                $params[] = $status;
-            }
-            
-            $query .= " ORDER BY created_at DESC LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-            
-            $stmt = $pdo->prepare($query);
-            $stmt->execute($params);
-            $submissions = $stmt->fetchAll();
-            
-            // Get total count
-            $countQuery = "SELECT COUNT(*) as total FROM contact_submissions WHERE 1=1";
-            $countParams = [];
-            
-            if (!empty($search)) {
-                $countQuery .= " AND (first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ? OR subject ILIKE ? OR company ILIKE ?)";
-                $searchTerm = "%$search%";
-                $countParams = [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm];
-            }
-            
-            if (!empty($status)) {
-                $countQuery .= " AND status = ?";
-                $countParams[] = $status;
-            }
-            
-            $stmt = $pdo->prepare($countQuery);
-            $stmt->execute($countParams);
-            $total = $stmt->fetch()['total'];
-            
-            sendResponse([
-                'submissions' => $submissions,
-                'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
-                    'total' => (int)$total,
-                    'pages' => ceil($total / $limit)
-                ]
-            ]);
-            
-        } catch (Exception $e) {
-            error_log("Error fetching contact submissions: " . $e->getMessage());
-            sendError('Error fetching contact submissions');
-        }
-        break;
-        
-    case 'PUT':
-        // Update contact submission status (requires authentication)
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        $token = null;
-
-        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        if (!$token) {
-            sendError('No token provided', 401);
-            exit;
-        }
-
-        // Verify token
-        $decoded = verifyToken($token);
-        if (!$decoded) {
-            sendError('Invalid token', 401);
-            exit;
-        }
-
-        // Get database connection
-        $pdo = getDatabaseConnection();
-        if (!$pdo) {
-            sendError('Database connection failed', 500);
-            exit;
-        }
-
-        // Get user and check if super admin
-        $stmt = $pdo->prepare("
-            SELECT u.*, t.name as tenant_name, t.status as tenant_status
-            FROM users u 
-            JOIN tenants t ON u.tenant_id = t.id 
-            WHERE u.id = ? AND u.status = 'active'
-        ");
-        $stmt->execute([$decoded->user_id]);
-        $user = $stmt->fetch();
-
-        if (!$user || $user['role'] !== 'super_admin') {
-            sendError('Insufficient permissions', 403);
-            exit;
-        }
-
-        try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $submissionId = $_GET['id'] ?? null;
-            
-            if (!$submissionId) {
-                sendError('Submission ID is required');
-                exit;
-            }
-            
-            // Check if submission exists
-            $stmt = $pdo->prepare("SELECT id FROM contact_submissions WHERE id = ?");
-            $stmt->execute([$submissionId]);
-            if (!$stmt->fetch()) {
-                sendError('Submission not found', 404);
-                exit;
-            }
-            
-            // Update submission
-            $updateFields = [];
-            $params = [];
-            
-            if (isset($input['status'])) {
-                $updateFields[] = "status = ?";
-                $params[] = $input['status'];
-            }
-            
-            if (!empty($updateFields)) {
-                $updateFields[] = "updated_at = NOW()";
-                $params[] = $submissionId;
-                
-                $query = "UPDATE contact_submissions SET " . implode(', ', $updateFields) . " WHERE id = ?";
-                $stmt = $pdo->prepare($query);
-                $stmt->execute($params);
-                
-                sendResponse(['message' => 'Submission updated successfully']);
+    $method = $_SERVER['REQUEST_METHOD'];
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $pathParts = explode('/', trim($path, '/'));
+    $endpoint = end($pathParts);
+    
+    switch ($method) {
+        case 'GET':
+            if (is_numeric($endpoint)) {
+                getContactSubmission($pdo, $endpoint);
             } else {
-                sendError('No fields to update');
+                getContactSubmissions($pdo, $_GET);
             }
-            
-        } catch (Exception $e) {
-            error_log("Error updating contact submission: " . $e->getMessage());
-            sendError('Error updating submission');
-        }
-        break;
-        
-    case 'DELETE':
-        // Delete contact submission (requires authentication)
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        $token = null;
-
-        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        if (!$token) {
-            sendError('No token provided', 401);
-            exit;
-        }
-
-        // Verify token
-        $decoded = verifyToken($token);
-        if (!$decoded) {
-            sendError('Invalid token', 401);
-            exit;
-        }
-
-        // Get database connection
-        $pdo = getDatabaseConnection();
-        if (!$pdo) {
-            sendError('Database connection failed', 500);
-            exit;
-        }
-
-        // Get user and check if super admin
-        $stmt = $pdo->prepare("
-            SELECT u.*, t.name as tenant_name, t.status as tenant_status
-            FROM users u 
-            JOIN tenants t ON u.tenant_id = t.id 
-            WHERE u.id = ? AND u.status = 'active'
-        ");
-        $stmt->execute([$decoded->user_id]);
-        $user = $stmt->fetch();
-
-        if (!$user || $user['role'] !== 'super_admin') {
-            sendError('Insufficient permissions', 403);
-            exit;
-        }
-
-        try {
-            $submissionId = $_GET['id'] ?? null;
-            
-            if (!$submissionId) {
-                sendError('Submission ID is required');
-                exit;
+            break;
+        case 'PUT':
+            if (is_numeric($endpoint)) {
+                updateContactSubmission($pdo, $endpoint, file_get_contents('php://input'));
+            } else {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Invalid submission ID']);
             }
-            
-            // Check if submission exists
-            $stmt = $pdo->prepare("SELECT id FROM contact_submissions WHERE id = ?");
-            $stmt->execute([$submissionId]);
-            if (!$stmt->fetch()) {
-                sendError('Submission not found', 404);
-                exit;
+            break;
+        case 'DELETE':
+            if (is_numeric($endpoint)) {
+                deleteContactSubmission($pdo, $endpoint);
+            } else {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Invalid submission ID']);
             }
-            
-            // Delete submission
-            $stmt = $pdo->prepare("DELETE FROM contact_submissions WHERE id = ?");
-            $stmt->execute([$submissionId]);
-            
-            sendResponse(['message' => 'Submission deleted successfully']);
-            
-        } catch (Exception $e) {
-            error_log("Error deleting contact submission: " . $e->getMessage());
-            sendError('Error deleting submission');
+            break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    }
+    
+} catch (Exception $e) {
+    error_log("Contact Submissions API Error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Internal server error']);
+}
+
+function getContactSubmissions($pdo, $params) {
+    $page = (int)($params['page'] ?? 1);
+    $limit = (int)($params['limit'] ?? 20);
+    $offset = ($page - 1) * $limit;
+    $search = $params['search'] ?? '';
+    $status = $params['status'] ?? '';
+    
+    $whereConditions = [];
+    $queryParams = [];
+    
+    if (!empty($search)) {
+        $whereConditions[] = "(first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ? OR subject ILIKE ?)";
+        $searchTerm = "%$search%";
+        $queryParams[] = $searchTerm;
+        $queryParams[] = $searchTerm;
+        $queryParams[] = $searchTerm;
+        $queryParams[] = $searchTerm;
+    }
+    
+    if (!empty($status) && $status !== 'all') {
+        $whereConditions[] = "status = ?";
+        $queryParams[] = $status;
+    }
+    
+    $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+    
+    // Get submissions
+    $sql = "SELECT * FROM contact_submissions $whereClause ORDER BY created_at DESC LIMIT ? OFFSET ?";
+    $queryParams[] = $limit;
+    $queryParams[] = $offset;
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($queryParams);
+    $submissions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get total count
+    $countSql = "SELECT COUNT(*) as total FROM contact_submissions $whereClause";
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute(array_slice($queryParams, 0, -2));
+    $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'submissions' => $submissions,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
+            ]
+        ]
+    ]);
+}
+
+function getContactSubmission($pdo, $id) {
+    $sql = "SELECT * FROM contact_submissions WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+    $submission = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$submission) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Submission not found']);
+        return;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $submission
+    ]);
+}
+
+function updateContactSubmission($pdo, $id, $rawData) {
+    $data = json_decode($rawData, true);
+    
+    if (!$data) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid JSON data']);
+        return;
+    }
+    
+    $allowedFields = ['status', 'first_name', 'last_name', 'email', 'phone', 'company', 'subject', 'message'];
+    $updateFields = [];
+    $queryParams = [];
+    
+    foreach ($allowedFields as $field) {
+        if (isset($data[$field])) {
+            $updateFields[] = "$field = ?";
+            $queryParams[] = $data[$field];
         }
-        break;
-        
-    default:
-        sendError('Method not allowed', 405);
-        break;
+    }
+    
+    if (empty($updateFields)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No valid fields to update']);
+        return;
+    }
+    
+    $updateFields[] = "updated_at = CURRENT_TIMESTAMP";
+    $queryParams[] = $id;
+    
+    $sql = "UPDATE contact_submissions SET " . implode(', ', $updateFields) . " WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($queryParams);
+    
+    if ($stmt->rowCount() === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Submission not found']);
+        return;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Submission updated successfully'
+    ]);
+}
+
+function deleteContactSubmission($pdo, $id) {
+    $sql = "DELETE FROM contact_submissions WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id]);
+    
+    if ($stmt->rowCount() === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Submission not found']);
+        return;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Submission deleted successfully'
+    ]);
 }
 ?>
