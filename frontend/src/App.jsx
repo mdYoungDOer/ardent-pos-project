@@ -54,6 +54,8 @@ import SuperAdminSupportPortalPage from './pages/app/SuperAdminSupportPortalPage
 import SuperAdminAPIKeysPage from './pages/app/SuperAdminAPIKeysPage';
 import SuperAdminSystemHealthPage from './pages/app/SuperAdminSystemHealthPage';
 import SuperAdminSystemLogsPage from './pages/app/SuperAdminSystemLogsPage';
+import KnowledgebaseManagementPage from './pages/app/KnowledgebaseManagementPage';
+import SupportTicketManagementPage from './pages/app/SupportTicketManagementPage';
 
 function App() {
   return (
@@ -128,6 +130,8 @@ function App() {
               <Route path="billing" element={<SuperAdminBillingPage />} />
               <Route path="security" element={<SuperAdminSecurityPage />} />
               <Route path="contact-submissions" element={<SuperAdminContactSubmissionsPage />} />
+              <Route path="knowledgebase" element={<KnowledgebaseManagementPage />} />
+              <Route path="support-tickets" element={<SupportTicketManagementPage />} />
               <Route path="support-portal" element={<SuperAdminSupportPortalPage />} />
               <Route path="api-keys" element={<SuperAdminAPIKeysPage />} />
               <Route path="system-health" element={<SuperAdminSystemHealthPage />} />

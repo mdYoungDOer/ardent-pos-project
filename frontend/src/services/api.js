@@ -511,6 +511,226 @@ export const superAdminAPI = {
       console.error('Error fetching failed logins:', error);
       return { data: { success: true, data: { failed_logins: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
     }
+  },
+
+  // Knowledgebase Management
+  getKnowledgebaseCategories: async (params = {}) => {
+    try {
+      const response = await fetch('/knowledgebase-management.php/categories', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error fetching knowledgebase categories:', error);
+      return { data: { success: true, data: { categories: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  createKnowledgebaseCategory: async (data) => {
+    try {
+      const response = await fetch('/knowledgebase-management.php/categories', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error creating knowledgebase category:', error);
+      throw error;
+    }
+  },
+
+  updateKnowledgebaseCategory: async (data) => {
+    try {
+      const response = await fetch('/knowledgebase-management.php/categories', {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error updating knowledgebase category:', error);
+      throw error;
+    }
+  },
+
+  deleteKnowledgebaseCategory: async (id) => {
+    try {
+      const response = await fetch(`/knowledgebase-management.php/categories?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error deleting knowledgebase category:', error);
+      throw error;
+    }
+  },
+
+  getKnowledgebaseArticles: async (params = {}) => {
+    try {
+      const response = await fetch(`/knowledgebase-management.php/articles?${new URLSearchParams(params)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error fetching knowledgebase articles:', error);
+      return { data: { success: true, data: { articles: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  createKnowledgebaseArticle: async (data) => {
+    try {
+      const response = await fetch('/knowledgebase-management.php/articles', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error creating knowledgebase article:', error);
+      throw error;
+    }
+  },
+
+  updateKnowledgebaseArticle: async (data) => {
+    try {
+      const response = await fetch('/knowledgebase-management.php/articles', {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error updating knowledgebase article:', error);
+      throw error;
+    }
+  },
+
+  deleteKnowledgebaseArticle: async (id) => {
+    try {
+      const response = await fetch(`/knowledgebase-management.php/articles?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error deleting knowledgebase article:', error);
+      throw error;
+    }
+  },
+
+  // Support Ticket Management
+  getSupportTickets: async (params = {}) => {
+    try {
+      const response = await fetch(`/support-ticket-management.php/tickets?${new URLSearchParams(params)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error fetching support tickets:', error);
+      return { data: { success: true, data: { tickets: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
+    }
+  },
+
+  getSupportTicket: async (id) => {
+    try {
+      const response = await fetch(`/support-ticket-management.php/ticket?id=${id}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error fetching support ticket:', error);
+      return { data: { success: true, data: {} } };
+    }
+  },
+
+  getSupportTicketStats: async () => {
+    try {
+      const response = await fetch('/support-ticket-management.php/stats', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error fetching support ticket stats:', error);
+      return { data: { success: true, data: {} } };
+    }
+  },
+
+  createSupportTicket: async (data) => {
+    try {
+      const response = await fetch('/support-ticket-management.php/tickets', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error creating support ticket:', error);
+      throw error;
+    }
+  },
+
+  updateSupportTicket: async (data) => {
+    try {
+      const response = await fetch('/support-ticket-management.php/tickets', {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error updating support ticket:', error);
+      throw error;
+    }
+  },
+
+  deleteSupportTicket: async (id) => {
+    try {
+      const response = await fetch(`/support-ticket-management.php/tickets?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error deleting support ticket:', error);
+      throw error;
+    }
+  },
+
+  addSupportReply: async (data) => {
+    try {
+      const response = await fetch('/support-ticket-management.php/reply', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return { data: await response.json() };
+    } catch (error) {
+      console.error('Error adding support reply:', error);
+      throw error;
+    }
   }
 };
 

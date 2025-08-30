@@ -27,7 +27,9 @@ import {
   FiKey,
   FiDollarSign,
   FiFileText,
-  FiHelpCircle
+  FiHelpCircle,
+  FiBookOpen,
+  FiMessageSquare
 } from 'react-icons/fi'
 
 const Sidebar = () => {
@@ -38,6 +40,8 @@ const Sidebar = () => {
   const superAdminNavigation = [
     { name: 'Super Admin Dashboard', href: '/super-admin/dashboard', icon: FiShield },
     { name: 'Tenant Management', href: '/super-admin/tenants', icon: FiUsers },
+    { name: 'Knowledgebase Management', href: '/super-admin/knowledgebase', icon: FiBookOpen },
+    { name: 'Support Tickets', href: '/super-admin/support-tickets', icon: FiMessageSquare },
     { name: 'Contact Submissions', href: '/super-admin/contact-submissions', icon: FiMail },
     { name: 'API Keys Management', href: '/super-admin/api-keys', icon: FiKey },
     { name: 'System Analytics', href: '/super-admin/analytics', icon: FiBarChart2 },
