@@ -45,8 +45,10 @@ const SuperAdminContactSubmissionsPage = () => {
       // Fetch contact submissions from API
       const response = await superAdminAPI.getContactSubmissions();
       
-      if (response.data.success) {
-        setSubmissions(response.data.data);
+      if (response.data?.success) {
+        // Ensure we have the correct data structure
+        const submissions = response.data.data?.submissions || response.data.data || [];
+        setSubmissions(Array.isArray(submissions) ? submissions : []);
       } else {
         // Use demo data if API fails
         setSubmissions([
@@ -94,27 +96,31 @@ const SuperAdminContactSubmissionsPage = () => {
             user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0) AppleWebKit/605.1.15',
             created_at: '2024-01-13T11:20:00Z',
             updated_at: '2024-01-14T16:30:00Z'
-          },
-          {
-            id: 4,
-            first_name: 'Emily',
-            last_name: 'Williams',
-            email: 'emily.williams@cafe.com',
-            phone: '+233 27 777 8888',
-            company: 'Coffee Corner Cafe',
-            subject: 'Integration Questions',
-            message: 'I have some questions about integrating your POS system with our existing accounting software. Do you support QuickBooks integration?',
-            status: 'new',
-            ip_address: '192.168.1.101',
-            user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            created_at: '2024-01-15T08:15:00Z',
-            updated_at: '2024-01-15T08:15:00Z'
           }
         ]);
       }
-    } catch (err) {
-      console.error('Error fetching contact submissions:', err);
-      setError('Failed to load contact submissions');
+    } catch (error) {
+      console.error('Error fetching contact submissions:', error);
+      setError('Failed to load contact submissions. Using demo data.');
+      
+      // Use demo data as fallback
+      setSubmissions([
+        {
+          id: 1,
+          first_name: 'John',
+          last_name: 'Doe',
+          email: 'john.doe@example.com',
+          phone: '+233 20 123 4567',
+          company: 'Tech Solutions Ltd',
+          subject: 'Inquiry about Enterprise Plan',
+          message: 'I am interested in learning more about your enterprise plan features and pricing.',
+          status: 'new',
+          ip_address: '192.168.1.100',
+          user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          created_at: '2024-01-15T10:30:00Z',
+          updated_at: '2024-01-15T10:30:00Z'
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -173,15 +179,30 @@ const SuperAdminContactSubmissionsPage = () => {
     }
   };
 
-  const filteredSubmissions = submissions
-    .filter(sub => filter === 'all' || sub.status === filter)
-    .filter(sub => 
-      sub.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.company.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const filteredSubmissions = () => {
+    // Ensure submissions is an array
+    if (!Array.isArray(submissions)) {
+      return [];
+    }
+
+    let filtered = submissions;
+    
+    if (searchTerm) {
+      filtered = filtered.filter(submission => 
+        submission.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.message?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (filter !== 'all') {
+      filtered = filtered.filter(submission => submission.status === filter);
+    }
+
+    return filtered;
+  };
 
   if (loading) {
     return (
@@ -356,7 +377,7 @@ const SuperAdminContactSubmissionsPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredSubmissions.map((submission) => (
+                {filteredSubmissions().map((submission) => (
                   <tr key={submission.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
