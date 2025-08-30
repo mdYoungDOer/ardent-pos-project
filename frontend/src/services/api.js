@@ -403,14 +403,9 @@ export const superAdminAPI = {
   getSecurityLogs: (params = {}) => api.get('/super-admin.php/security-logs', { params }),
 
   // Contact Submissions
-  getContactSubmissions: (params = {}) => api.get('/contact-submissions.php', { params }),
-  updateContactSubmission: (id, data) => api.put(`/contact-submissions.php?id=${id}`, data),
-  deleteContactSubmission: (id) => api.delete(`/contact-submissions.php?id=${id}`),
-
-  // Contact Submissions Management
   getContactSubmissions: async (params = {}) => {
     try {
-      const response = await api.get('/contact-submissions.php', { params });
+      const response = await api.get('/contact-submissions-management.php', { params });
       return response;
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
@@ -420,7 +415,7 @@ export const superAdminAPI = {
 
   getContactSubmission: async (id) => {
     try {
-      const response = await api.get(`/contact-submissions.php?id=${id}`);
+      const response = await api.get(`/super-admin.php/contact-submissions/${id}`);
       return response;
     } catch (error) {
       console.error('Error fetching contact submission:', error);
@@ -428,8 +423,25 @@ export const superAdminAPI = {
     }
   },
 
-  updateContactSubmission: (id, data) => api.put(`/contact-submissions.php?id=${id}`, data),
-  deleteContactSubmission: (id) => api.delete(`/contact-submissions.php?id=${id}`),
+  updateContactSubmission: async (id, data) => {
+    try {
+      const response = await api.put(`/super-admin.php/contact-submissions/${id}`, data);
+      return response;
+    } catch (error) {
+      console.error('Error updating contact submission:', error);
+      return { data: { success: false, message: 'Failed to update submission' } };
+    }
+  },
+
+  deleteContactSubmission: async (id) => {
+    try {
+      const response = await api.delete(`/super-admin.php/contact-submissions/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error deleting contact submission:', error);
+      return { data: { success: false, message: 'Failed to delete submission' } };
+    }
+  },
 
   // Billing & Payments Management
   getBillingOverview: async () => {
