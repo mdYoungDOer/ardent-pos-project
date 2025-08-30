@@ -203,11 +203,11 @@ const SupportPortalPage = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Quick Actions */}
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-           <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center mb-4">
               <FiBookOpen className="h-8 w-8 text-primary mr-3" />
-              <h3 className="text-xl font-semibold">Knowledge Base</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Knowledge Base</h3>
             </div>
             <p className="text-gray-600 mb-4">
               Browse our comprehensive collection of guides, tutorials, and FAQs
@@ -220,41 +220,41 @@ const SupportPortalPage = () => {
             </button>
           </div>
 
-                     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
-             <div className="flex items-center mb-4">
-               <FiMessageSquare className="h-8 w-8 text-primary mr-3" />
-               <h3 className="text-xl font-semibold">Support Tickets</h3>
-             </div>
-             <p className="text-gray-600 mb-4">
-               Create a ticket for personalized support from our team
-             </p>
-             <button
-               onClick={() => setShowTicketModal(true)}
-               className="text-primary hover:text-accent-1 font-medium flex items-center"
-             >
-               Create Ticket <FiArrowRight className="ml-2 h-4 w-4" />
-             </button>
-           </div>
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <FiMessageSquare className="h-8 w-8 text-primary mr-3" />
+              <h3 className="text-xl font-semibold text-gray-900">Support Tickets</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Create a ticket for personalized support from our team
+            </p>
+            <button
+              onClick={() => setShowTicketModal(true)}
+              className="text-primary hover:text-accent-1 font-medium flex items-center"
+            >
+              Create Ticket <FiArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          </div>
 
-                     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
-             <div className="flex items-center mb-4">
-               <FiHelpCircle className="h-8 w-8 text-primary mr-3" />
-               <h3 className="text-xl font-semibold">Live Chat</h3>
-             </div>
-             <p className="text-gray-600 mb-4">
-               Get instant help from our AI assistant or human support team
-             </p>
-             <button
-               onClick={() => {
-                 // Trigger chat widget
-                 const chatButton = document.querySelector('[data-chat-trigger]');
-                 if (chatButton) chatButton.click();
-               }}
-               className="text-primary hover:text-accent-1 font-medium flex items-center"
-             >
-               Start Chat <FiArrowRight className="ml-2 h-4 w-4" />
-             </button>
-           </div>
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <FiHelpCircle className="h-8 w-8 text-primary mr-3" />
+              <h3 className="text-xl font-semibold text-gray-900">Live Chat</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Get instant help from our AI assistant or human support team
+            </p>
+            <button
+              onClick={() => {
+                // Trigger chat widget
+                const chatButton = document.querySelector('[data-chat-trigger]');
+                if (chatButton) chatButton.click();
+              }}
+              className="text-primary hover:text-accent-1 font-medium flex items-center"
+            >
+              Start Chat <FiArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}

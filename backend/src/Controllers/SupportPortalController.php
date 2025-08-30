@@ -440,14 +440,33 @@ class SupportPortalController
     public function getKnowledgebaseArticle($id)
     {
         try {
-            $sql = "
-                SELECT kb.*, c.name as category_name 
-                FROM knowledgebase kb
-                LEFT JOIN knowledgebase_categories c ON kb.category_id = c.id
-                WHERE kb.id = :id AND kb.published = true
-            ";
+            // Ensure tables exist
+            $this->ensureTablesExist();
             
-            $article = Database::fetch($sql, ['id' => $id]);
+            // Check if $id is numeric (ID) or string (slug)
+            $isNumeric = is_numeric($id);
+            
+            if ($isNumeric) {
+                // Search by ID
+                $sql = "
+                    SELECT kb.*, c.name as category_name 
+                    FROM knowledgebase kb
+                    LEFT JOIN knowledgebase_categories c ON kb.category_id = c.id
+                    WHERE kb.id = :id AND kb.published = true
+                ";
+                $params = ['id' => (int)$id];
+            } else {
+                // Search by slug
+                $sql = "
+                    SELECT kb.*, c.name as category_name 
+                    FROM knowledgebase kb
+                    LEFT JOIN knowledgebase_categories c ON kb.category_id = c.id
+                    WHERE kb.slug = :slug AND kb.published = true
+                ";
+                $params = ['slug' => $id];
+            }
+            
+            $article = Database::fetch($sql, $params);
             
             if (!$article) {
                 http_response_code(404);
@@ -459,7 +478,11 @@ class SupportPortalController
             }
             
             // Increment view count
-            Database::query("UPDATE knowledgebase SET view_count = view_count + 1 WHERE id = :id", ['id' => $id]);
+            if ($isNumeric) {
+                Database::query("UPDATE knowledgebase SET view_count = view_count + 1 WHERE id = :id", ['id' => (int)$id]);
+            } else {
+                Database::query("UPDATE knowledgebase SET view_count = view_count + 1 WHERE slug = :slug", ['slug' => $id]);
+            }
             
             echo json_encode([
                 'success' => true,
@@ -739,6 +762,101 @@ class SupportPortalController
         } catch (Exception $e) {
             error_log("Auto Response Error: " . $e->getMessage());
             return "I'm here to help! Would you like me to create a support ticket for you?";
+        }
+    }
+    
+    private function ensureTablesExist()
+    {
+        try {
+            // Check if knowledgebase table exists
+            $result = Database::query("SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'knowledgebase'
+            )");
+            
+            if (!$result || !$result[0]['exists']) {
+                // Create knowledgebase_categories table
+                $sql = "CREATE TABLE IF NOT EXISTS knowledgebase_categories (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    slug VARCHAR(255) UNIQUE NOT NULL,
+                    description TEXT,
+                    sort_order INTEGER DEFAULT 0,
+                    is_active BOOLEAN DEFAULT true,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )";
+                Database::query($sql);
+                
+                // Create knowledgebase table
+                $sql = "CREATE TABLE IF NOT EXISTS knowledgebase (
+                    id SERIAL PRIMARY KEY,
+                    title VARCHAR(255) NOT NULL,
+                    slug VARCHAR(255) UNIQUE NOT NULL,
+                    content TEXT NOT NULL,
+                    excerpt TEXT,
+                    category_id INTEGER REFERENCES knowledgebase_categories(id),
+                    tags TEXT,
+                    author_id INTEGER,
+                    published BOOLEAN DEFAULT true,
+                    view_count INTEGER DEFAULT 0,
+                    helpful_count INTEGER DEFAULT 0,
+                    not_helpful_count INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )";
+                Database::query($sql);
+                
+                // Create indexes
+                Database::query("CREATE INDEX IF NOT EXISTS idx_knowledgebase_category ON knowledgebase(category_id)");
+                Database::query("CREATE INDEX IF NOT EXISTS idx_knowledgebase_published ON knowledgebase(published)");
+                Database::query("CREATE INDEX IF NOT EXISTS idx_knowledgebase_slug ON knowledgebase(slug)");
+                
+                // Insert default categories and sample articles
+                $this->insertDefaultData();
+                
+                error_log("Knowledgebase tables created successfully");
+            }
+        } catch (Exception $e) {
+            error_log("Error ensuring knowledgebase tables exist: " . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    private function insertDefaultData()
+    {
+        // Insert default categories
+        $categories = [
+            ['name' => 'Getting Started', 'slug' => 'getting-started', 'description' => 'Basic setup and getting started guides', 'sort_order' => 1],
+            ['name' => 'Sales & Transactions', 'slug' => 'sales-transactions', 'description' => 'How to process sales and manage transactions', 'sort_order' => 2],
+            ['name' => 'Inventory Management', 'slug' => 'inventory-management', 'description' => 'Managing your product inventory', 'sort_order' => 3]
+        ];
+        
+        foreach ($categories as $category) {
+            $sql = "INSERT INTO knowledgebase_categories (name, slug, description, sort_order) 
+                    VALUES (:name, :slug, :description, :sort_order) 
+                    ON CONFLICT (slug) DO NOTHING";
+            Database::query($sql, $category);
+        }
+        
+        // Insert sample articles
+        $articles = [
+            [
+                'title' => 'Getting Started with Ardent POS',
+                'slug' => 'getting-started-with-ardent-pos',
+                'content' => '<h2>Welcome to Ardent POS!</h2><p>This guide will help you get started with your new Ardent POS system.</p>',
+                'excerpt' => 'Learn how to set up your Ardent POS account and start processing sales.',
+                'category_id' => 1,
+                'tags' => 'setup,getting-started'
+            ]
+        ];
+        
+        foreach ($articles as $article) {
+            $sql = "INSERT INTO knowledgebase (title, slug, content, excerpt, category_id, tags) 
+                    VALUES (:title, :slug, :content, :excerpt, :category_id, :tags) 
+                    ON CONFLICT (slug) DO NOTHING";
+            Database::query($sql, $article);
         }
     }
 }
