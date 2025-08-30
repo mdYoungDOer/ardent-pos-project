@@ -31,8 +31,8 @@ const ContactPage = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true)
     try {
-      // Submit to API endpoint
-      const response = await fetch('/api/contact-submissions', {
+      // Submit to direct endpoint
+      const response = await fetch('/contact-submit.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
