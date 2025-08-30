@@ -57,7 +57,7 @@ const SuperAdminSidebar = () => {
           status: 'active'
         },
         { 
-          path: '/super-admin/subscriptions', 
+          path: '/super-admin/subscription-plans', 
           name: 'Subscription Plans', 
           icon: FiCreditCard,
           status: 'active'
@@ -101,12 +101,6 @@ const SuperAdminSidebar = () => {
           name: 'Billing & Payments', 
           icon: FiActivity,
           status: 'active'
-        },
-        { 
-          path: '/super-admin/reports', 
-          name: 'System Reports', 
-          icon: FiFileText,
-          status: 'active'
         }
       ]
     },
@@ -136,12 +130,6 @@ const SuperAdminSidebar = () => {
           name: 'System Logs', 
           icon: FiFileText,
           status: 'active'
-        },
-        { 
-          path: '/super-admin/database', 
-          name: 'Database Management', 
-          icon: FiDatabase,
-          status: 'active'
         }
       ]
     },
@@ -152,12 +140,6 @@ const SuperAdminSidebar = () => {
           path: '/super-admin/settings', 
           name: 'Global Settings', 
           icon: FiSettings,
-          status: 'active'
-        },
-        { 
-          path: '/super-admin/monitoring', 
-          name: 'System Monitoring', 
-          icon: FiMonitor,
           status: 'active'
         }
       ]

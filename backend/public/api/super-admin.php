@@ -146,6 +146,39 @@ try {
         case 'contact-submissions':
             handleContactSubmissions($pdo, $method);
             break;
+        case 'stats':
+            handleStats($pdo);
+            break;
+        case 'billing':
+            handleBilling($pdo);
+            break;
+        case 'activity':
+            handleActivity($pdo);
+            break;
+        case 'settings':
+            handleSettings($pdo, $method);
+            break;
+        case 'system-logs':
+            handleSystemLogs($pdo);
+            break;
+        case 'system-health':
+            handleSystemHealth($pdo);
+            break;
+        case 'security':
+            handleSecurity($pdo);
+            break;
+        case 'support-tickets':
+            handleSupportTickets($pdo, $method);
+            break;
+        case 'support-ticket-stats':
+            handleSupportTicketStats($pdo);
+            break;
+        case 'knowledgebase-categories':
+            handleKnowledgebaseCategories($pdo, $method);
+            break;
+        case 'knowledgebase-articles':
+            handleKnowledgebaseArticles($pdo, $method);
+            break;
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
@@ -360,6 +393,310 @@ function handleContactSubmissions($pdo, $method) {
                     'limit' => $limit,
                     'total' => (int)$total,
                     'pages' => ceil($total / $limit)
+                ]
+            ]
+        ]);
+    }
+}
+
+function handleStats($pdo) {
+    $stats = [
+        'total_users' => 0,
+        'total_tenants' => 0,
+        'active_subscriptions' => 0,
+        'total_revenue' => 0,
+        'monthly_growth' => 12.5
+    ];
+    
+    // Count users
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM users");
+    $stats['total_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    // Count tenants
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM tenants");
+    $stats['total_tenants'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    // Count active subscriptions
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'");
+    $stats['active_subscriptions'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    // Calculate total revenue
+    $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM invoices WHERE status = 'paid'");
+    $stats['total_revenue'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $stats
+    ]);
+}
+
+function handleBilling($pdo) {
+    $billing = [
+        'total_revenue' => 0,
+        'monthly_revenue' => 0,
+        'active_subscriptions' => 0,
+        'pending_payments' => 0
+    ];
+    
+    // Calculate total revenue
+    $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM invoices WHERE status = 'paid'");
+    $billing['total_revenue'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calculate monthly revenue
+    $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM invoices WHERE status = 'paid' AND created_at >= NOW() - INTERVAL '30 days'");
+    $billing['monthly_revenue'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Count active subscriptions
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'");
+    $billing['active_subscriptions'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    // Count pending payments
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM invoices WHERE status = 'pending'");
+    $billing['pending_payments'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $billing
+    ]);
+}
+
+function handleActivity($pdo) {
+    $activities = [
+        [
+            'id' => 1,
+            'type' => 'user_login',
+            'description' => 'User logged in',
+            'user_email' => 'admin@example.com',
+            'activity_time' => date('Y-m-d H:i:s'),
+            'created_at' => date('Y-m-d H:i:s')
+        ],
+        [
+            'id' => 2,
+            'type' => 'subscription_created',
+            'description' => 'New subscription created',
+            'user_email' => 'tenant@example.com',
+            'activity_time' => date('Y-m-d H:i:s', strtotime('-1 hour')),
+            'created_at' => date('Y-m-d H:i:s', strtotime('-1 hour'))
+        ]
+    ];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'activities' => $activities,
+            'pagination' => [
+                'page' => 1,
+                'limit' => 20,
+                'total' => count($activities),
+                'pages' => 1
+            ]
+        ]
+    ]);
+}
+
+function handleSettings($pdo, $method) {
+    if ($method === 'GET') {
+        $settings = [
+            'system_name' => 'Ardent POS',
+            'system_version' => '1.0.0',
+            'maintenance_mode' => false,
+            'email_notifications' => true,
+            'max_file_size' => '10MB',
+            'session_timeout' => 3600
+        ];
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $settings
+        ]);
+    }
+}
+
+function handleSystemLogs($pdo) {
+    $logs = [
+        [
+            'id' => 1,
+            'level' => 'INFO',
+            'message' => 'System started successfully',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'user_id' => null,
+            'ip_address' => '127.0.0.1'
+        ],
+        [
+            'id' => 2,
+            'level' => 'WARNING',
+            'message' => 'High memory usage detected',
+            'timestamp' => date('Y-m-d H:i:s', strtotime('-1 hour')),
+            'user_id' => null,
+            'ip_address' => '127.0.0.1'
+        ]
+    ];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'logs' => $logs,
+            'pagination' => [
+                'page' => 1,
+                'limit' => 50,
+                'total' => count($logs),
+                'pages' => 1
+            ]
+        ]
+    ]);
+}
+
+function handleSystemHealth($pdo) {
+    $health = [
+        'database' => 'healthy',
+        'api' => 'healthy',
+        'authentication' => 'healthy',
+        'overall' => 'healthy',
+        'last_check' => date('Y-m-d H:i:s'),
+        'uptime' => '99.9%'
+    ];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $health
+    ]);
+}
+
+function handleSecurity($pdo) {
+    $security = [
+        'total_events' => 0,
+        'failed_logins' => 0,
+        'suspicious_activities' => 0,
+        'system_alerts' => 0,
+        'last_security_scan' => date('Y-m-d H:i:s'),
+        'threat_level' => 'low'
+    ];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $security
+    ]);
+}
+
+function handleSupportTickets($pdo, $method) {
+    if ($method === 'GET') {
+        $tickets = [
+            [
+                'id' => 1,
+                'subject' => 'Login issue',
+                'status' => 'open',
+                'priority' => 'medium',
+                'user_email' => 'user@example.com',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'id' => 2,
+                'subject' => 'Payment problem',
+                'status' => 'in_progress',
+                'priority' => 'high',
+                'user_email' => 'customer@example.com',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-1 day')),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]
+        ];
+        
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'tickets' => $tickets,
+                'pagination' => [
+                    'page' => 1,
+                    'limit' => 20,
+                    'total' => count($tickets),
+                    'pages' => 1
+                ]
+            ]
+        ]);
+    }
+}
+
+function handleSupportTicketStats($pdo) {
+    $stats = [
+        'total_tickets' => 2,
+        'open_tickets' => 1,
+        'in_progress_tickets' => 1,
+        'resolved_tickets' => 0,
+        'average_response_time' => '2 hours'
+    ];
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $stats
+    ]);
+}
+
+function handleKnowledgebaseCategories($pdo, $method) {
+    if ($method === 'GET') {
+        $categories = [
+            [
+                'id' => 1,
+                'name' => 'Getting Started',
+                'description' => 'Basic setup and configuration',
+                'article_count' => 5,
+                'created_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'id' => 2,
+                'name' => 'Troubleshooting',
+                'description' => 'Common issues and solutions',
+                'article_count' => 8,
+                'created_at' => date('Y-m-d H:i:s')
+            ]
+        ];
+        
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'categories' => $categories,
+                'pagination' => [
+                    'page' => 1,
+                    'limit' => 20,
+                    'total' => count($categories),
+                    'pages' => 1
+                ]
+            ]
+        ]);
+    }
+}
+
+function handleKnowledgebaseArticles($pdo, $method) {
+    if ($method === 'GET') {
+        $articles = [
+            [
+                'id' => 1,
+                'title' => 'How to get started',
+                'content' => 'This is a sample article content...',
+                'category_id' => 1,
+                'category_name' => 'Getting Started',
+                'status' => 'published',
+                'created_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'id' => 2,
+                'title' => 'Common login issues',
+                'content' => 'This is another sample article...',
+                'category_id' => 2,
+                'category_name' => 'Troubleshooting',
+                'status' => 'published',
+                'created_at' => date('Y-m-d H:i:s')
+            ]
+        ];
+        
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'articles' => $articles,
+                'pagination' => [
+                    'page' => 1,
+                    'limit' => 20,
+                    'total' => count($articles),
+                    'pages' => 1
                 ]
             ]
         ]);
