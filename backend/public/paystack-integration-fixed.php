@@ -24,6 +24,10 @@ if (file_exists($envFile)) {
 // Include unified authentication
 require_once __DIR__ . '/auth/unified-auth.php';
 
+// Paystack configuration
+$paystackSecretKey = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
+$paystackPublicKey = $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '';
+
 try {
     // Database connection
     $dsn = sprintf(
@@ -44,28 +48,6 @@ try {
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
     $auth = new UnifiedAuth($pdo, $jwtSecret);
     
-    // Check authentication
-    $headers = getallheaders();
-    $authHeader = $headers['Authorization'] ?? '';
-    
-    if (empty($authHeader) || !str_starts_with($authHeader, 'Bearer ')) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Token not provided']);
-        exit;
-    }
-    
-    $token = substr($authHeader, 7);
-    $authResult = $auth->verifyToken($token);
-    
-    if (!$authResult['success']) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Token not provided or invalid']);
-        exit;
-    }
-    
-    $currentUser = $authResult['user'];
-    $currentTenant = $authResult['tenant'];
-    
     // Handle requests
     $method = $_SERVER['REQUEST_METHOD'];
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -73,26 +55,26 @@ try {
     $endpoint = end($pathParts);
     
     switch ($method) {
-        case 'POST':
-            if ($endpoint === 'initialize-payment') {
-                handleInitializePayment($pdo, $currentUser, $currentTenant);
-            } elseif ($endpoint === 'verify-payment') {
-                handleVerifyPayment($pdo, $currentUser, $currentTenant);
-            } elseif ($endpoint === 'create-subscription') {
-                handleCreateSubscription($pdo, $currentUser, $currentTenant);
-            } elseif ($endpoint === 'webhook') {
-                handleWebhook($pdo);
+        case 'GET':
+            if ($endpoint === 'subscription-plans') {
+                getSubscriptionPlans($pdo);
+            } elseif ($endpoint === 'payment-status') {
+                getPaymentStatus($pdo);
             } else {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
             }
             break;
             
-        case 'GET':
-            if ($endpoint === 'payment-status') {
-                handlePaymentStatus($pdo, $currentUser, $currentTenant);
-            } elseif ($endpoint === 'subscription-plans') {
-                getSubscriptionPlans($pdo, $currentUser, $currentTenant);
+        case 'POST':
+            if ($endpoint === 'initialize-payment') {
+                initializePayment($pdo, $auth);
+            } elseif ($endpoint === 'verify-payment') {
+                verifyPayment($pdo);
+            } elseif ($endpoint === 'create-subscription') {
+                createSubscription($pdo, $auth);
+            } elseif ($endpoint === 'webhook') {
+                handleWebhook($pdo);
             } else {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
@@ -105,478 +87,608 @@ try {
     }
     
 } catch (Exception $e) {
-    error_log("Paystack integration error: " . $e->getMessage());
+    error_log("Paystack Integration Fixed Error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Internal server error']);
 }
 
-function handleInitializePayment($pdo, $currentUser, $currentTenant) {
-    // Super admins don't need to pay
-    if ($currentUser['role'] === 'super_admin') {
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'is_super_admin' => true,
-                'no_payment_required' => true,
-                'message' => 'Super admins do not require payment'
+function getSubscriptionPlans($pdo) {
+    try {
+        // Default subscription plans
+        $plans = [
+            [
+                'id' => 'free',
+                'name' => 'Free Plan',
+                'price' => 0,
+                'currency' => 'GHS',
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'Up to 100 products',
+                    'Basic reporting',
+                    'Email support',
+                    '1 user account'
+                ],
+                'limits' => [
+                    'products' => 100,
+                    'users' => 1,
+                    'storage' => '1GB'
+                ]
+            ],
+            [
+                'id' => 'starter',
+                'name' => 'Starter Plan',
+                'price' => 5000, // 50 GHS in kobo
+                'currency' => 'GHS',
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'Up to 500 products',
+                    'Advanced reporting',
+                    'Priority support',
+                    'Up to 5 user accounts',
+                    'Inventory management',
+                    'Customer management'
+                ],
+                'limits' => [
+                    'products' => 500,
+                    'users' => 5,
+                    'storage' => '5GB'
+                ]
+            ],
+            [
+                'id' => 'professional',
+                'name' => 'Professional Plan',
+                'price' => 15000, // 150 GHS in kobo
+                'currency' => 'GHS',
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'Unlimited products',
+                    'Advanced analytics',
+                    '24/7 support',
+                    'Unlimited user accounts',
+                    'Multi-location support',
+                    'API access',
+                    'Custom integrations'
+                ],
+                'limits' => [
+                    'products' => -1, // Unlimited
+                    'users' => -1, // Unlimited
+                    'storage' => '50GB'
+                ]
+            ],
+            [
+                'id' => 'enterprise',
+                'name' => 'Enterprise Plan',
+                'price' => 50000, // 500 GHS in kobo
+                'currency' => 'GHS',
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'Everything in Professional',
+                    'Dedicated account manager',
+                    'Custom development',
+                    'White-label options',
+                    'Advanced security',
+                    'SLA guarantees'
+                ],
+                'limits' => [
+                    'products' => -1, // Unlimited
+                    'users' => -1, // Unlimited
+                    'storage' => '500GB'
+                ]
             ]
-        ]);
-        return;
-    }
-    
-    // Regular users need a tenant
-    if (!$currentTenant) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Tenant required for payment']);
-        return;
-    }
-    
-    $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
-    
-    if (!$data || empty($data['amount']) || empty($data['email'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Amount and email are required']);
-        return;
-    }
-    
-    $amount = $data['amount'] * 100; // Convert to kobo
-    $email = $data['email'];
-    $reference = 'TXN_' . time() . '_' . rand(1000, 9999);
-    $callbackUrl = $data['callback_url'] ?? 'https://ardentpos.com/payment/callback';
-    
-    // Paystack API call
-    $paystackData = [
-        'amount' => $amount,
-        'email' => $email,
-        'reference' => $reference,
-        'callback_url' => $callbackUrl,
-        'currency' => 'GHS'
-    ];
-    
-    $response = makePaystackRequest('transaction/initialize', $paystackData);
-    
-    if ($response['status'] === true) {
-        // Store payment record with tenant_id
-        $stmt = $pdo->prepare("
-            INSERT INTO payments (reference, amount, email, tenant_id, status, paystack_data, created_at)
-            VALUES (?, ?, ?, ?, 'pending', ?, NOW())
-        ");
-        $stmt->execute([$reference, $data['amount'], $email, $currentTenant['id'], json_encode($response['data'])]);
+        ];
         
         echo json_encode([
             'success' => true,
-            'data' => $response['data']
+            'data' => $plans
         ]);
-    } else {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Failed to initialize payment'
-        ]);
+    } catch (Exception $e) {
+        error_log("Get subscription plans error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to fetch subscription plans']);
     }
 }
 
-function handleVerifyPayment($pdo, $currentUser, $currentTenant) {
-    $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
+function initializePayment($pdo, $auth) {
+    global $paystackSecretKey;
     
-    if (!$data || empty($data['reference'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Reference is required']);
-        return;
+    try {
+        // Check authentication
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? '';
+        
+        if (empty($authHeader) || !str_starts_with($authHeader, 'Bearer ')) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Token not provided']);
+            return;
+        }
+        
+        $token = substr($authHeader, 7);
+        $authResult = $auth->verifyToken($token);
+        
+        if (!$authResult['success']) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Token not provided or invalid']);
+            return;
+        }
+        
+        $currentUser = $authResult['user'];
+        $currentTenant = $authResult['tenant'];
+        
+        // Super admins cannot make payments
+        if ($currentUser['role'] === 'super_admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Super admins cannot make payments']);
+            return;
+        }
+        
+        if (!$currentTenant) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Tenant not found']);
+            return;
+        }
+        
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['amount']) || empty($data['email'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Amount and email are required']);
+            return;
+        }
+        
+        // Prepare Paystack payment data
+        $paymentData = [
+            'amount' => $data['amount'] * 100, // Convert to kobo
+            'email' => $data['email'],
+            'currency' => $data['currency'] ?? 'GHS',
+            'reference' => 'ARDENT_' . time() . '_' . rand(1000, 9999),
+            'callback_url' => $data['callback_url'] ?? '',
+            'metadata' => [
+                'tenant_id' => $currentTenant['id'],
+                'user_id' => $currentUser['id'],
+                'plan_name' => $data['plan_name'] ?? '',
+                'custom_fields' => [
+                    [
+                        'display_name' => 'Tenant',
+                        'variable_name' => 'tenant_name',
+                        'value' => $currentTenant['name']
+                    ]
+                ]
+            ]
+        ];
+        
+        // Make request to Paystack
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://api.paystack.co/transaction/initialize');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($paymentData));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $paystackSecretKey,
+            'Content-Type: application/json'
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200) {
+            error_log("Paystack API error: " . $response);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Failed to initialize payment']);
+            return;
+        }
+        
+        $paystackResponse = json_decode($response, true);
+        
+        if (!$paystackResponse['status']) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $paystackResponse['message'] ?? 'Payment initialization failed']);
+            return;
+        }
+        
+        // Store payment record in database
+        $sql = "
+            INSERT INTO payments (id, tenant_id, user_id, reference, amount, currency, status, payment_method, metadata, created_at, updated_at)
+            VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?, 'pending', 'paystack', ?, NOW(), NOW())
+        ";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $currentTenant['id'],
+            $currentUser['id'],
+            $paymentData['reference'],
+            $data['amount'],
+            $data['currency'] ?? 'GHS',
+            json_encode($paymentData['metadata'])
+        ]);
+        
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'authorization_url' => $paystackResponse['data']['authorization_url'],
+                'reference' => $paymentData['reference'],
+                'access_code' => $paystackResponse['data']['access_code']
+            ]
+        ]);
+    } catch (Exception $e) {
+        error_log("Initialize payment error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to initialize payment']);
     }
+}
+
+function verifyPayment($pdo) {
+    global $paystackSecretKey;
     
-    $reference = $data['reference'];
-    
-    // Verify with Paystack
-    $response = makePaystackRequest("transaction/verify/$reference", [], 'GET');
-    
-    if ($response['status'] === true) {
-        $transaction = $response['data'];
+    try {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['reference'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Reference is required']);
+            return;
+        }
+        
+        // Verify with Paystack
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://api.paystack.co/transaction/verify/' . $data['reference']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $paystackSecretKey
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200) {
+            error_log("Paystack verification error: " . $response);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Failed to verify payment']);
+            return;
+        }
+        
+        $paystackResponse = json_decode($response, true);
+        
+        if (!$paystackResponse['status']) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $paystackResponse['message'] ?? 'Payment verification failed']);
+            return;
+        }
+        
+        $transaction = $paystackResponse['data'];
         
         // Update payment record
-        $stmt = $pdo->prepare("
+        $sql = "
             UPDATE payments 
-            SET status = ?, paystack_data = ?, updated_at = NOW()
+            SET status = ?, gateway_response = ?, updated_at = NOW()
             WHERE reference = ?
-        ");
-        $stmt->execute([$transaction['status'], json_encode($transaction), $reference]);
+        ";
         
-        // If payment is successful, update subscription
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $transaction['status'] === 'success' ? 'completed' : 'failed',
+            json_encode($transaction),
+            $data['reference']
+        ]);
+        
         if ($transaction['status'] === 'success') {
-            updateSubscriptionFromPayment($pdo, $reference, $transaction);
+            // Get payment record
+            $sql = "SELECT * FROM payments WHERE reference = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$data['reference']]);
+            $payment = $stmt->fetch();
+            
+            if ($payment) {
+                // Create or update subscription
+                $metadata = json_decode($payment['metadata'], true);
+                $planName = $metadata['plan_name'] ?? 'starter';
+                
+                // Cancel current subscription
+                $cancelSql = "UPDATE subscriptions SET status = 'cancelled', updated_at = NOW() WHERE tenant_id = ? AND status = 'active'";
+                $stmt = $pdo->prepare($cancelSql);
+                $stmt->execute([$payment['tenant_id']]);
+                
+                // Create new subscription
+                $subscriptionSql = "
+                    INSERT INTO subscriptions (id, tenant_id, plan_name, amount, billing_cycle, status, payment_reference, created_at, updated_at)
+                    VALUES (uuid_generate_v4(), ?, ?, ?, 'monthly', 'active', ?, NOW(), NOW())
+                    RETURNING *
+                ";
+                
+                $stmt = $pdo->prepare($subscriptionSql);
+                $stmt->execute([
+                    $payment['tenant_id'],
+                    $planName,
+                    $payment['amount'],
+                    $payment['reference']
+                ]);
+                
+                $subscription = $stmt->fetch();
+                
+                // Create invoice
+                $invoiceSql = "
+                    INSERT INTO invoices (id, tenant_id, invoice_number, amount, currency, status, description, payment_reference, created_at, updated_at)
+                    VALUES (uuid_generate_v4(), ?, ?, ?, ?, 'paid', ?, ?, NOW(), NOW())
+                    RETURNING *
+                ";
+                
+                $invoiceNumber = 'INV-' . date('Y') . '-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                $stmt = $pdo->prepare($invoiceSql);
+                $stmt->execute([
+                    $payment['tenant_id'],
+                    $invoiceNumber,
+                    $payment['amount'],
+                    $payment['currency'],
+                    'Subscription payment for ' . $planName . ' plan',
+                    $payment['reference']
+                ]);
+                
+                $invoice = $stmt->fetch();
+            }
         }
         
         echo json_encode([
             'success' => true,
-            'data' => $transaction
+            'data' => [
+                'status' => $transaction['status'],
+                'reference' => $data['reference'],
+                'amount' => $transaction['amount'] / 100, // Convert from kobo
+                'currency' => $transaction['currency'],
+                'gateway_ref' => $transaction['gateway_ref'] ?? null
+            ]
         ]);
-    } else {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Failed to verify payment'
-        ]);
+    } catch (Exception $e) {
+        error_log("Verify payment error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to verify payment']);
     }
 }
 
-function handleCreateSubscription($pdo, $currentUser, $currentTenant) {
-    // Super admins don't need subscriptions
-    if ($currentUser['role'] === 'super_admin') {
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'is_super_admin' => true,
-                'no_subscription_required' => true,
-                'message' => 'Super admins do not require subscriptions'
-            ]
+function createSubscription($pdo, $auth) {
+    try {
+        // Check authentication
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? '';
+        
+        if (empty($authHeader) || !str_starts_with($authHeader, 'Bearer ')) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Token not provided']);
+            return;
+        }
+        
+        $token = substr($authHeader, 7);
+        $authResult = $auth->verifyToken($token);
+        
+        if (!$authResult['success']) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Token not provided or invalid']);
+            return;
+        }
+        
+        $currentUser = $authResult['user'];
+        $currentTenant = $authResult['tenant'];
+        
+        // Super admins cannot create subscriptions
+        if ($currentUser['role'] === 'super_admin') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Super admins cannot create subscriptions']);
+            return;
+        }
+        
+        if (!$currentTenant) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Tenant not found']);
+            return;
+        }
+        
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['plan_name'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Plan name is required']);
+            return;
+        }
+        
+        // Cancel current subscription
+        $cancelSql = "UPDATE subscriptions SET status = 'cancelled', updated_at = NOW() WHERE tenant_id = ? AND status = 'active'";
+        $stmt = $pdo->prepare($cancelSql);
+        $stmt->execute([$currentTenant['id']]);
+        
+        // Create new subscription
+        $sql = "
+            INSERT INTO subscriptions (id, tenant_id, plan_name, amount, billing_cycle, status, created_at, updated_at)
+            VALUES (uuid_generate_v4(), ?, ?, ?, 'monthly', 'active', NOW(), NOW())
+            RETURNING *
+        ";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $currentTenant['id'],
+            $data['plan_name'],
+            $data['amount'] ?? 0
         ]);
-        return;
-    }
-    
-    // Regular users need a tenant
-    if (!$currentTenant) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Tenant required for subscription']);
-        return;
-    }
-    
-    $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
-    
-    if (!$data || empty($data['plan']) || empty($data['email'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Plan and email are required']);
-        return;
-    }
-    
-    $plan = $data['plan'];
-    $email = $data['email'];
-    $billingCycle = $data['billing_cycle'] ?? 'monthly';
-    
-    $planDetails = getPlanDetails($plan, $billingCycle);
-    $amount = $planDetails['amount'] * 100; // Convert to kobo
-    
-    // Create Paystack plan if it doesn't exist
-    $planCode = createPaystackPlan($plan, $amount, $billingCycle);
-    
-    // Create Paystack subscription
-    $paystackData = [
-        'customer' => $email,
-        'plan' => $planCode,
-        'start_date' => date('Y-m-d\TH:i:s\Z')
-    ];
-    
-    $response = makePaystackRequest('subscription', $paystackData);
-    
-    if ($response['status'] === true) {
-        $subscription = $response['data'];
         
-        // Store subscription record with tenant_id
-        $stmt = $pdo->prepare("
-            INSERT INTO subscriptions (id, tenant_id, plan_name, status, paystack_subscription_code, amount, currency, billing_cycle, created_at, updated_at)
-            VALUES (uuid_generate_v4(), ?, ?, 'active', ?, ?, 'GHS', ?, NOW(), NOW())
-        ");
-        $stmt->execute([$currentTenant['id'], $plan, $subscription['subscription_code'], $planDetails['amount'], $billingCycle]);
-        
-        // Update tenant plan
-        $updateSql = "UPDATE tenants SET plan = ?, updated_at = NOW() WHERE id = ?";
-        $updateStmt = $pdo->prepare($updateSql);
-        $updateStmt->execute([$plan, $currentTenant['id']]);
+        $subscription = $stmt->fetch();
         
         echo json_encode([
             'success' => true,
             'data' => $subscription
         ]);
-    } else {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Failed to create subscription'
-        ]);
+    } catch (Exception $e) {
+        error_log("Create subscription error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to create subscription']);
     }
 }
 
-function getSubscriptionPlans($pdo, $currentUser, $currentTenant) {
-    // Super admins don't need subscription plans
-    if ($currentUser['role'] === 'super_admin') {
+function getPaymentStatus($pdo) {
+    try {
+        $reference = $_GET['reference'] ?? '';
+        
+        if (empty($reference)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Reference is required']);
+            return;
+        }
+        
+        $sql = "SELECT * FROM payments WHERE reference = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$reference]);
+        $payment = $stmt->fetch();
+        
+        if (!$payment) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Payment not found']);
+            return;
+        }
+        
         echo json_encode([
             'success' => true,
             'data' => [
-                'is_super_admin' => true,
-                'no_subscription_required' => true,
-                'plans' => []
+                'reference' => $payment['reference'],
+                'status' => $payment['status'],
+                'amount' => $payment['amount'],
+                'currency' => $payment['currency'],
+                'created_at' => $payment['created_at']
             ]
         ]);
-        return;
+    } catch (Exception $e) {
+        error_log("Get payment status error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to get payment status']);
     }
-    
-    // Regular users get subscription plans
-    $plans = [
-        [
-            'id' => 'starter',
-            'name' => 'Starter Plan',
-            'description' => 'Perfect for small businesses',
-            'monthly_price' => 120.00,
-            'yearly_price' => 1200.00,
-            'features' => [
-                'Up to 5 users',
-                'Basic inventory management',
-                'Sales reporting',
-                'Email support'
-            ]
-        ],
-        [
-            'id' => 'professional',
-            'name' => 'Professional Plan',
-            'description' => 'Ideal for growing businesses',
-            'monthly_price' => 240.00,
-            'yearly_price' => 2400.00,
-            'features' => [
-                'Up to 20 users',
-                'Advanced inventory management',
-                'Advanced reporting',
-                'Priority support',
-                'API access'
-            ]
-        ],
-        [
-            'id' => 'enterprise',
-            'name' => 'Enterprise Plan',
-            'description' => 'For large organizations',
-            'monthly_price' => 480.00,
-            'yearly_price' => 4800.00,
-            'features' => [
-                'Unlimited users',
-                'Full feature access',
-                'Custom integrations',
-                'Dedicated support',
-                'White-label options'
-            ]
-        ]
-    ];
-    
-    echo json_encode([
-        'success' => true,
-        'data' => [
-            'is_super_admin' => false,
-            'plans' => $plans
-        ]
-    ]);
-}
-
-function handlePaymentStatus($pdo, $currentUser, $currentTenant) {
-    $reference = $_GET['reference'] ?? '';
-    
-    if (empty($reference)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Reference is required']);
-        return;
-    }
-    
-    // Get payment status from database
-    $stmt = $pdo->prepare("SELECT * FROM payments WHERE reference = ?");
-    $stmt->execute([$reference]);
-    $payment = $stmt->fetch();
-    
-    if (!$payment) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Payment not found']);
-        return;
-    }
-    
-    echo json_encode([
-        'success' => true,
-        'data' => $payment
-    ]);
 }
 
 function handleWebhook($pdo) {
-    $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
+    global $paystackSecretKey;
     
-    if (!$data) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid webhook data']);
-        return;
-    }
-    
-    // Verify webhook signature
-    $signature = $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ?? '';
-    if (!verifyWebhookSignature($input, $signature)) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Invalid signature']);
-        return;
-    }
-    
-    $event = $data['event'];
-    $transaction = $data['data'];
-    
-    switch ($event) {
-        case 'charge.success':
-            handleSuccessfulCharge($pdo, $transaction);
-            break;
-        case 'subscription.create':
-            handleSubscriptionCreated($pdo, $transaction);
-            break;
-        case 'subscription.disable':
-            handleSubscriptionDisabled($pdo, $transaction);
-            break;
-        default:
-            // Log unknown event
-            error_log("Unknown Paystack webhook event: $event");
-    }
-    
-    echo json_encode(['success' => true]);
-}
-
-function makePaystackRequest($endpoint, $data = [], $method = 'POST') {
-    $paystackSecretKey = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
-    
-    if (empty($paystackSecretKey)) {
-        throw new Exception('Paystack secret key not configured');
-    }
-    
-    $url = "https://api.paystack.co/$endpoint";
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $paystackSecretKey,
-        'Content-Type: application/json'
-    ]);
-    
-    if ($method === 'POST') {
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    }
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($response === false) {
-        throw new Exception('Failed to connect to Paystack');
-    }
-    
-    return json_decode($response, true);
-}
-
-function createPaystackPlan($plan, $amount, $billingCycle) {
-    $planName = ucfirst($plan) . ' Plan';
-    $interval = $billingCycle === 'yearly' ? 'annually' : 'monthly';
-    
-    $planData = [
-        'name' => $planName,
-        'amount' => $amount,
-        'interval' => $interval,
-        'currency' => 'GHS'
-    ];
-    
-    $response = makePaystackRequest('plan', $planData);
-    
-    if ($response['status'] === true) {
-        return $response['data']['plan_code'];
-    } else {
-        // If plan creation fails, return a default plan code
-        return 'PLN_' . strtoupper($plan) . '_' . strtoupper($billingCycle);
+    try {
+        // Verify webhook signature
+        $signature = $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ?? '';
+        $payload = file_get_contents('php://input');
+        
+        if (empty($signature)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Missing signature']);
+            return;
+        }
+        
+        $expectedSignature = hash_hmac('sha512', $payload, $paystackSecretKey);
+        
+        if (!hash_equals($expectedSignature, $signature)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid signature']);
+            return;
+        }
+        
+        $data = json_decode($payload, true);
+        
+        if (!$data || empty($data['event'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid webhook data']);
+            return;
+        }
+        
+        $event = $data['event'];
+        $transaction = $data['data'];
+        
+        switch ($event) {
+            case 'charge.success':
+                handleChargeSuccess($pdo, $transaction);
+                break;
+            case 'subscription.create':
+                handleSubscriptionCreate($pdo, $transaction);
+                break;
+            case 'subscription.disable':
+                handleSubscriptionDisable($pdo, $transaction);
+                break;
+            case 'invoice.create':
+                handleInvoiceCreate($pdo, $transaction);
+                break;
+            case 'invoice.payment_failed':
+                handleInvoicePaymentFailed($pdo, $transaction);
+                break;
+            default:
+                error_log("Unhandled Paystack webhook event: " . $event);
+        }
+        
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        error_log("Webhook error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Webhook processing failed']);
     }
 }
 
-function updateSubscriptionFromPayment($pdo, $reference, $transaction) {
-    // Find the payment record
-    $stmt = $pdo->prepare("SELECT * FROM payments WHERE reference = ?");
-    $stmt->execute([$reference]);
-    $payment = $stmt->fetch();
-    
-    if (!$payment) {
-        return;
+function handleChargeSuccess($pdo, $transaction) {
+    try {
+        $reference = $transaction['reference'];
+        
+        // Update payment status
+        $sql = "UPDATE payments SET status = 'completed', gateway_response = ?, updated_at = NOW() WHERE reference = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([json_encode($transaction), $reference]);
+        
+        // Get payment record
+        $sql = "SELECT * FROM payments WHERE reference = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$reference]);
+        $payment = $stmt->fetch();
+        
+        if ($payment) {
+            // Update subscription if this is a subscription payment
+            $metadata = json_decode($payment['metadata'], true);
+            if (isset($metadata['plan_name'])) {
+                $sql = "
+                    UPDATE subscriptions 
+                    SET status = 'active', payment_reference = ?, updated_at = NOW()
+                    WHERE tenant_id = ? AND plan_name = ?
+                ";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$reference, $payment['tenant_id'], $metadata['plan_name']]);
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Handle charge success error: " . $e->getMessage());
     }
-    
-    // Update subscription status
-    $stmt = $pdo->prepare("
-        UPDATE subscriptions 
-        SET status = 'active', paystack_reference = ?, updated_at = NOW()
-        WHERE tenant_id = ?
-    ");
-    $stmt->execute([$reference, $payment['tenant_id']]);
-    
-    // Create invoice record
-    $invoiceNumber = generateInvoiceNumber();
-    $stmt = $pdo->prepare("
-        INSERT INTO invoices (id, tenant_id, subscription_id, invoice_number, amount, currency, status, paystack_reference, paid_at, created_at, updated_at)
-        VALUES (uuid_generate_v4(), ?, (SELECT id FROM subscriptions WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 1), ?, ?, 'GHS', 'paid', ?, NOW(), NOW(), NOW())
-    ");
-    $stmt->execute([$payment['tenant_id'], $payment['tenant_id'], $invoiceNumber, $payment['amount'], $reference]);
 }
 
-function handleSuccessfulCharge($pdo, $transaction) {
-    $reference = $transaction['reference'];
-    
-    // Update payment status
-    $stmt = $pdo->prepare("
-        UPDATE payments 
-        SET status = 'success', paystack_data = ?, updated_at = NOW()
-        WHERE reference = ?
-    ");
-    $stmt->execute([json_encode($transaction), $reference]);
-    
-    // Update subscription if this is a subscription payment
-    updateSubscriptionFromPayment($pdo, $reference, $transaction);
-}
-
-function handleSubscriptionCreated($pdo, $subscription) {
-    // Update subscription with Paystack data
-    $stmt = $pdo->prepare("
-        UPDATE subscriptions 
-        SET paystack_subscription_code = ?, paystack_data = ?, updated_at = NOW()
-        WHERE id = ?
-    ");
-    $stmt->execute([$subscription['subscription_code'], json_encode($subscription), $subscription['id']]);
-}
-
-function handleSubscriptionDisabled($pdo, $subscription) {
-    // Update subscription status
-    $stmt = $pdo->prepare("
-        UPDATE subscriptions 
-        SET status = 'cancelled', updated_at = NOW()
-        WHERE paystack_subscription_code = ?
-    ");
-    $stmt->execute([$subscription['subscription_code']]);
-}
-
-function verifyWebhookSignature($payload, $signature) {
-    $paystackSecretKey = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
-    
-    if (empty($paystackSecretKey)) {
-        return false;
+function handleSubscriptionCreate($pdo, $transaction) {
+    try {
+        // Handle subscription creation
+        error_log("Subscription created: " . json_encode($transaction));
+    } catch (Exception $e) {
+        error_log("Handle subscription create error: " . $e->getMessage());
     }
-    
-    $expectedSignature = hash_hmac('sha512', $payload, $paystackSecretKey);
-    return hash_equals($expectedSignature, $signature);
 }
 
-function getPlanDetails($plan, $billingCycle) {
-    $plans = [
-        'starter' => [
-            'monthly' => ['amount' => 120.00],
-            'yearly' => ['amount' => 1200.00]
-        ],
-        'professional' => [
-            'monthly' => ['amount' => 240.00],
-            'yearly' => ['amount' => 2400.00]
-        ],
-        'enterprise' => [
-            'monthly' => ['amount' => 480.00],
-            'yearly' => ['amount' => 4800.00]
-        ]
-    ];
-    
-    return $plans[$plan][$billingCycle] ?? ['amount' => 0.00];
+function handleSubscriptionDisable($pdo, $transaction) {
+    try {
+        // Handle subscription disable
+        error_log("Subscription disabled: " . json_encode($transaction));
+    } catch (Exception $e) {
+        error_log("Handle subscription disable error: " . $e->getMessage());
+    }
 }
 
-function generateInvoiceNumber() {
-    return 'INV-' . date('Y') . '-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+function handleInvoiceCreate($pdo, $transaction) {
+    try {
+        // Handle invoice creation
+        error_log("Invoice created: " . json_encode($transaction));
+    } catch (Exception $e) {
+        error_log("Handle invoice create error: " . $e->getMessage());
+    }
+}
+
+function handleInvoicePaymentFailed($pdo, $transaction) {
+    try {
+        // Handle invoice payment failure
+        error_log("Invoice payment failed: " . json_encode($transaction));
+    } catch (Exception $e) {
+        error_log("Handle invoice payment failed error: " . $e->getMessage());
+    }
 }
