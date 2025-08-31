@@ -17,12 +17,36 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     // Load environment variables
+    $envFile = __DIR__ . '/../../../.env';
+    if (file_exists($envFile)) {
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+                list($key, $value) = explode('=', $line, 2);
+                $_ENV[trim($key)] = trim($value);
+            }
+        }
+    }
+
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
-    $dbHost = $_ENV['DB_HOST'] ?? 'localhost';
-    $dbPort = $_ENV['DB_PORT'] ?? '5432';
-    $dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
-    $dbUser = $_ENV['DB_USERNAME'] ?? '';
-    $dbPass = $_ENV['DB_PASSWORD'] ?? '';
+    $host = $_ENV['DB_HOST'] ?? '';
+    $port = $_ENV['DB_PORT'] ?? '25060';
+    $dbname = $_ENV['DB_NAME'] ?? '';
+    $user = $_ENV['DB_USER'] ?? $_ENV['DB_USERNAME'] ?? '';
+    $password = $_ENV['DB_PASS'] ?? $_ENV['DB_PASSWORD'] ?? '';
+
+    if (empty($host) || empty($dbname) || empty($user) || empty($password)) {
+        throw new Exception('Database configuration incomplete');
+    }
+
+    // Connect to database
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
+    $pdo = new PDO($dsn, $user, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Include unified authentication
+    require_once __DIR__ . '/unified-auth.php';
+    $auth = new UnifiedAuth($pdo, $jwtSecret);
 
     // Get request data
     $input = file_get_contents('php://input');
@@ -32,80 +56,23 @@ try {
         throw new Exception('Token is required');
     }
 
-    // Load JWT library - try multiple paths
-    $autoloaderPaths = [
-        __DIR__ . '/../../vendor/autoload.php',
-        __DIR__ . '/../vendor/autoload.php',
-        '/var/www/html/vendor/autoload.php',
-        '/var/www/html/backend/vendor/autoload.php'
-    ];
-    
-    $autoloaderFound = false;
-    foreach ($autoloaderPaths as $path) {
-        if (file_exists($path)) {
-            require_once $path;
-            $autoloaderFound = true;
-            break;
-        }
-    }
-    
-    if (!$autoloaderFound) {
-        throw new Exception('JWT library not found');
-    }
+    // Verify token using unified authentication
+    $result = $auth->verifyToken($data['token']);
 
-    // Decode and verify token
-    $decoded = Firebase\JWT\JWT::decode($data['token'], new Firebase\JWT\Key($jwtSecret, 'HS256'));
-
-    // Connect to database
-    $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
-    $pdo = new PDO($dsn, $dbUser, $dbPass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
-
-    // Get user and tenant info
-    $stmt = $pdo->prepare("
-        SELECT u.*, t.name as tenant_name, t.status as tenant_status
-        FROM users u 
-        JOIN tenants t ON u.tenant_id = t.id 
-        WHERE u.id = ? AND u.status = 'active'
-    ");
-    $stmt->execute([$decoded->user_id]);
-    $user = $stmt->fetch();
-
-    if (!$user) {
+    if (!$result['success']) {
         http_response_code(401);
-        echo json_encode(['error' => 'User not found']);
-        exit;
-    }
-
-    if ($user['tenant_status'] !== 'active') {
-        http_response_code(401);
-        echo json_encode(['error' => 'Account is inactive']);
+        echo json_encode($result);
         exit;
     }
 
     // Return user info
-    echo json_encode([
-        'success' => true,
-        'user' => [
-            'id' => $user['id'],
-            'email' => $user['email'],
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
-            'role' => $user['role']
-        ],
-        'tenant' => [
-            'id' => $user['tenant_id'],
-            'name' => $user['tenant_name']
-        ]
-    ]);
+    echo json_encode($result);
 
 } catch (Exception $e) {
     http_response_code(401);
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid token'
+        'error' => 'Invalid token: ' . $e->getMessage()
     ]);
 }
 ?>

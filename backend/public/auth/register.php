@@ -131,14 +131,46 @@ try {
 
         $pdo->commit();
 
-        // Generate token
-        $token = base64_encode(json_encode([
-            'user_id' => $userId,
-            'tenant_id' => $tenantId,
-            'email' => $email,
-            'role' => 'admin',
-            'exp' => time() + (24 * 60 * 60)
-        ]));
+        // Generate JWT token for consistency
+        $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
+        
+        // Load JWT library
+        $autoloaderPaths = [
+            __DIR__ . '/../../vendor/autoload.php',
+            __DIR__ . '/../vendor/autoload.php',
+            '/var/www/html/vendor/autoload.php',
+            '/var/www/html/backend/vendor/autoload.php'
+        ];
+        
+        $autoloaderFound = false;
+        foreach ($autoloaderPaths as $path) {
+            if (file_exists($path)) {
+                require_once $path;
+                $autoloaderFound = true;
+                break;
+            }
+        }
+        
+        if ($autoloaderFound) {
+            $payload = [
+                'user_id' => $userId,
+                'tenant_id' => $tenantId,
+                'email' => $email,
+                'role' => 'admin',
+                'iat' => time(),
+                'exp' => time() + (24 * 60 * 60)
+            ];
+            $token = Firebase\JWT\JWT::encode($payload, $jwtSecret, 'HS256');
+        } else {
+            // Fallback to base64 token if JWT library not available
+            $token = base64_encode(json_encode([
+                'user_id' => $userId,
+                'tenant_id' => $tenantId,
+                'email' => $email,
+                'role' => 'admin',
+                'exp' => time() + (24 * 60 * 60)
+            ]));
+        }
 
         // Return success response
         echo json_encode([
