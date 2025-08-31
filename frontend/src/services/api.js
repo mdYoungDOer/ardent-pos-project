@@ -70,11 +70,11 @@ export const authAPI = {
   },
 
   superAdminLogin: async (credentials) => {
-    console.log('Making super admin login request to /auth/super-admin-login.php');
+    console.log('Making super admin login request to /super-admin-login-working.php');
     console.log('Request data:', { email: credentials.email, password: '***' });
     
     try {
-      const response = await authAxios.post('/auth/super-admin-login.php', credentials);
+      const response = await authAxios.post('/super-admin-login-working.php', credentials);
       console.log('Super admin login response:', response.data);
       
       if (response.data.success) {
