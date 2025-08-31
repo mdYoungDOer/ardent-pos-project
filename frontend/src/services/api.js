@@ -91,7 +91,7 @@ export const authAPI = {
   },
 
   register: async (userData) => {
-    const response = await authAxios.post('/auth/register.php', userData);
+    const response = await authAxios.post('/auth/register-simple.php', userData);
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
