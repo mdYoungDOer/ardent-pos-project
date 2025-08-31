@@ -71,6 +71,7 @@ try {
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             plan VARCHAR(50) NOT NULL DEFAULT 'free',
+            plan_id UUID,
             status VARCHAR(20) DEFAULT 'active',
             paystack_subscription_code VARCHAR(255),
             paystack_customer_code VARCHAR(255),
@@ -113,7 +114,7 @@ try {
     $firstName = trim($data['first_name'] ?? '');
     $lastName = trim($data['last_name'] ?? '');
     $businessName = trim($data['business_name'] ?? '');
-    $selectedPlan = trim($data['plan'] ?? 'free');
+    $selectedPlan = trim($data['selected_plan'] ?? 'free');
 
     if (empty($email) || empty($password) || empty($firstName) || empty($lastName) || empty($businessName)) {
         throw new Exception('All fields are required');
@@ -179,10 +180,10 @@ try {
         // Create initial subscription
         $planDetails = getPlanDetails($selectedPlan);
         $stmt = $pdo->prepare("
-            INSERT INTO subscriptions (tenant_id, plan, status, amount, currency, billing_cycle, created_at, updated_at)
-            VALUES (?, ?, 'active', ?, ?, ?, NOW(), NOW())
+            INSERT INTO subscriptions (tenant_id, plan, plan_id, status, amount, currency, billing_cycle, created_at, updated_at)
+            VALUES (?, ?, ?, 'active', ?, ?, ?, NOW(), NOW())
         ");
-        $stmt->execute([$tenantId, $selectedPlan, $planDetails['amount'], $planDetails['currency'], $planDetails['billing_cycle']]);
+        $stmt->execute([$tenantId, $selectedPlan, null, $planDetails['amount'], $planDetails['currency'], $planDetails['billing_cycle']]);
 
         // Create initial invoice if not free plan
         if ($selectedPlan !== 'free') {
