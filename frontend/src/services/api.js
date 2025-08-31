@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base API configuration for authenticated endpoints
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: '/backend/public',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -11,16 +11,16 @@ const api = axios.create({
 
 // Public API - for endpoints that don't require authentication
 const publicApi = axios.create({
-  baseURL: '/api',
+  baseURL: '/backend/public',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Auth API - direct PHP endpoints (no /api prefix)
+// Auth API - direct PHP endpoints
 const authAxios = axios.create({
-  baseURL: '', // No base URL for auth endpoints
+  baseURL: '/backend/public', // Point to the correct backend path
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
