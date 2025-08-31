@@ -1059,8 +1059,8 @@ export const supportAPI = {
   createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
   
   // Authenticated endpoints (require login)
-  getTickets: () => api.get('/support-portal/tickets'),
-  createTicket: (ticketData) => api.post('/support-portal/tickets', ticketData),
+  getTickets: () => authAxios.get('/support-tickets-fetch.php'),
+  createTicket: (ticketData) => authAxios.post('/support-ticket-create.php', ticketData),
   updateTicket: (ticketId, updateData) => api.put(`/support-portal/tickets/${ticketId}`, updateData),
   deleteTicket: (ticketId) => api.delete(`/support-portal/tickets/${ticketId}`),
   getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
