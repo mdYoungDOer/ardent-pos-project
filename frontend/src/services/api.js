@@ -1087,8 +1087,8 @@ export const couponsAPI = {
 
   // Billing & Subscription API - Updated to use tenancy management
   export const billingAPI = {
-    // Subscription Plans
-    getSubscriptionPlans: () => authAxios.get('/subscription-plans.php'),
+    // Subscription Plans - Updated to use fixed Paystack integration
+    getSubscriptionPlans: () => authAxios.get('/paystack-integration-fixed.php/subscription-plans'),
     
     // Subscriptions
     getSubscriptions: (params = {}) => authAxios.get(`/tenancy-management-simple.php/subscriptions?${new URLSearchParams(params)}`),
@@ -1108,11 +1108,12 @@ export const couponsAPI = {
     // Billing Info
     getBillingInfo: () => authAxios.get('/tenancy-management-simple.php/billing-info'),
     
-    // Paystack Integration
-    initializePayment: (data) => authAxios.post('/paystack-integration.php/initialize-payment', data),
-    verifyPayment: (data) => authAxios.post('/paystack-integration.php/verify-payment', data),
-    createSubscription: (data) => authAxios.post('/paystack-integration.php/create-subscription', data),
-    getPaymentStatus: (reference) => authAxios.get(`/paystack-integration.php/payment-status?reference=${reference}`)
+    // Paystack Integration - Updated to use fixed endpoint
+    initializePayment: (data) => authAxios.post('/paystack-integration-fixed.php/initialize-payment', data),
+    verifyPayment: (data) => authAxios.post('/paystack-integration-fixed.php/verify-payment', data),
+    createSubscription: (data) => authAxios.post('/paystack-integration-fixed.php/create-subscription', data),
+    getPaymentStatus: (reference) => authAxios.get(`/paystack-integration-fixed.php/payment-status?reference=${reference}`),
+    getSubscriptionPlans: () => authAxios.get('/paystack-integration-fixed.php/subscription-plans')
   };
 
 // Tenancy Management API
