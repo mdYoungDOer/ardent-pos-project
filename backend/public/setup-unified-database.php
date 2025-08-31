@@ -1,4 +1,7 @@
 <?php
+// Prevent any output before JSON
+ob_start();
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
@@ -30,11 +33,42 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
-    echo "Connected to database successfully.\n";
+    $output = [];
+    $output[] = "Connected to database successfully.";
     
     // Enable UUID extension if not already enabled
     $pdo->exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"");
-    echo "UUID extension enabled.\n";
+    $output[] = "UUID extension enabled.";
+    
+    // Drop existing tables in correct order to avoid foreign key conflicts
+    $dropTables = [
+        'audit_logs',
+        'support_replies',
+        'support_tickets',
+        'knowledgebase',
+        'knowledgebase_categories',
+        'contact_submissions',
+        'payments',
+        'invoices',
+        'subscriptions',
+        'sale_items',
+        'sales',
+        'customers',
+        'inventory',
+        'products',
+        'categories',
+        'users',
+        'tenants'
+    ];
+    
+    foreach ($dropTables as $table) {
+        try {
+            $pdo->exec("DROP TABLE IF EXISTS $table CASCADE");
+        } catch (Exception $e) {
+            // Ignore errors if table doesn't exist
+        }
+    }
+    $output[] = "Existing tables dropped (if any).";
     
     // Create tenants table
     $sql = "CREATE TABLE IF NOT EXISTS tenants (
@@ -48,7 +82,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Tenants table created.\n";
+    $output[] = "Tenants table created.";
     
     // Create users table
     $sql = "CREATE TABLE IF NOT EXISTS users (
@@ -64,7 +98,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Users table created.\n";
+    $output[] = "Users table created.";
     
     // Create categories table
     $sql = "CREATE TABLE IF NOT EXISTS categories (
@@ -77,7 +111,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Categories table created.\n";
+    $output[] = "Categories table created.";
     
     // Create products table
     $sql = "CREATE TABLE IF NOT EXISTS products (
@@ -96,7 +130,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Products table created.\n";
+    $output[] = "Products table created.";
     
     // Create inventory table
     $sql = "CREATE TABLE IF NOT EXISTS inventory (
@@ -110,7 +144,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Inventory table created.\n";
+    $output[] = "Inventory table created.";
     
     // Create customers table
     $sql = "CREATE TABLE IF NOT EXISTS customers (
@@ -125,7 +159,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Customers table created.\n";
+    $output[] = "Customers table created.";
     
     // Create sales table
     $sql = "CREATE TABLE IF NOT EXISTS sales (
@@ -143,7 +177,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Sales table created.\n";
+    $output[] = "Sales table created.";
     
     // Create sale_items table
     $sql = "CREATE TABLE IF NOT EXISTS sale_items (
@@ -156,7 +190,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Sale items table created.\n";
+    $output[] = "Sale items table created.";
     
     // Create subscriptions table
     $sql = "CREATE TABLE IF NOT EXISTS subscriptions (
@@ -173,7 +207,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Subscriptions table created.\n";
+    $output[] = "Subscriptions table created.";
     
     // Create invoices table
     $sql = "CREATE TABLE IF NOT EXISTS invoices (
@@ -191,7 +225,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Invoices table created.\n";
+    $output[] = "Invoices table created.";
     
     // Create payments table
     $sql = "CREATE TABLE IF NOT EXISTS payments (
@@ -209,7 +243,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Payments table created.\n";
+    $output[] = "Payments table created.";
     
     // Create contact_submissions table
     $sql = "CREATE TABLE IF NOT EXISTS contact_submissions (
@@ -223,7 +257,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Contact submissions table created.\n";
+    $output[] = "Contact submissions table created.";
     
     // Create knowledgebase_categories table
     $sql = "CREATE TABLE IF NOT EXISTS knowledgebase_categories (
@@ -236,7 +270,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Knowledgebase categories table created.\n";
+    $output[] = "Knowledgebase categories table created.";
     
     // Create knowledgebase table
     $sql = "CREATE TABLE IF NOT EXISTS knowledgebase (
@@ -251,7 +285,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Knowledgebase table created.\n";
+    $output[] = "Knowledgebase table created.";
     
     // Create support_tickets table
     $sql = "CREATE TABLE IF NOT EXISTS support_tickets (
@@ -268,7 +302,7 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Support tickets table created.\n";
+    $output[] = "Support tickets table created.";
     
     // Create support_replies table
     $sql = "CREATE TABLE IF NOT EXISTS support_replies (
@@ -280,7 +314,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Support replies table created.\n";
+    $output[] = "Support replies table created.";
     
     // Create audit_logs table
     $sql = "CREATE TABLE IF NOT EXISTS audit_logs (
@@ -297,7 +331,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql);
-    echo "Audit logs table created.\n";
+    $output[] = "Audit logs table created.";
     
     // Create indexes for better performance
     $indexes = [
@@ -320,7 +354,7 @@ try {
     foreach ($indexes as $index) {
         $pdo->exec($index);
     }
-    echo "Database indexes created.\n";
+    $output[] = "Database indexes created.";
     
     // Insert default super admin user
     $superAdminEmail = 'superadmin@ardentpos.com';
@@ -334,11 +368,11 @@ try {
                 VALUES (uuid_generate_v4(), 'Super', 'Admin', ?, ?, 'super_admin', 'active')";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$superAdminEmail, $superAdminPassword]);
-        echo "Default super admin user created.\n";
-        echo "Email: superadmin@ardentpos.com\n";
-        echo "Password: superadmin123\n";
+        $output[] = "Default super admin user created.";
+        $output[] = "Email: superadmin@ardentpos.com";
+        $output[] = "Password: superadmin123";
     } else {
-        echo "Super admin user already exists.\n";
+        $output[] = "Super admin user already exists.";
     }
     
     // Insert default knowledgebase categories
@@ -362,7 +396,7 @@ try {
             $stmt->execute($category);
         }
     }
-    echo "Default knowledgebase categories created.\n";
+    $output[] = "Default knowledgebase categories created.";
     
     // Insert sample knowledgebase articles
     $sampleArticles = [
@@ -404,11 +438,12 @@ try {
             }
         }
     }
-    echo "Sample knowledgebase articles created.\n";
+    $output[] = "Sample knowledgebase articles created.";
     
-    echo json_encode([
+    $result = [
         'success' => true,
         'message' => 'Database setup completed successfully',
+        'output' => $output,
         'details' => [
             'tables_created' => 15,
             'indexes_created' => count($indexes),
@@ -416,13 +451,22 @@ try {
             'knowledgebase_categories_created' => count($defaultCategories),
             'sample_articles_created' => count($sampleArticles)
         ]
-    ]);
+    ];
+    
+    // Clear any output buffer and ensure proper JSON output
+    ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($result, JSON_PRETTY_PRINT);
     
 } catch (Exception $e) {
     error_log("Database setup error: " . $e->getMessage());
+    
+    // Clear any output buffer and ensure proper JSON output for errors
+    ob_clean();
+    header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'error' => 'Database setup failed: ' . $e->getMessage()
-    ]);
+    ], JSON_PRETTY_PRINT);
 }
 ?>
