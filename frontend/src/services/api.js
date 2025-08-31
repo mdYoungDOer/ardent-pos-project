@@ -579,9 +579,9 @@ export const superAdminAPI = {
   },
 
   // Knowledgebase Management
-  getKnowledgebaseCategories: async (params = {}) => {
-    try {
-      const response = await fetch('/knowledgebase-management.php/categories', {
+getKnowledgebaseCategories: async (params = {}) => {
+  try {
+    const response = await fetch('/knowledgebase-management-fixed.php/categories', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       return { data: await response.json() };
@@ -592,8 +592,8 @@ export const superAdminAPI = {
   },
 
   createKnowledgebaseCategory: async (data) => {
-    try {
-      const response = await fetch('/knowledgebase-management.php/categories', {
+  try {
+    const response = await fetch('/knowledgebase-management-fixed.php/categories', {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -609,8 +609,8 @@ export const superAdminAPI = {
   },
 
   updateKnowledgebaseCategory: async (data) => {
-    try {
-      const response = await fetch('/knowledgebase-management.php/categories', {
+  try {
+    const response = await fetch('/knowledgebase-management-fixed.php/categories', {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -626,8 +626,8 @@ export const superAdminAPI = {
   },
 
   deleteKnowledgebaseCategory: async (id) => {
-    try {
-      const response = await fetch(`/knowledgebase-management.php/categories?id=${id}`, {
+  try {
+    const response = await fetch(`/knowledgebase-management-fixed.php/categories?id=${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -639,8 +639,8 @@ export const superAdminAPI = {
   },
 
   getKnowledgebaseArticles: async (params = {}) => {
-    try {
-      const response = await fetch(`/knowledgebase-management.php/articles?${new URLSearchParams(params)}`, {
+  try {
+    const response = await fetch(`/knowledgebase-management-fixed.php/articles?${new URLSearchParams(params)}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       return { data: await response.json() };
@@ -651,8 +651,8 @@ export const superAdminAPI = {
   },
 
   createKnowledgebaseArticle: async (data) => {
-    try {
-      const response = await fetch('/knowledgebase-management.php/articles', {
+  try {
+    const response = await fetch('/knowledgebase-management-fixed.php/articles', {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -668,8 +668,8 @@ export const superAdminAPI = {
   },
 
   updateKnowledgebaseArticle: async (data) => {
-    try {
-      const response = await fetch('/knowledgebase-management.php/articles', {
+  try {
+    const response = await fetch('/knowledgebase-management-fixed.php/articles', {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -685,8 +685,8 @@ export const superAdminAPI = {
   },
 
   deleteKnowledgebaseArticle: async (id) => {
-    try {
-      const response = await fetch(`/knowledgebase-management.php/articles?id=${id}`, {
+  try {
+    const response = await fetch(`/knowledgebase-management-fixed.php/articles?id=${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -1071,7 +1071,7 @@ export const couponsAPI = {
     },
     
     searchKnowledgebase: (query) => publicApi.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
-    getKnowledgebaseArticle: (id) => publicApi.get(`/knowledgebase-article.php?id=${id}`),
+    getKnowledgebaseArticle: (id) => publicApi.get(`/knowledgebase-article-fixed.php?id=${id}`),
     createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
     
     // Authenticated endpoints (require login)
