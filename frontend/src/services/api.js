@@ -27,6 +27,26 @@ const authAxios = axios.create({
   },
 });
 
+// Add token to authAxios requests
+authAxios.interceptors.request.use((config) => {
+  const token = authAPI.getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle 401 responses for authAxios
+authAxios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('401 Unauthorized - Token may be invalid or expired');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authAPI = {
   login: async (credentials) => {
     console.log('Making login request to /auth/login.php');
@@ -680,10 +700,8 @@ export const superAdminAPI = {
   // Support Ticket Management
   getSupportTickets: async (params = {}) => {
     try {
-      const response = await fetch(`/support-ticket-management.php/tickets?${new URLSearchParams(params)}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      return { data: await response.json() };
+      const response = await authAxios.get(`/support-ticket-management.php/tickets?${new URLSearchParams(params)}`);
+      return response;
     } catch (error) {
       console.error('Error fetching support tickets:', error);
       return { data: { success: true, data: { tickets: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } } } };
@@ -704,10 +722,8 @@ export const superAdminAPI = {
 
   getSupportTicketStats: async () => {
     try {
-      const response = await fetch('/support-ticket-management.php/stats', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      return { data: await response.json() };
+      const response = await authAxios.get('/support-ticket-management.php/stats');
+      return response;
     } catch (error) {
       console.error('Error fetching support ticket stats:', error);
       return { data: { success: true, data: {} } };
@@ -1059,10 +1075,10 @@ export const supportAPI = {
   createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
   
   // Authenticated endpoints (require login)
-  getTickets: () => authAxios.get('/support-tickets-fetch.php'),
-  createTicket: (ticketData) => authAxios.post('/support-ticket-create.php', ticketData),
-  updateTicket: (ticketId, updateData) => api.put(`/support-portal/tickets/${ticketId}`, updateData),
-  deleteTicket: (ticketId) => api.delete(`/support-portal/tickets/${ticketId}`),
+  getTickets: () => authAxios.get('/support-ticket-management.php/tickets'),
+  createTicket: (ticketData) => authAxios.post('/support-ticket-management.php/tickets', ticketData),
+  updateTicket: (ticketId, updateData) => authAxios.put('/support-ticket-management.php/tickets', { id: ticketId, ...updateData }),
+  deleteTicket: (ticketId) => authAxios.delete(`/support-ticket-management.php/tickets?id=${ticketId}`),
   getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
   sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message, sender_type: 'user' }),
   createChatSession: () => publicApi.post('/support-portal/chat/session'),

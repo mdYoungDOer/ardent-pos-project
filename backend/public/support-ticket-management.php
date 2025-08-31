@@ -10,465 +10,465 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Load environment variables
-$envFile = __DIR__ . '/../.env';
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
-            list($key, $value) = explode('=', $line, 2);
-            $_ENV[trim($key)] = trim($value);
+$dbHost = $_ENV['DB_HOST'] ?? 'localhost';
+$dbPort = $_ENV['DB_PORT'] ?? '5432';
+$dbName = $_ENV['DB_NAME'] ?? 'defaultdb';
+$dbUser = $_ENV['DB_USERNAME'] ?? '';
+$dbPass = $_ENV['DB_PASSWORD'] ?? '';
+$jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
+
+// Function to check authentication
+function checkAuth() {
+    global $jwtSecret, $dbHost, $dbPort, $dbName, $dbUser, $dbPass;
+    
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    
+    if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        return null;
+    }
+    
+    $token = $matches[1];
+    
+    try {
+        // Load JWT library
+        $autoloaderPaths = [
+            __DIR__ . '/../vendor/autoload.php',
+            __DIR__ . '/../../vendor/autoload.php',
+            '/var/www/html/vendor/autoload.php'
+        ];
+        
+        $autoloaderFound = false;
+        foreach ($autoloaderPaths as $path) {
+            if (file_exists($path)) {
+                require_once $path;
+                $autoloaderFound = true;
+                break;
+            }
         }
+        
+        if (!$autoloaderFound) {
+            throw new Exception('JWT library not found');
+        }
+        
+        // Decode token
+        $decoded = Firebase\JWT\JWT::decode($token, new Firebase\JWT\Key($jwtSecret, 'HS256'));
+        
+        // Connect to database
+        $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
+        $pdo = new PDO($dsn, $dbUser, $dbPass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]);
+        
+        // Verify user exists and is active
+        $stmt = $pdo->prepare("
+            SELECT u.*, t.name as tenant_name 
+            FROM users u 
+            JOIN tenants t ON u.tenant_id = t.id 
+            WHERE u.id = ? AND u.status = 'active' AND t.status = 'active'
+        ");
+        $stmt->execute([$decoded->user_id]);
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            return null;
+        }
+        
+        return $user;
+        
+    } catch (Exception $e) {
+        error_log("Auth error: " . $e->getMessage());
+        return null;
     }
-}
-
-// Database configuration
-$dbConfig = [
-    'host' => $_ENV['DB_HOST'] ?? 'localhost',
-    'port' => $_ENV['DB_PORT'] ?? '5432',
-    'database' => $_ENV['DB_NAME'] ?? 'defaultdb',
-    'username' => $_ENV['DB_USERNAME'] ?? $_ENV['DB_USER'] ?? 'postgres',
-    'password' => $_ENV['DB_PASSWORD'] ?? $_ENV['DB_PASS'] ?? 'password',
-];
-
-// Simple authentication check (you may want to enhance this)
-function checkSuperAdminAuth() {
-    $headers = getallheaders();
-    $authHeader = $headers['Authorization'] ?? '';
-    
-    if (empty($authHeader) || !str_starts_with($authHeader, 'Bearer ')) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-        exit;
-    }
-    
-    // For now, we'll accept any Bearer token - in production, validate the JWT
-    return true;
 }
 
 try {
-    // Create database connection
-    $dsn = sprintf(
-        'pgsql:host=%s;port=%s;dbname=%s;sslmode=require',
-        $dbConfig['host'],
-        $dbConfig['port'],
-        $dbConfig['database']
-    );
-    
-    $pdo = new PDO(
-        $dsn,
-        $dbConfig['username'],
-        $dbConfig['password'],
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]
-    );
-    
     // Check authentication
-    checkSuperAdminAuth();
+    $user = checkAuth();
+    
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Token not provided or invalid'
+        ]);
+        exit;
+    }
+    
+    // Connect to database
+    $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName;sslmode=require";
+    $pdo = new PDO($dsn, $dbUser, $dbPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Ensure support_tickets table exists
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS support_tickets (
+            id SERIAL PRIMARY KEY,
+            ticket_number VARCHAR(50) UNIQUE,
+            user_id INTEGER,
+            tenant_id INTEGER,
+            first_name VARCHAR(100),
+            last_name VARCHAR(100),
+            email VARCHAR(255),
+            subject VARCHAR(255) NOT NULL,
+            message TEXT NOT NULL,
+            priority VARCHAR(20) DEFAULT 'medium',
+            category VARCHAR(50) DEFAULT 'general',
+            status VARCHAR(20) DEFAULT 'open',
+            assigned_to INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
     
     $method = $_SERVER['REQUEST_METHOD'];
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $pathParts = explode('/', trim($path, '/'));
     $endpoint = end($pathParts);
     
-    // Handle different endpoints
+    // Remove .php extension if present
+    $endpoint = str_replace('.php', '', $endpoint);
+    
     switch ($method) {
         case 'GET':
-            handleGetRequest($pdo, $endpoint, $_GET);
+            if ($endpoint === 'tickets') {
+                handleGetTickets($pdo, $user);
+            } elseif ($endpoint === 'stats') {
+                handleGetStats($pdo, $user);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            }
             break;
+            
         case 'POST':
-            handlePostRequest($pdo, $endpoint, $_POST, file_get_contents('php://input'));
+            if ($endpoint === 'tickets') {
+                handleCreateTicket($pdo, $user);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            }
             break;
+            
         case 'PUT':
-            handlePutRequest($pdo, $endpoint, file_get_contents('php://input'));
+            if ($endpoint === 'tickets') {
+                handleUpdateTicket($pdo, $user);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            }
             break;
+            
         case 'DELETE':
-            handleDeleteRequest($pdo, $endpoint, $_GET);
+            if ($endpoint === 'tickets') {
+                $ticketId = $_GET['id'] ?? null;
+                if ($ticketId) {
+                    handleDeleteTicket($pdo, $ticketId, $user);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Ticket ID required']);
+                }
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            }
             break;
+            
         default:
             http_response_code(405);
-            echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            break;
     }
     
 } catch (Exception $e) {
-    error_log("Support Ticket Management Error: " . $e->getMessage());
+    error_log("Support ticket management error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Internal server error',
-        'debug' => $e->getMessage()
+        'message' => 'Internal server error'
     ]);
 }
 
-function handleGetRequest($pdo, $endpoint, $params) {
-    switch ($endpoint) {
-        case 'tickets':
-            getTickets($pdo, $params);
-            break;
-        case 'ticket':
-            getTicket($pdo, $params);
-            break;
-        case 'stats':
-            getTicketStats($pdo);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
-    }
-}
-
-function handlePostRequest($pdo, $endpoint, $postData, $rawData) {
-    $data = json_decode($rawData, true) ?: $postData;
+function handleGetTickets($pdo, $user) {
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+    $status = isset($_GET['status']) ? $_GET['status'] : null;
+    $priority = isset($_GET['priority']) ? $_GET['priority'] : null;
+    $category = isset($_GET['category']) ? $_GET['category'] : null;
     
-    switch ($endpoint) {
-        case 'tickets':
-            createTicket($pdo, $data);
-            break;
-        case 'reply':
-            addReply($pdo, $data);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
-    }
-}
-
-function handlePutRequest($pdo, $endpoint, $rawData) {
-    $data = json_decode($rawData, true);
+    $offset = ($page - 1) * $limit;
     
-    switch ($endpoint) {
-        case 'tickets':
-            updateTicket($pdo, $data);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
+    // Build WHERE clause based on user role
+    $whereConditions = [];
+    $bindParams = [];
+    
+    if ($user['role'] === 'super_admin') {
+        // Super admin can see all tickets
+        $whereConditions[] = "1=1";
+    } else {
+        // Regular users can only see their tenant's tickets
+        $whereConditions[] = "t.tenant_id = ?";
+        $bindParams[] = $user['tenant_id'];
     }
-}
-
-function handleDeleteRequest($pdo, $endpoint, $params) {
-    switch ($endpoint) {
-        case 'tickets':
-            deleteTicket($pdo, $params);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
+    
+    if ($status) {
+        $whereConditions[] = "t.status = ?";
+        $bindParams[] = $status;
     }
-}
-
-// Ticket Management Functions
-function getTickets($pdo, $params) {
-    try {
-        $page = isset($params['page']) ? (int)$params['page'] : 1;
-        $limit = isset($params['limit']) ? (int)$params['limit'] : 50;
-        $offset = ($page - 1) * $limit;
-        $status = $params['status'] ?? null;
-        $priority = $params['priority'] ?? null;
-        $search = $params['search'] ?? null;
-        $tenantId = $params['tenant_id'] ?? null;
-        
-        $whereConditions = [];
-        $bindParams = [];
-        
-        if ($status) {
-            $whereConditions[] = "st.status = :status";
-            $bindParams['status'] = $status;
-        }
-        
-        if ($priority) {
-            $whereConditions[] = "st.priority = :priority";
-            $bindParams['priority'] = $priority;
-        }
-        
-        if ($tenantId) {
-            $whereConditions[] = "st.tenant_id = :tenant_id";
-            $bindParams['tenant_id'] = $tenantId;
-        }
-        
-        if ($search) {
-            $whereConditions[] = "(st.subject ILIKE :search OR st.description ILIKE :search OR u.name ILIKE :search)";
-            $bindParams['search'] = "%$search%";
-        }
-        
-        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
-        
-        $sql = "SELECT st.*, u.name as user_name, u.email as user_email, t.name as tenant_name
-                FROM support_tickets st 
-                LEFT JOIN users u ON st.user_id = u.id 
-                LEFT JOIN tenants t ON st.tenant_id = t.id 
-                $whereClause 
-                ORDER BY st.created_at DESC 
-                LIMIT :limit OFFSET :offset";
-        
-        $stmt = $pdo->prepare($sql);
-        foreach ($bindParams as $key => $value) {
-            $stmt->bindValue(":$key", $value);
-        }
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        $tickets = $stmt->fetchAll();
-        
-        // Get total count
-        $countSql = "SELECT COUNT(*) as total FROM support_tickets st 
-                     LEFT JOIN users u ON st.user_id = u.id 
-                     LEFT JOIN tenants t ON st.tenant_id = t.id 
-                     $whereClause";
-        $countStmt = $pdo->prepare($countSql);
-        foreach ($bindParams as $key => $value) {
-            $countStmt->bindValue(":$key", $value);
-        }
-        $countStmt->execute();
-        $total = $countStmt->fetch()['total'];
-        
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'tickets' => $tickets,
-                'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
-                    'total' => (int)$total,
-                    'pages' => ceil($total / $limit)
-                ]
+    
+    if ($priority) {
+        $whereConditions[] = "t.priority = ?";
+        $bindParams[] = $priority;
+    }
+    
+    if ($category) {
+        $whereConditions[] = "t.category = ?";
+        $bindParams[] = $category;
+    }
+    
+    $whereClause = implode(' AND ', $whereConditions);
+    
+    // Get tickets with user information
+    $sql = "
+        SELECT 
+            t.*,
+            u.first_name as user_first_name,
+            u.last_name as user_last_name,
+            u.email as user_email,
+            tenant.name as tenant_name
+        FROM support_tickets t
+        LEFT JOIN users u ON t.user_id = u.id
+        LEFT JOIN tenants tenant ON t.tenant_id = tenant.id
+        WHERE $whereClause
+        ORDER BY t.created_at DESC
+        LIMIT ? OFFSET ?
+    ";
+    
+    $bindParams[] = $limit;
+    $bindParams[] = $offset;
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($bindParams);
+    $tickets = $stmt->fetchAll();
+    
+    // Get total count
+    $countSql = "SELECT COUNT(*) as total FROM support_tickets t WHERE $whereClause";
+    $countBindParams = array_slice($bindParams, 0, -2); // Remove limit and offset
+    
+    $stmt = $pdo->prepare($countSql);
+    $stmt->execute($countBindParams);
+    $totalResult = $stmt->fetch();
+    $total = $totalResult['total'] ?? 0;
+    
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'tickets' => $tickets,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'pages' => ceil($total / $limit)
             ]
-        ]);
-    } catch (Exception $e) {
-        error_log("Get tickets error: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to fetch tickets']);
-    }
+        ]
+    ]);
 }
 
-function getTicket($pdo, $params) {
-    try {
-        $id = $params['id'] ?? null;
-        if (!$id) {
+function handleCreateTicket($pdo, $user) {
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
+    if (!$data) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+        return;
+    }
+    
+    // Validate required fields
+    $requiredFields = ['subject', 'message', 'priority', 'category'];
+    foreach ($requiredFields as $field) {
+        if (empty($data[$field])) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Ticket ID required']);
+            echo json_encode(['success' => false, 'message' => "Missing required field: $field"]);
             return;
         }
-        
-        // Get ticket details
-        $sql = "SELECT st.*, u.name as user_name, u.email as user_email, t.name as tenant_name
-                FROM support_tickets st 
-                LEFT JOIN users u ON st.user_id = u.id 
-                LEFT JOIN tenants t ON st.tenant_id = t.id 
-                WHERE st.id = :id";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(['id' => $id]);
-        $ticket = $stmt->fetch();
-        
-        if (!$ticket) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Ticket not found']);
-            return;
-        }
-        
-        // Get ticket replies
-        $repliesSql = "SELECT sr.*, u.name as user_name, u.email as user_email
-                       FROM support_replies sr 
-                       LEFT JOIN users u ON sr.user_id = u.id 
-                       WHERE sr.ticket_id = :ticket_id 
-                       ORDER BY sr.created_at ASC";
-        $repliesStmt = $pdo->prepare($repliesSql);
-        $repliesStmt->execute(['ticket_id' => $id]);
-        $replies = $repliesStmt->fetchAll();
-        
-        $ticket['replies'] = $replies;
-        
-        echo json_encode(['success' => true, 'data' => $ticket]);
-    } catch (Exception $e) {
-        error_log("Get ticket error: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to fetch ticket']);
     }
+    
+    // Generate ticket number
+    $ticketNumber = 'TKT-' . date('Y') . '-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+    
+    // Insert ticket
+    $stmt = $pdo->prepare("
+        INSERT INTO support_tickets (
+            ticket_number, user_id, tenant_id, subject, message, 
+            priority, category, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        RETURNING id
+    ");
+    
+    $stmt->execute([
+        $ticketNumber,
+        $user['id'],
+        $user['tenant_id'],
+        $data['subject'],
+        $data['message'],
+        $data['priority'],
+        $data['category'],
+        'open'
+    ]);
+    
+    $ticketId = $pdo->lastInsertId();
+    
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'ticket_id' => $ticketId,
+            'ticket_number' => $ticketNumber
+        ],
+        'message' => 'Support ticket created successfully!'
+    ]);
 }
 
-function getTicketStats($pdo) {
-    try {
-        $stats = [
-            'total_tickets' => 0,
-            'open_tickets' => 0,
-            'closed_tickets' => 0,
-            'pending_tickets' => 0,
-            'high_priority' => 0,
-            'medium_priority' => 0,
-            'low_priority' => 0,
-            'recent_tickets' => 0
-        ];
-        
-        // Get basic counts
-        $sql = "SELECT 
-                COUNT(*) as total_tickets,
-                COUNT(CASE WHEN status = 'open' THEN 1 END) as open_tickets,
-                COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed_tickets,
-                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_tickets,
-                COUNT(CASE WHEN priority = 'high' THEN 1 END) as high_priority,
-                COUNT(CASE WHEN priority = 'medium' THEN 1 END) as medium_priority,
-                COUNT(CASE WHEN priority = 'low' THEN 1 END) as low_priority,
-                COUNT(CASE WHEN created_at >= NOW() - INTERVAL '7 days' THEN 1 END) as recent_tickets
-                FROM support_tickets";
-        
-        $stmt = $pdo->query($sql);
-        $result = $stmt->fetch();
-        
-        $stats = array_merge($stats, $result);
-        
-        echo json_encode(['success' => true, 'data' => $stats]);
-    } catch (Exception $e) {
-        error_log("Get ticket stats error: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to fetch ticket stats']);
+function handleUpdateTicket($pdo, $user) {
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
+    if (!$data || empty($data['id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Ticket ID required']);
+        return;
     }
+    
+    $ticketId = $data['id'];
+    
+    // Check if user has access to this ticket
+    $accessSql = "SELECT tenant_id FROM support_tickets WHERE id = ?";
+    $stmt = $pdo->prepare($accessSql);
+    $stmt->execute([$ticketId]);
+    $ticket = $stmt->fetch();
+    
+    if (!$ticket) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Ticket not found']);
+        return;
+    }
+    
+    if ($user['role'] !== 'super_admin' && $ticket['tenant_id'] != $user['tenant_id']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Access denied']);
+        return;
+    }
+    
+    // Update ticket
+    $updateFields = [];
+    $bindParams = [];
+    
+    if (isset($data['status'])) {
+        $updateFields[] = "status = ?";
+        $bindParams[] = $data['status'];
+    }
+    
+    if (isset($data['priority'])) {
+        $updateFields[] = "priority = ?";
+        $bindParams[] = $data['priority'];
+    }
+    
+    if (isset($data['category'])) {
+        $updateFields[] = "category = ?";
+        $bindParams[] = $data['category'];
+    }
+    
+    if (isset($data['assigned_to'])) {
+        $updateFields[] = "assigned_to = ?";
+        $bindParams[] = $data['assigned_to'];
+    }
+    
+    if (empty($updateFields)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'No fields to update']);
+        return;
+    }
+    
+    $updateFields[] = "updated_at = NOW()";
+    $bindParams[] = $ticketId;
+    
+    $sql = "UPDATE support_tickets SET " . implode(', ', $updateFields) . " WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($bindParams);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Ticket updated successfully!'
+    ]);
 }
 
-function createTicket($pdo, $data) {
-    try {
-        $requiredFields = ['subject', 'description', 'priority'];
-        foreach ($requiredFields as $field) {
-            if (empty($data[$field])) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => "Field '$field' is required"]);
-                return;
-            }
-        }
-        
-        $sql = "INSERT INTO support_tickets (user_id, tenant_id, subject, description, priority, status, created_at, updated_at) 
-                VALUES (:user_id, :tenant_id, :subject, :description, :priority, :status, NOW(), NOW())";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            'user_id' => $data['user_id'] ?? null,
-            'tenant_id' => $data['tenant_id'] ?? null,
-            'subject' => $data['subject'],
-            'description' => $data['description'],
-            'priority' => $data['priority'],
-            'status' => $data['status'] ?? 'open'
-        ]);
-        
-        $ticketId = $pdo->lastInsertId();
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Ticket created successfully',
-            'data' => ['id' => $ticketId]
-        ]);
-    } catch (Exception $e) {
-        error_log("Create ticket error: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to create ticket']);
+function handleDeleteTicket($pdo, $ticketId, $user) {
+    // Check if user has access to this ticket
+    $accessSql = "SELECT tenant_id FROM support_tickets WHERE id = ?";
+    $stmt = $pdo->prepare($accessSql);
+    $stmt->execute([$ticketId]);
+    $ticket = $stmt->fetch();
+    
+    if (!$ticket) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Ticket not found']);
+        return;
     }
+    
+    if ($user['role'] !== 'super_admin' && $ticket['tenant_id'] != $user['tenant_id']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Access denied']);
+        return;
+    }
+    
+    // Delete ticket
+    $stmt = $pdo->prepare("DELETE FROM support_tickets WHERE id = ?");
+    $stmt->execute([$ticketId]);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Ticket deleted successfully!'
+    ]);
 }
 
-function updateTicket($pdo, $data) {
-    try {
-        if (empty($data['id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Ticket ID required']);
-            return;
-        }
-        
-        $sql = "UPDATE support_tickets SET 
-                subject = :subject, 
-                description = :description, 
-                priority = :priority, 
-                status = :status, 
-                assigned_to = :assigned_to, 
-                updated_at = NOW() 
-                WHERE id = :id";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            'id' => $data['id'],
-            'subject' => $data['subject'],
-            'description' => $data['description'],
-            'priority' => $data['priority'],
-            'status' => $data['status'],
-            'assigned_to' => $data['assigned_to'] ?? null
-        ]);
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Ticket updated successfully'
-        ]);
-    } catch (Exception $e) {
-        error_log("Update ticket error: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to update ticket']);
+function handleGetStats($pdo, $user) {
+    $whereClause = "1=1";
+    $bindParams = [];
+    
+    if ($user['role'] !== 'super_admin') {
+        $whereClause = "tenant_id = ?";
+        $bindParams = [$user['tenant_id']];
     }
+    
+    // Get ticket counts by status
+    $statusSql = "
+        SELECT 
+            status,
+            COUNT(*) as count
+        FROM support_tickets 
+        WHERE $whereClause
+        GROUP BY status
+    ";
+    
+    $stmt = $pdo->prepare($statusSql);
+    $stmt->execute($bindParams);
+    $statusStats = $stmt->fetchAll();
+    
+    // Get total tickets
+    $totalSql = "SELECT COUNT(*) as total FROM support_tickets WHERE $whereClause";
+    $stmt = $pdo->prepare($totalSql);
+    $stmt->execute($bindParams);
+    $totalResult = $stmt->fetch();
+    $total = $totalResult['total'] ?? 0;
+    
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'total_tickets' => (int)$total,
+            'status_breakdown' => $statusStats
+        ]
+    ]);
 }
-
-function deleteTicket($pdo, $params) {
-    try {
-        $id = $params['id'] ?? null;
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Ticket ID required']);
-            return;
-        }
-        
-        // Delete ticket replies first
-        $deleteRepliesSql = "DELETE FROM support_replies WHERE ticket_id = :id";
-        $deleteRepliesStmt = $pdo->prepare($deleteRepliesSql);
-        $deleteRepliesStmt->execute(['id' => $id]);
-        
-        // Delete the ticket
-        $sql = "DELETE FROM support_tickets WHERE id = :id";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(['id' => $id]);
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Ticket deleted successfully'
-        ]);
-    } catch (Exception $e) {
-        error_log("Delete ticket error: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to delete ticket']);
-    }
-}
-
-function addReply($pdo, $data) {
-    try {
-        $requiredFields = ['ticket_id', 'message'];
-        foreach ($requiredFields as $field) {
-            if (empty($data[$field])) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => "Field '$field' is required"]);
-                return;
-            }
-        }
-        
-        $sql = "INSERT INTO support_replies (ticket_id, user_id, message, created_at) 
-                VALUES (:ticket_id, :user_id, :message, NOW())";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            'ticket_id' => $data['ticket_id'],
-            'user_id' => $data['user_id'] ?? null,
-            'message' => $data['message']
-        ]);
-        
-        $replyId = $pdo->lastInsertId();
-        
-        // Update ticket status to 'pending' if it was 'open'
-        $updateTicketSql = "UPDATE support_tickets SET status = 'pending', updated_at = NOW() 
-                           WHERE id = :ticket_id AND status = 'open'";
-        $updateTicketStmt = $pdo->prepare($updateTicketSql);
-        $updateTicketStmt->execute(['ticket_id' => $data['ticket_id']]);
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Reply added successfully',
-            'data' => ['id' => $replyId]
-        ]);
-    } catch (Exception $e) {
-        error_log("Add reply error: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to add reply']);
-    }
-}
+?>
