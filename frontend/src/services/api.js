@@ -1085,22 +1085,28 @@ export const couponsAPI = {
     markArticleHelpful: (articleId, helpful) => api.post(`/support-portal/knowledgebase/${articleId}/helpful`, { helpful })
   };
 
-  // Billing & Subscription API
+  // Billing & Subscription API - Updated to use tenancy management
   export const billingAPI = {
     // Subscription Plans
-    getSubscriptionPlans: () => authAxios.get('/billing-management.php/subscription-plans'),
+    getSubscriptionPlans: () => authAxios.get('/subscription-plans.php'),
     
     // Subscriptions
-    getSubscriptions: (params = {}) => authAxios.get(`/billing-management.php/subscriptions?${new URLSearchParams(params)}`),
-    upgradeSubscription: (data) => authAxios.post('/billing-management.php/upgrade-subscription', data),
-    cancelSubscription: (data) => authAxios.post('/billing-management.php/cancel-subscription', data),
+    getSubscriptions: (params = {}) => authAxios.get(`/tenancy-management-simple.php/subscriptions?${new URLSearchParams(params)}`),
+    upgradeSubscription: (data) => authAxios.post('/tenancy-management-simple.php/upgrade-subscription', data),
+    cancelSubscription: (data) => authAxios.post('/tenancy-management-simple.php/cancel-subscription', data),
     
     // Invoices
-    getInvoices: (params = {}) => authAxios.get(`/billing-management.php/invoices?${new URLSearchParams(params)}`),
-    generateInvoice: (data) => authAxios.post('/billing-management.php/generate-invoice', data),
+    getInvoices: (params = {}) => authAxios.get(`/tenancy-management-simple.php/invoices?${new URLSearchParams(params)}`),
+    generateInvoice: (data) => authAxios.post('/tenancy-management-simple.php/generate-invoice', data),
     
     // Billing Overview
-    getBillingOverview: () => authAxios.get('/billing-management.php/billing-overview'),
+    getBillingOverview: () => authAxios.get('/tenancy-management-simple.php/billing-overview'),
+    
+    // Subscription Status
+    getSubscriptionStatus: () => authAxios.get('/tenancy-management-simple.php/subscription-status'),
+    
+    // Billing Info
+    getBillingInfo: () => authAxios.get('/tenancy-management-simple.php/billing-info'),
     
     // Paystack Integration
     initializePayment: (data) => authAxios.post('/paystack-integration.php/initialize-payment', data),
@@ -1108,5 +1114,27 @@ export const couponsAPI = {
     createSubscription: (data) => authAxios.post('/paystack-integration.php/create-subscription', data),
     getPaymentStatus: (reference) => authAxios.get(`/paystack-integration.php/payment-status?reference=${reference}`)
   };
+
+// Tenancy Management API
+export const tenancyAPI = {
+  // Get subscription status (handles Super Admin vs Client separation)
+  getSubscriptionStatus: () => authAxios.get('/tenancy-management-simple.php/subscription-status'),
+  
+  // Get billing info (handles Super Admin vs Client separation)
+  getBillingInfo: () => authAxios.get('/tenancy-management-simple.php/billing-info'),
+  
+  // Tenant management (Super Admin only)
+  getTenants: (params = {}) => authAxios.get(`/tenancy-management-fixed.php/tenants?${new URLSearchParams(params)}`),
+  createTenant: (data) => authAxios.post('/tenancy-management-fixed.php/tenants', data),
+  updateTenant: (data) => authAxios.put('/tenancy-management-fixed.php/tenants', data),
+  deleteTenant: (id) => authAxios.delete(`/tenancy-management-fixed.php/tenants?id=${id}`),
+  
+  // Tenant info
+  getTenantInfo: () => authAxios.get('/tenancy-management-fixed.php/tenant-info'),
+  updateTenantSettings: (data) => authAxios.put('/tenancy-management-fixed.php/tenant-settings', data),
+  
+  // Subscription management
+  upgradeSubscription: (data) => authAxios.post('/tenancy-management-fixed.php/upgrade-subscription', data)
+};
 
 export default api;
