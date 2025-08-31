@@ -700,7 +700,7 @@ export const superAdminAPI = {
   // Support Ticket Management
   getSupportTickets: async (params = {}) => {
     try {
-      const response = await authAxios.get(`/support-ticket-management.php/tickets?${new URLSearchParams(params)}`);
+      const response = await authAxios.get(`/support-ticket-management-fixed.php/tickets?${new URLSearchParams(params)}`);
       return response;
     } catch (error) {
       console.error('Error fetching support tickets:', error);
@@ -722,7 +722,7 @@ export const superAdminAPI = {
 
   getSupportTicketStats: async () => {
     try {
-      const response = await authAxios.get('/support-ticket-management.php/stats');
+      const response = await authAxios.get('/support-ticket-management-fixed.php/stats');
       return response;
     } catch (error) {
       console.error('Error fetching support ticket stats:', error);
@@ -732,7 +732,7 @@ export const superAdminAPI = {
 
   createSupportTicket: async (data) => {
     try {
-      const response = await fetch('/support-ticket-management.php/tickets', {
+      const response = await fetch('/support-ticket-management-fixed.php/tickets', {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -749,7 +749,7 @@ export const superAdminAPI = {
 
   updateSupportTicket: async (data) => {
     try {
-      const response = await fetch('/support-ticket-management.php/tickets', {
+      const response = await fetch('/support-ticket-management-fixed.php/tickets', {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -766,7 +766,7 @@ export const superAdminAPI = {
 
   deleteSupportTicket: async (id) => {
     try {
-      const response = await fetch(`/support-ticket-management.php/tickets?id=${id}`, {
+      const response = await fetch(`/support-ticket-management-fixed.php/tickets?id=${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -1075,10 +1075,10 @@ export const couponsAPI = {
     createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
     
     // Authenticated endpoints (require login)
-    getTickets: () => authAxios.get('/support-ticket-management.php/tickets'),
-    createTicket: (ticketData) => authAxios.post('/support-ticket-management.php/tickets', ticketData),
-    updateTicket: (ticketId, updateData) => authAxios.put('/support-ticket-management.php/tickets', { id: ticketId, ...updateData }),
-    deleteTicket: (ticketId) => authAxios.delete(`/support-ticket-management.php/tickets?id=${ticketId}`),
+    getTickets: () => authAxios.get('/support-ticket-management-fixed.php/tickets'),
+    createTicket: (ticketData) => authAxios.post('/support-ticket-management-fixed.php/tickets', ticketData),
+    updateTicket: (ticketId, updateData) => authAxios.put('/support-ticket-management-fixed.php/tickets', { id: ticketId, ...updateData }),
+    deleteTicket: (ticketId) => authAxios.delete(`/support-ticket-management-fixed.php/tickets?id=${ticketId}`),
     getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
     sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message, sender_type: 'user' }),
     createChatSession: () => publicApi.post('/support-portal/chat/session'),
