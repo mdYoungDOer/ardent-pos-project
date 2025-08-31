@@ -1,52 +1,55 @@
-name: ardent-pos-app
+name: ardent-pos
 services:
-- name: web
-  source_dir: /
-  github:
-    repo: mdYoungDOer/ardent-pos-project
-    branch: main
-  run_command: apache2-foreground
-  http_port: 80
-  instance_count: 1
-  instance_size_slug: basic-xxs
-  health_check:
-    http_path: /health.php
-  envs:
-  - key: APP_URL
-    value: https://ardent-pos-app-sdq3t.ondigitalocean.app
-  - key: DB_HOST
-    value: db-postgresql-nyc3-77594-ardent-pos-do-user-24545475-0.g.db.ondigitalocean.com
-  - key: DB_PORT
-    value: "25060"
-  - key: DB_NAME
-    value: defaultdb
-  - key: DB_USER
-    value: doadmin
-  - key: DB_PASS
-    value: ${DB_PASS}
-    type: SECRET
-  - key: JWT_SECRET
-    value: ${JWT_SECRET}
-    type: SECRET
-  - key: CORS_ALLOWED_ORIGINS
-    value: https://ardent-pos-app-sdq3t.ondigitalocean.app
-  - key: PAYSTACK_PUBLIC_KEY
-    value: pk_test_af9bf6a2a8cf6ac7693e03ce00aeb5fdd48c25f3
-  - key: PAYSTACK_SECRET_KEY
-    value: ${PAYSTACK_SECRET_KEY}
-    type: SECRET
-  - key: SENDGRID_API_KEY
-    value: ${SENDGRID_API_KEY}
-    type: SECRET
-  - key: SENDGRID_FROM_EMAIL
-    value: notify@ardentwebservices.com
-  - key: JWT_EXPIRY
-    value: "3600"
-  - key: API_URL
-    value: https://ardent-pos-app-sdq3t.ondigitalocean.app/api
-  - key: APP_DEBUG
-    value: "false"
-  - key: DEFAULT_CURRENCY
-    value: GHS
-  - key: DEFAULT_LOCALE
-    value: en-GH
+  - name: frontend
+    source_dir: /frontend
+    github:
+      repo: mdYoungDOer/ardent-pos-project
+      branch: main
+    build_command: npm install && npm run build
+    run_command: npm run preview
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
+    envs:
+      - key: VITE_API_BASE_URL
+        value: ${backend.URL}
+      - key: NODE_ENV
+        value: production
+
+  - name: backend
+    source_dir: /backend
+    github:
+      repo: mdYoungDOer/ardent-pos-project
+      branch: main
+    build_command: composer install --no-dev --optimize-autoloader
+    run_command: php -S 0.0.0.0:8000 -t public
+    environment_slug: php
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /backend
+    envs:
+      - key: DB_HOST
+        value: ${DB_HOST}
+      - key: DB_PORT
+        value: ${DB_PORT}
+      - key: DB_NAME
+        value: ${DB_NAME}
+      - key: DB_USERNAME
+        value: ${DB_USERNAME}
+      - key: DB_PASSWORD
+        value: ${DB_PASSWORD}
+      - key: JWT_SECRET
+        value: ${JWT_SECRET}
+      - key: APP_URL
+        value: ${APP_URL}
+      - key: CORS_ALLOWED_ORIGINS
+        value: ${CORS_ALLOWED_ORIGINS}
+
+databases:
+  - name: ardent-pos-db
+    engine: PG
+    version: "15"
+    size: db-s-1vcpu-1gb
