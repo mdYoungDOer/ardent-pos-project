@@ -1044,7 +1044,7 @@ export const couponsAPI = {
     // Public endpoints (no authentication required)
     getKnowledgebase: async () => {
       try {
-        const response = await publicApi.get('/support-portal/knowledgebase');
+        const response = await publicApi.get('/support-portal/knowledgebase.php');
         // Ensure we return the correct data structure
         return {
           data: {
@@ -1059,7 +1059,7 @@ export const couponsAPI = {
     
     getCategories: async () => {
       try {
-        const response = await publicApi.get('/support-portal/categories');
+        const response = await publicApi.get('/support-portal/categories.php');
         // Ensure we return the correct data structure
         return {
           data: response.data?.data || response.data || []
@@ -1072,7 +1072,7 @@ export const couponsAPI = {
     
     searchKnowledgebase: (query) => publicApi.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
     getKnowledgebaseArticle: (id) => publicApi.get(`/knowledgebase-article-fixed.php?id=${id}`),
-    createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
+    createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets.php', ticketData),
     
     // Authenticated endpoints (require login)
     getTickets: () => authAxios.get('/support-ticket-management-fixed.php/tickets'),
