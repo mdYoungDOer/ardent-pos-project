@@ -168,12 +168,12 @@ api.interceptors.response.use(
   }
 );
 
-// Dashboard API
+// Dashboard API - Updated to use fixed endpoint
 export const dashboardAPI = {
   getStats: async () => {
     try {
-      console.log('Fetching dashboard stats from /api/dashboard.php');
-      const response = await api.get('/dashboard.php');
+      console.log('Fetching dashboard stats from /client-dashboard-fixed.php/dashboard');
+      const response = await api.get('/client-dashboard-fixed.php/dashboard');
       console.log('Dashboard API response:', response);
       return response;
     } catch (error) {
@@ -199,12 +199,12 @@ export const dashboardAPI = {
   },
 };
 
-// Super Admin API with robust error handling
+// Super Admin API - Updated to use fixed endpoint
 export const superAdminAPI = {
   // Dashboard & Analytics
   getStats: async () => {
     try {
-      const response = await api.get('/super-admin.php');
+      const response = await api.get('/super-admin-dashboard-fixed.php/stats');
       return response;
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -214,7 +214,7 @@ export const superAdminAPI = {
   
   getAnalytics: async (params = {}) => {
     try {
-      const response = await api.get('/super-admin.php/analytics', { params });
+      const response = await api.get('/super-admin-dashboard-fixed.php/analytics', { params });
       return response;
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -224,7 +224,7 @@ export const superAdminAPI = {
   
   getActivity: async () => {
     try {
-      const response = await api.get('/super-admin.php/activity');
+      const response = await api.get('/super-admin-dashboard-fixed.php/activity');
       return response;
     } catch (error) {
       console.error('Error fetching activity:', error);
@@ -235,7 +235,7 @@ export const superAdminAPI = {
   // Tenant Management
   getTenants: async (params = {}) => {
     try {
-      const response = await api.get('/super-admin.php/tenants', { params });
+      const response = await api.get('/super-admin-dashboard-fixed.php/tenants', { params });
       return response;
     } catch (error) {
       console.error('Error fetching tenants:', error);
@@ -243,9 +243,9 @@ export const superAdminAPI = {
     }
   },
   
-  createTenant: (data) => api.post('/super-admin.php/tenant', data),
-  updateTenant: (id, data) => api.put(`/super-admin.php/tenant/${id}`, data),
-  deleteTenant: (id) => api.delete(`/super-admin.php/tenant/${id}`),
+  createTenant: (data) => api.post('/super-admin-dashboard-fixed.php/tenants', data),
+  updateTenant: (id, data) => api.put('/super-admin-dashboard-fixed.php/tenants', { id, ...data }),
+  deleteTenant: (id) => api.delete(`/super-admin-dashboard-fixed.php/tenants?id=${id}`),
   
   // User Management
   getUsers: async (params = {}) => {
@@ -806,47 +806,47 @@ export const usersAPI = {
   changePassword: (id, password) => api.post(`/users.php?id=${id}/change-password`, { password }),
 };
 
-// Products API
+// Products API - Updated to use fixed endpoint
 export const productsAPI = {
-  getAll: () => api.get('/products.php'),
-  create: (product) => api.post('/products.php', product),
-  update: (product) => api.put('/products.php', product),
-  delete: (id) => api.delete(`/products.php?id=${id}`),
-  getById: (id) => api.get(`/products.php?id=${id}`),
-  search: (query) => api.get(`/products.php?search=${encodeURIComponent(query)}`),
+  getAll: (params = {}) => api.get('/client-dashboard-fixed.php/products', { params }),
+  create: (product) => api.post('/client-dashboard-fixed.php/products', product),
+  update: (product) => api.put('/client-dashboard-fixed.php/products', product),
+  delete: (id) => api.delete(`/client-dashboard-fixed.php/products?id=${id}`),
+  getById: (id) => api.get(`/client-dashboard-fixed.php/products?id=${id}`),
+  search: (query) => api.get(`/client-dashboard-fixed.php/products?search=${encodeURIComponent(query)}`),
 };
 
-// Sales API
+// Sales API - Updated to use fixed endpoint
 export const salesAPI = {
-  getAll: () => api.get('/sales.php'),
-  create: (sale) => api.post('/sales.php', sale),
-  update: (sale) => api.put('/sales.php', sale),
-  delete: (id) => api.delete(`/sales.php?id=${id}`),
-  getById: (id) => api.get(`/sales.php?id=${id}`),
+  getAll: (params = {}) => api.get('/client-dashboard-fixed.php/sales', { params }),
+  create: (sale) => api.post('/client-dashboard-fixed.php/sales', sale),
+  update: (sale) => api.put('/client-dashboard-fixed.php/sales', sale),
+  delete: (id) => api.delete(`/client-dashboard-fixed.php/sales?id=${id}`),
+  getById: (id) => api.get(`/client-dashboard-fixed.php/sales?id=${id}`),
   getReports: () => api.get('/sales/reports.php'),
-  getByDateRange: (startDate, endDate) => api.get(`/sales.php?start_date=${startDate}&end_date=${endDate}`),
+  getByDateRange: (startDate, endDate) => api.get(`/client-dashboard-fixed.php/sales?start_date=${startDate}&end_date=${endDate}`),
 };
 
-// Customers API
+// Customers API - Updated to use fixed endpoint
 export const customersAPI = {
-  getAll: () => api.get('/customers.php'),
-  create: (customer) => api.post('/customers.php', customer),
-  update: (customer) => api.put('/customers.php', customer),
-  delete: (id) => api.delete(`/customers.php?id=${id}`),
-  getById: (id) => api.get(`/customers.php?id=${id}`),
-  search: (query) => api.get(`/customers.php?search=${encodeURIComponent(query)}`),
+  getAll: (params = {}) => api.get('/client-dashboard-fixed.php/customers', { params }),
+  create: (customer) => api.post('/client-dashboard-fixed.php/customers', customer),
+  update: (customer) => api.put('/client-dashboard-fixed.php/customers', customer),
+  delete: (id) => api.delete(`/client-dashboard-fixed.php/customers?id=${id}`),
+  getById: (id) => api.get(`/client-dashboard-fixed.php/customers?id=${id}`),
+  search: (query) => api.get(`/client-dashboard-fixed.php/customers?search=${encodeURIComponent(query)}`),
 };
 
-// Categories API
+// Categories API - Updated to use fixed endpoint
 export const categoriesAPI = {
-  getAll: (params = {}) => api.get('/categories.php', { params }),
-  create: (category) => api.post('/categories.php', category),
-  update: (category) => api.put('/categories.php', category),
-  delete: (id) => api.delete(`/categories.php?id=${id}`),
-  getById: (id) => api.get(`/categories.php?id=${id}`),
-  getSubcategories: (parentId) => api.get(`/categories.php?parent_id=${parentId}`),
-  getHierarchical: () => api.get('/categories.php?include_subcategories=true'),
-  getProductsByCategory: (categoryId) => api.get(`/categories.php?category_id=${categoryId}&include_products=true`),
+  getAll: (params = {}) => api.get('/client-dashboard-fixed.php/categories', { params }),
+  create: (category) => api.post('/client-dashboard-fixed.php/categories', category),
+  update: (category) => api.put('/client-dashboard-fixed.php/categories', category),
+  delete: (id) => api.delete(`/client-dashboard-fixed.php/categories?id=${id}`),
+  getById: (id) => api.get(`/client-dashboard-fixed.php/categories?id=${id}`),
+  getSubcategories: (parentId) => api.get(`/client-dashboard-fixed.php/categories?parent_id=${parentId}`),
+  getHierarchical: () => api.get('/client-dashboard-fixed.php/categories?include_subcategories=true'),
+  getProductsByCategory: (categoryId) => api.get(`/client-dashboard-fixed.php/categories?category_id=${categoryId}&include_products=true`),
 };
 
 // Sub-Categories API
@@ -870,13 +870,13 @@ export const locationsAPI = {
   getSalesByLocation: (locationId) => api.get(`/locations.php?location_id=${locationId}&include_sales=true`),
 };
 
-// Inventory API
+// Inventory API - Updated to use fixed endpoint
 export const inventoryAPI = {
-  getAll: () => api.get('/inventory.php'),
-  updateStock: (productId, quantity) => api.put('/inventory.php', { product_id: productId, quantity }),
-  getLowStock: () => api.get('/inventory.php?low_stock=true'),
-  getStockHistory: (productId) => api.get(`/inventory.php?product_id=${productId}&history=true`),
-  addStock: (productId, quantity, reason) => api.post('/inventory.php', { product_id: productId, quantity, reason }),
+  getAll: (params = {}) => api.get('/client-dashboard-fixed.php/inventory', { params }),
+  updateStock: (productId, quantity) => api.put('/client-dashboard-fixed.php/inventory', { product_id: productId, quantity }),
+  getLowStock: () => api.get('/client-dashboard-fixed.php/inventory?low_stock=true'),
+  getStockHistory: (productId) => api.get(`/client-dashboard-fixed.php/inventory?product_id=${productId}&history=true`),
+  addStock: (productId, quantity, reason) => api.post('/client-dashboard-fixed.php/inventory', { product_id: productId, quantity, reason }),
 };
 
 // Reports API
