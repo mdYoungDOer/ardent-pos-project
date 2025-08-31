@@ -4,7 +4,7 @@ import {
   FiUser, FiShoppingCart, FiX, FiPrinter, FiHash, FiClock,
   FiPackage, FiTag, FiAlertCircle, FiCheck, FiArrowLeft, FiArrowRight,
   FiPercent, FiGift, FiTag as FiCoupon, FiVolume2, FiVolumeX, FiRotateCw,
-  FiGrid, FiList, FiFilter, FiCamera, FiEye
+  FiGrid, FiList, FiFilter, FiCamera, FiEye, FiMaximize, FiMinimize
 } from 'react-icons/fi';
 import { productsAPI, customersAPI, salesAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -34,6 +34,7 @@ const POSPage = () => {
   const [coupons, setCoupons] = useState([]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponCode, setCouponCode] = useState('');
+  const [fullScreenMode, setFullScreenMode] = useState(false);
   
   const searchInputRef = useRef(null);
   const audioRef = useRef(null);
@@ -45,6 +46,22 @@ const POSPage = () => {
     }
   }, [soundEnabled]);
 
+  // Toggle full screen mode
+  const toggleFullScreen = () => {
+    setFullScreenMode(!fullScreenMode);
+    if (!fullScreenMode) {
+      // Enter full screen
+      document.documentElement.requestFullscreen?.() || 
+      document.documentElement.webkitRequestFullscreen?.() ||
+      document.documentElement.msRequestFullscreen?.();
+    } else {
+      // Exit full screen
+      document.exitFullscreen?.() || 
+      document.webkitExitFullscreen?.() ||
+      document.msExitFullscreen?.();
+    }
+  };
+
   // Fetch data on component mount
   useEffect(() => {
     fetchProducts();
@@ -53,6 +70,24 @@ const POSPage = () => {
     fetchDiscounts();
     fetchCoupons();
   }, []);
+
+  // Keyboard shortcuts for full-screen mode
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // F11 or Ctrl+F for full-screen toggle
+      if (event.key === 'F11' || (event.ctrlKey && event.key === 'f')) {
+        event.preventDefault();
+        toggleFullScreen();
+      }
+      // Escape to exit full-screen
+      if (event.key === 'Escape' && fullScreenMode) {
+        toggleFullScreen();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [fullScreenMode]);
 
   // Filter products based on search and category
   useEffect(() => {
@@ -395,12 +430,25 @@ const POSPage = () => {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex overflow-hidden">
+    <div className={`${fullScreenMode ? 'fixed inset-0 z-50' : 'h-screen'} bg-gradient-to-br from-gray-50 to-gray-100 flex overflow-hidden`}>
       {/* Audio element for sound effects - only if sound is enabled */}
       {soundEnabled && (
         <audio ref={audioRef} preload="auto">
           <source src="/sounds/add-to-cart.mp3" type="audio/mpeg" />
         </audio>
+      )}
+
+      {/* Floating Exit Full Screen Button */}
+      {fullScreenMode && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={toggleFullScreen}
+            className="bg-red-500 text-white p-3 rounded-full shadow-lg hover:bg-red-600 transition-colors"
+            title="Exit Full Screen"
+          >
+            <FiMinimize className="h-5 w-5" />
+          </button>
+        </div>
       )}
 
       {/* Left Panel - Products */}
@@ -414,8 +462,16 @@ const POSPage = () => {
                   <FiShoppingCart className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-[#2c2c2c]">POS Terminal</h1>
-                  <p className="text-[#746354] flex items-center">
+                  <h1 className={`font-bold text-[#2c2c2c] ${fullScreenMode ? 'text-3xl' : 'text-2xl'}`}>
+                    POS Terminal
+                    {fullScreenMode && (
+                      <span className="ml-2 inline-flex items-center px-2 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full">
+                        <FiMaximize className="h-3 w-3 mr-1" />
+                        Full Screen
+                      </span>
+                    )}
+                  </h1>
+                  <p className={`text-[#746354] flex items-center ${fullScreenMode ? 'text-base' : ''}`}>
                     <FiUser className="h-4 w-4 mr-1" />
                     Cashier: {user?.first_name} {user?.last_name}
                   </p>
@@ -424,6 +480,19 @@ const POSPage = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Full Screen Toggle */}
+              <button
+                onClick={toggleFullScreen}
+                className={`p-2 rounded-lg transition-colors ${
+                  fullScreenMode 
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                    : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                }`}
+                title={fullScreenMode ? 'Exit Full Screen' : 'Enter Full Screen'}
+              >
+                {fullScreenMode ? <FiMinimize className="h-5 w-5" /> : <FiMaximize className="h-5 w-5" />}
+              </button>
+              
               {/* Sound Toggle */}
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
@@ -446,13 +515,15 @@ const POSPage = () => {
                 </p>
               </div>
               
-              <button
-                onClick={() => window.history.back()}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                <FiArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </button>
+              {!fullScreenMode && (
+                <button
+                  onClick={() => window.history.back()}
+                  className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <FiArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -541,24 +612,38 @@ const POSPage = () => {
         {/* Enhanced Products Display */}
         <div className="flex-1 overflow-y-auto p-4">
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className={`grid gap-4 ${
+              fullScreenMode 
+                ? 'grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7' 
+                : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+            }`}>
               {filteredProducts.map(product => (
                 <div
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-[#e41e5b] hover:scale-105 group"
+                  className={`bg-white rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-[#e41e5b] hover:scale-105 group ${
+                    fullScreenMode ? 'p-6' : 'p-4'
+                  }`}
                 >
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-[#e41e5b]/10 to-[#9a0864]/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                      <FiPackage className="h-8 w-8 text-[#e41e5b]" />
+                    <div className={`bg-gradient-to-br from-[#e41e5b]/10 to-[#9a0864]/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform ${
+                      fullScreenMode ? 'w-20 h-20' : 'w-16 h-16'
+                    }`}>
+                      <FiPackage className={`text-[#e41e5b] ${fullScreenMode ? 'h-10 w-10' : 'h-8 w-8'}`} />
                     </div>
-                    <h3 className="font-semibold text-[#2c2c2c] text-sm mb-1 truncate">
+                    <h3 className={`font-semibold text-[#2c2c2c] mb-1 truncate ${
+                      fullScreenMode ? 'text-base' : 'text-sm'
+                    }`}>
                       {product.name}
                     </h3>
-                    <p className="text-[#746354] text-xs mb-2">
+                    <p className={`text-[#746354] mb-2 ${
+                      fullScreenMode ? 'text-sm' : 'text-xs'
+                    }`}>
                       {product.sku || 'No SKU'}
                     </p>
-                    <p className="text-[#e41e5b] font-bold text-lg">
+                    <p className={`text-[#e41e5b] font-bold ${
+                      fullScreenMode ? 'text-xl' : 'text-lg'
+                    }`}>
                       {formatCurrency(product.price)}
                     </p>
                     <div className="mt-2">
@@ -618,12 +703,18 @@ const POSPage = () => {
       </div>
 
       {/* Enhanced Right Panel - Cart */}
-      <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
+      <div className={`bg-white border-l border-gray-200 flex flex-col ${
+        fullScreenMode ? 'w-[450px]' : 'w-96'
+      }`}>
         {/* Enhanced Cart Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#e41e5b] to-[#9a0864] text-white">
+        <div className={`border-b border-gray-200 bg-gradient-to-r from-[#e41e5b] to-[#9a0864] text-white ${
+          fullScreenMode ? 'p-8' : 'p-6'
+        }`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold flex items-center">
-              <FiShoppingCart className="h-6 w-6 mr-2" />
+            <h2 className={`font-bold flex items-center ${
+              fullScreenMode ? 'text-2xl' : 'text-xl'
+            }`}>
+              <FiShoppingCart className={`mr-2 ${fullScreenMode ? 'h-8 w-8' : 'h-6 w-6'}`} />
               Cart ({cart.length})
             </h2>
             <button
@@ -631,21 +722,25 @@ const POSPage = () => {
               className="text-white/80 hover:text-white transition-colors"
               title="Clear Cart"
             >
-              <FiTrash className="h-5 w-5" />
+              <FiTrash className={`${fullScreenMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
             </button>
           </div>
         </div>
 
         {/* Enhanced Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className={`flex-1 overflow-y-auto ${
+          fullScreenMode ? 'p-6' : 'p-4'
+        }`}>
           {cart.length === 0 ? (
             <div className="text-center py-12">
-              <FiShoppingCart className="h-12 w-12 text-[#746354] mx-auto mb-4" />
-              <p className="text-[#746354]">Cart is empty</p>
-              <p className="text-sm text-[#746354] mt-2">Add products to get started</p>
+              <FiShoppingCart className={`text-[#746354] mx-auto mb-4 ${
+                fullScreenMode ? 'h-16 w-16' : 'h-12 w-12'
+              }`} />
+              <p className={`text-[#746354] ${fullScreenMode ? 'text-lg' : ''}`}>Cart is empty</p>
+              <p className={`text-[#746354] mt-2 ${fullScreenMode ? 'text-base' : 'text-sm'}`}>Add products to get started</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className={`space-y-${fullScreenMode ? '4' : '3'}`}>
               {cart.map(item => (
                 <div key={item.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
                   <div className="flex items-center justify-between mb-3">
@@ -664,18 +759,24 @@ const POSPage = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => updateCartItem(item.id, 'quantity', Math.max(1, item.quantity - 1))}
-                        className="w-8 h-8 bg-[#e41e5b] text-white rounded-lg flex items-center justify-center hover:bg-[#9a0864] transition-colors"
+                        className={`bg-[#e41e5b] text-white rounded-lg flex items-center justify-center hover:bg-[#9a0864] transition-colors ${
+                          fullScreenMode ? 'w-10 h-10' : 'w-8 h-8'
+                        }`}
                       >
-                        <FiMinus className="h-3 w-3" />
+                        <FiMinus className={`${fullScreenMode ? 'h-4 w-4' : 'h-3 w-3'}`} />
                       </button>
-                      <span className="font-semibold text-[#2c2c2c] min-w-[2rem] text-center">
+                      <span className={`font-semibold text-[#2c2c2c] text-center ${
+                        fullScreenMode ? 'min-w-[3rem] text-lg' : 'min-w-[2rem]'
+                      }`}>
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateCartItem(item.id, 'quantity', item.quantity + 1)}
-                        className="w-8 h-8 bg-[#e41e5b] text-white rounded-lg flex items-center justify-center hover:bg-[#9a0864] transition-colors"
+                        className={`bg-[#e41e5b] text-white rounded-lg flex items-center justify-center hover:bg-[#9a0864] transition-colors ${
+                          fullScreenMode ? 'w-10 h-10' : 'w-8 h-8'
+                        }`}
                       >
-                        <FiPlus className="h-3 w-3" />
+                        <FiPlus className={`${fullScreenMode ? 'h-4 w-4' : 'h-3 w-3'}`} />
                       </button>
                     </div>
                     
@@ -828,7 +929,9 @@ const POSPage = () => {
           <button
             onClick={() => setShowPaymentModal(true)}
             disabled={cart.length === 0 || loading}
-            className="w-full bg-gradient-to-r from-[#e41e5b] to-[#9a0864] text-white py-4 rounded-lg font-semibold hover:from-[#9a0864] hover:to-[#e41e5b] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105"
+            className={`w-full bg-gradient-to-r from-[#e41e5b] to-[#9a0864] text-white font-semibold hover:from-[#9a0864] hover:to-[#e41e5b] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 rounded-lg ${
+              fullScreenMode ? 'py-6 text-xl' : 'py-4'
+            }`}
           >
             {loading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
