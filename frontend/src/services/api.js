@@ -1039,50 +1039,74 @@ export const couponsAPI = {
   generateCode: () => api.get('/coupons.php/generate-code'),
 };
 
-// Support Portal API methods
-export const supportAPI = {
-  // Public endpoints (no authentication required)
-  getKnowledgebase: async () => {
-    try {
-      const response = await publicApi.get('/support-portal/knowledgebase');
-      // Ensure we return the correct data structure
-      return {
-        data: {
-          articles: response.data?.data?.articles || response.data?.articles || []
-        }
-      };
-    } catch (error) {
-      console.error('Error fetching knowledgebase:', error);
-      return { data: { articles: [] } };
-    }
-  },
-  
-  getCategories: async () => {
-    try {
-      const response = await publicApi.get('/support-portal/categories');
-      // Ensure we return the correct data structure
-      return {
-        data: response.data?.data || response.data || []
-      };
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      return { data: [] };
-    }
-  },
-  
-  searchKnowledgebase: (query) => publicApi.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
-  getKnowledgebaseArticle: (id) => publicApi.get(`/knowledgebase-article.php?id=${id}`),
-  createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
-  
-  // Authenticated endpoints (require login)
-  getTickets: () => authAxios.get('/support-ticket-management.php/tickets'),
-  createTicket: (ticketData) => authAxios.post('/support-ticket-management.php/tickets', ticketData),
-  updateTicket: (ticketId, updateData) => authAxios.put('/support-ticket-management.php/tickets', { id: ticketId, ...updateData }),
-  deleteTicket: (ticketId) => authAxios.delete(`/support-ticket-management.php/tickets?id=${ticketId}`),
-  getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
-  sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message, sender_type: 'user' }),
-  createChatSession: () => publicApi.post('/support-portal/chat/session'),
-  markArticleHelpful: (articleId, helpful) => api.post(`/support-portal/knowledgebase/${articleId}/helpful`, { helpful })
-};
+  // Support Portal API methods
+  export const supportAPI = {
+    // Public endpoints (no authentication required)
+    getKnowledgebase: async () => {
+      try {
+        const response = await publicApi.get('/support-portal/knowledgebase');
+        // Ensure we return the correct data structure
+        return {
+          data: {
+            articles: response.data?.data?.articles || response.data?.articles || []
+          }
+        };
+      } catch (error) {
+        console.error('Error fetching knowledgebase:', error);
+        return { data: { articles: [] } };
+      }
+    },
+    
+    getCategories: async () => {
+      try {
+        const response = await publicApi.get('/support-portal/categories');
+        // Ensure we return the correct data structure
+        return {
+          data: response.data?.data || response.data || []
+        };
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        return { data: [] };
+      }
+    },
+    
+    searchKnowledgebase: (query) => publicApi.get(`/support-portal/search?q=${encodeURIComponent(query)}`),
+    getKnowledgebaseArticle: (id) => publicApi.get(`/knowledgebase-article.php?id=${id}`),
+    createPublicTicket: (ticketData) => publicApi.post('/support-portal/public-tickets', ticketData),
+    
+    // Authenticated endpoints (require login)
+    getTickets: () => authAxios.get('/support-ticket-management.php/tickets'),
+    createTicket: (ticketData) => authAxios.post('/support-ticket-management.php/tickets', ticketData),
+    updateTicket: (ticketId, updateData) => authAxios.put('/support-ticket-management.php/tickets', { id: ticketId, ...updateData }),
+    deleteTicket: (ticketId) => authAxios.delete(`/support-ticket-management.php/tickets?id=${ticketId}`),
+    getChatHistory: (sessionId) => api.get(`/support-portal/chat?session_id=${sessionId}`),
+    sendChatMessage: (sessionId, message) => api.post('/support-portal/chat', { session_id: sessionId, message, sender_type: 'user' }),
+    createChatSession: () => publicApi.post('/support-portal/chat/session'),
+    markArticleHelpful: (articleId, helpful) => api.post(`/support-portal/knowledgebase/${articleId}/helpful`, { helpful })
+  };
+
+  // Billing & Subscription API
+  export const billingAPI = {
+    // Subscription Plans
+    getSubscriptionPlans: () => authAxios.get('/billing-management.php/subscription-plans'),
+    
+    // Subscriptions
+    getSubscriptions: (params = {}) => authAxios.get(`/billing-management.php/subscriptions?${new URLSearchParams(params)}`),
+    upgradeSubscription: (data) => authAxios.post('/billing-management.php/upgrade-subscription', data),
+    cancelSubscription: (data) => authAxios.post('/billing-management.php/cancel-subscription', data),
+    
+    // Invoices
+    getInvoices: (params = {}) => authAxios.get(`/billing-management.php/invoices?${new URLSearchParams(params)}`),
+    generateInvoice: (data) => authAxios.post('/billing-management.php/generate-invoice', data),
+    
+    // Billing Overview
+    getBillingOverview: () => authAxios.get('/billing-management.php/billing-overview'),
+    
+    // Paystack Integration
+    initializePayment: (data) => authAxios.post('/paystack-integration.php/initialize-payment', data),
+    verifyPayment: (data) => authAxios.post('/paystack-integration.php/verify-payment', data),
+    createSubscription: (data) => authAxios.post('/paystack-integration.php/create-subscription', data),
+    getPaymentStatus: (reference) => authAxios.get(`/paystack-integration.php/payment-status?reference=${reference}`)
+  };
 
 export default api;
