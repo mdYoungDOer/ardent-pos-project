@@ -21,49 +21,30 @@ if (file_exists($envFile)) {
     }
 }
 
-// Database configuration
-$dbConfig = [
-    'host' => $_ENV['DB_HOST'] ?? 'localhost',
-    'port' => $_ENV['DB_PORT'] ?? '5432',
-    'database' => $_ENV['DB_NAME'] ?? 'defaultdb',
-    'username' => $_ENV['DB_USERNAME'] ?? $_ENV['DB_USER'] ?? 'postgres',
-    'password' => $_ENV['DB_PASSWORD'] ?? $_ENV['DB_PASS'] ?? 'password',
-];
-
 // Include unified authentication
 require_once __DIR__ . '/auth/unified-auth.php';
 
 try {
-    // Create database connection
+    // Database connection
     $dsn = sprintf(
         'pgsql:host=%s;port=%s;dbname=%s;sslmode=require',
-        $dbConfig['host'],
-        $dbConfig['port'],
-        $dbConfig['database']
+        $_ENV['DB_HOST'] ?? 'localhost',
+        $_ENV['DB_PORT'] ?? '5432',
+        $_ENV['DB_NAME'] ?? 'defaultdb'
     );
     
     $pdo = new PDO(
         $dsn,
-        $dbConfig['username'],
-        $dbConfig['password'],
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]
+        $_ENV['DB_USERNAME'] ?? $_ENV['DB_USER'] ?? 'postgres',
+        $_ENV['DB_PASSWORD'] ?? $_ENV['DB_PASS'] ?? 'password',
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     
     // Initialize unified authentication
     $jwtSecret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
     $auth = new UnifiedAuth($pdo, $jwtSecret);
     
-    // Get request data
-    $method = $_SERVER['REQUEST_METHOD'];
-    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    $pathParts = explode('/', trim($path, '/'));
-    $endpoint = end($pathParts);
-    
-    // Check authentication for all operations
+    // Check authentication
     $headers = getallheaders();
     $authHeader = $headers['Authorization'] ?? '';
     
@@ -85,20 +66,95 @@ try {
     $currentUser = $authResult['user'];
     $currentTenant = $authResult['tenant'];
     
-    // Handle different endpoints
+    // Only regular users (not super admins) can access client dashboard
+    if ($currentUser['role'] === 'super_admin') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Super admins cannot access client dashboard']);
+        exit;
+    }
+    
+    // Regular users must have a tenant
+    if (!$currentTenant) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Tenant required for client dashboard access']);
+        exit;
+    }
+    
+    // Handle requests
+    $method = $_SERVER['REQUEST_METHOD'];
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $pathParts = explode('/', trim($path, '/'));
+    $endpoint = end($pathParts);
+    
     switch ($method) {
         case 'GET':
-            handleGetRequest($pdo, $endpoint, $_GET, $currentUser, $currentTenant);
+            if ($endpoint === 'dashboard') {
+                getDashboardStats($pdo, $currentTenant);
+            } elseif ($endpoint === 'products') {
+                getProducts($pdo, $currentTenant);
+            } elseif ($endpoint === 'categories') {
+                getCategories($pdo, $currentTenant);
+            } elseif ($endpoint === 'sales') {
+                getSales($pdo, $currentTenant);
+            } elseif ($endpoint === 'customers') {
+                getCustomers($pdo, $currentTenant);
+            } elseif ($endpoint === 'inventory') {
+                getInventory($pdo, $currentTenant);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
+            }
             break;
+            
         case 'POST':
-            handlePostRequest($pdo, $endpoint, file_get_contents('php://input'), $currentUser, $currentTenant);
+            if ($endpoint === 'products') {
+                createProduct($pdo, $currentTenant);
+            } elseif ($endpoint === 'categories') {
+                createCategory($pdo, $currentTenant);
+            } elseif ($endpoint === 'sales') {
+                createSale($pdo, $currentTenant);
+            } elseif ($endpoint === 'customers') {
+                createCustomer($pdo, $currentTenant);
+            } elseif ($endpoint === 'inventory') {
+                updateInventory($pdo, $currentTenant);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
+            }
             break;
+            
         case 'PUT':
-            handlePutRequest($pdo, $endpoint, file_get_contents('php://input'), $currentUser, $currentTenant);
+            if ($endpoint === 'products') {
+                updateProduct($pdo, $currentTenant);
+            } elseif ($endpoint === 'categories') {
+                updateCategory($pdo, $currentTenant);
+            } elseif ($endpoint === 'sales') {
+                updateSale($pdo, $currentTenant);
+            } elseif ($endpoint === 'customers') {
+                updateCustomer($pdo, $currentTenant);
+            } elseif ($endpoint === 'inventory') {
+                updateInventory($pdo, $currentTenant);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
+            }
             break;
+            
         case 'DELETE':
-            handleDeleteRequest($pdo, $endpoint, $_GET, $currentUser, $currentTenant);
+            if ($endpoint === 'products') {
+                deleteProduct($pdo, $currentTenant);
+            } elseif ($endpoint === 'categories') {
+                deleteCategory($pdo, $currentTenant);
+            } elseif ($endpoint === 'sales') {
+                deleteSale($pdo, $currentTenant);
+            } elseif ($endpoint === 'customers') {
+                deleteCustomer($pdo, $currentTenant);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
+            }
             break;
+            
         default:
             http_response_code(405);
             echo json_encode(['success' => false, 'error' => 'Method not allowed']);
@@ -107,184 +163,57 @@ try {
 } catch (Exception $e) {
     error_log("Client Dashboard Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Internal server error',
-        'debug' => $e->getMessage()
-    ]);
+    echo json_encode(['success' => false, 'error' => 'Internal server error']);
 }
 
-function handleGetRequest($pdo, $endpoint, $params, $currentUser, $currentTenant) {
-    switch ($endpoint) {
-        case 'dashboard':
-            getDashboardStats($pdo, $currentUser, $currentTenant);
-            break;
-        case 'products':
-            getProducts($pdo, $params, $currentUser, $currentTenant);
-            break;
-        case 'categories':
-            getCategories($pdo, $params, $currentUser, $currentTenant);
-            break;
-        case 'sales':
-            getSales($pdo, $params, $currentUser, $currentTenant);
-            break;
-        case 'customers':
-            getCustomers($pdo, $params, $currentUser, $currentTenant);
-            break;
-        case 'inventory':
-            getInventory($pdo, $params, $currentUser, $currentTenant);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
-    }
-}
-
-function handlePostRequest($pdo, $endpoint, $rawData, $currentUser, $currentTenant) {
-    $data = json_decode($rawData, true);
-    
-    switch ($endpoint) {
-        case 'products':
-            createProduct($pdo, $data, $currentUser, $currentTenant);
-            break;
-        case 'categories':
-            createCategory($pdo, $data, $currentUser, $currentTenant);
-            break;
-        case 'sales':
-            createSale($pdo, $data, $currentUser, $currentTenant);
-            break;
-        case 'customers':
-            createCustomer($pdo, $data, $currentUser, $currentTenant);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
-    }
-}
-
-function handlePutRequest($pdo, $endpoint, $rawData, $currentUser, $currentTenant) {
-    $data = json_decode($rawData, true);
-    
-    switch ($endpoint) {
-        case 'products':
-            updateProduct($pdo, $data, $currentUser, $currentTenant);
-            break;
-        case 'categories':
-            updateCategory($pdo, $data, $currentUser, $currentTenant);
-            break;
-        case 'customers':
-            updateCustomer($pdo, $data, $currentUser, $currentTenant);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
-    }
-}
-
-function handleDeleteRequest($pdo, $endpoint, $params, $currentUser, $currentTenant) {
-    switch ($endpoint) {
-        case 'products':
-            deleteProduct($pdo, $params, $currentUser, $currentTenant);
-            break;
-        case 'categories':
-            deleteCategory($pdo, $params, $currentUser, $currentTenant);
-            break;
-        case 'customers':
-            deleteCustomer($pdo, $params, $currentUser, $currentTenant);
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Endpoint not found']);
-    }
-}
-
-// Dashboard Functions
-function getDashboardStats($pdo, $currentUser, $currentTenant) {
+function getDashboardStats($pdo, $currentTenant) {
     try {
-        $tenantId = $currentTenant['id'];
+        // Get total products
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total_products FROM products WHERE tenant_id = ?");
+        $stmt->execute([$currentTenant['id']]);
+        $totalProducts = $stmt->fetch()['total_products'];
         
-        // Today's sales
-        $todaySales = $pdo->prepare("
-            SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total 
-            FROM sales WHERE tenant_id = ? AND DATE(created_at) = CURRENT_DATE
-        ");
-        $todaySales->execute([$tenantId]);
-        $todayData = $todaySales->fetch();
+        // Get total sales
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total_sales FROM sales WHERE tenant_id = ?");
+        $stmt->execute([$currentTenant['id']]);
+        $totalSales = $stmt->fetch()['total_sales'];
         
-        // This month's sales
-        $monthSales = $pdo->prepare("
-            SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total 
-            FROM sales WHERE tenant_id = ? AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
-        ");
-        $monthSales->execute([$tenantId]);
-        $monthData = $monthSales->fetch();
+        // Get total customers
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total_customers FROM customers WHERE tenant_id = ?");
+        $stmt->execute([$currentTenant['id']]);
+        $totalCustomers = $stmt->fetch()['total_customers'];
         
-        // Total products
-        $totalProducts = $pdo->prepare("
-            SELECT COUNT(*) as count FROM products WHERE tenant_id = ? AND status = 'active'
-        ");
-        $totalProducts->execute([$tenantId]);
-        $productsData = $totalProducts->fetch();
+        // Get total revenue
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) as total_revenue FROM sales WHERE tenant_id = ?");
+        $stmt->execute([$currentTenant['id']]);
+        $totalRevenue = $stmt->fetch()['total_revenue'];
         
-        // Total customers
-        $totalCustomers = $pdo->prepare("
-            SELECT COUNT(*) as count FROM customers WHERE tenant_id = ?
-        ");
-        $totalCustomers->execute([$tenantId]);
-        $customersData = $totalCustomers->fetch();
+        // Get low stock products
+        $stmt = $pdo->prepare("SELECT COUNT(*) as low_stock_count FROM products WHERE tenant_id = ? AND stock_quantity <= 10");
+        $stmt->execute([$currentTenant['id']]);
+        $lowStockCount = $stmt->fetch()['low_stock_count'];
         
-        // Low stock count
-        $lowStockCount = $pdo->prepare("
-            SELECT COUNT(*) as count FROM inventory i 
-            JOIN products p ON i.product_id = p.id 
-            WHERE i.tenant_id = ? AND i.quantity <= i.min_stock AND p.track_inventory = true
+        // Get recent sales
+        $stmt = $pdo->prepare("
+            SELECT s.*, c.first_name, c.last_name 
+            FROM sales s 
+            LEFT JOIN customers c ON s.customer_id = c.id 
+            WHERE s.tenant_id = ? 
+            ORDER BY s.created_at DESC 
+            LIMIT 5
         ");
-        $lowStockCount->execute([$tenantId]);
-        $lowStockData = $lowStockCount->fetch();
-        
-        // Recent sales
-        $recentSales = $pdo->prepare("
-            SELECT s.id, s.total_amount, s.created_at,
-                   CONCAT(c.first_name, ' ', c.last_name) as customer_name
-            FROM sales s
-            LEFT JOIN customers c ON s.customer_id = c.id
-            WHERE s.tenant_id = ?
-            ORDER BY s.created_at DESC
-            LIMIT 10
-        ");
-        $recentSales->execute([$tenantId]);
-        $recentSalesData = $recentSales->fetchAll();
-        
-        // Low stock products
-        $lowStockProducts = $pdo->prepare("
-            SELECT p.id, p.name, p.sku, i.quantity, i.min_stock
-            FROM products p
-            JOIN inventory i ON p.id = i.product_id
-            WHERE p.tenant_id = ? AND i.quantity <= i.min_stock AND p.track_inventory = true
-            ORDER BY i.quantity ASC
-            LIMIT 10
-        ");
-        $lowStockProducts->execute([$tenantId]);
-        $lowStockProductsData = $lowStockProducts->fetchAll();
+        $stmt->execute([$currentTenant['id']]);
+        $recentSales = $stmt->fetchAll();
         
         echo json_encode([
             'success' => true,
             'data' => [
-                'stats' => [
-                    'today_sales' => [
-                        'count' => (int)$todayData['count'],
-                        'total' => (float)$todayData['total']
-                    ],
-                    'month_sales' => [
-                        'count' => (int)$monthData['count'],
-                        'total' => (float)$monthData['total']
-                    ],
-                    'total_products' => (int)$productsData['count'],
-                    'total_customers' => (int)$customersData['count'],
-                    'low_stock_count' => (int)$lowStockData['count']
-                ],
-                'recent_sales' => $recentSalesData,
-                'low_stock_products' => $lowStockProductsData
+                'total_products' => (int)$totalProducts,
+                'total_sales' => (int)$totalSales,
+                'total_customers' => (int)$totalCustomers,
+                'total_revenue' => (float)$totalRevenue,
+                'low_stock_count' => (int)$lowStockCount,
+                'recent_sales' => $recentSales
             ]
         ]);
     } catch (Exception $e) {
@@ -294,70 +223,59 @@ function getDashboardStats($pdo, $currentUser, $currentTenant) {
     }
 }
 
-// Products Functions
-function getProducts($pdo, $params, $currentUser, $currentTenant) {
+function getProducts($pdo, $currentTenant) {
     try {
-        $tenantId = $currentUser['tenant_id'];
-        $page = isset($params['page']) ? (int)$params['page'] : 1;
-        $limit = isset($params['limit']) ? (int)$params['limit'] : 50;
+        $page = $_GET['page'] ?? 1;
+        $limit = $_GET['limit'] ?? 10;
+        $search = $_GET['search'] ?? '';
+        $category_id = $_GET['category_id'] ?? '';
         $offset = ($page - 1) * $limit;
-        $search = $params['search'] ?? '';
-        $category = $params['category'] ?? '';
-        $status = $params['status'] ?? '';
         
         $whereConditions = ['p.tenant_id = ?'];
-        $bindParams = [$tenantId];
+        $params = [$currentTenant['id']];
         
-        if ($search) {
-            $whereConditions[] = "(p.name ILIKE ? OR p.sku ILIKE ? OR p.barcode ILIKE ?)";
-            $searchParam = "%$search%";
-            $bindParams[] = $searchParam;
-            $bindParams[] = $searchParam;
-            $bindParams[] = $searchParam;
+        if (!empty($search)) {
+            $whereConditions[] = '(p.name ILIKE ? OR p.description ILIKE ?)';
+            $params[] = "%$search%";
+            $params[] = "%$search%";
         }
         
-        if ($category) {
-            $whereConditions[] = "p.category_id = ?";
-            $bindParams[] = $category;
-        }
-        
-        if ($status) {
-            $whereConditions[] = "p.status = ?";
-            $bindParams[] = $status;
+        if (!empty($category_id)) {
+            $whereConditions[] = 'p.category_id = ?';
+            $params[] = $category_id;
         }
         
         $whereClause = implode(' AND ', $whereConditions);
         
-        $sql = "SELECT p.*, c.name as category_name, i.quantity, i.min_stock 
-                FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN inventory i ON p.id = i.product_id 
-                WHERE $whereClause
-                ORDER BY p.created_at DESC 
-                LIMIT ? OFFSET ?";
+        // Get total count
+        $countSql = "SELECT COUNT(*) FROM products p WHERE $whereClause";
+        $stmt = $pdo->prepare($countSql);
+        $stmt->execute($params);
+        $total = $stmt->fetchColumn();
         
-        $bindParams[] = $limit;
-        $bindParams[] = $offset;
+        // Get products with category info
+        $sql = "
+            SELECT p.*, c.name as category_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            WHERE $whereClause 
+            ORDER BY p.created_at DESC 
+            LIMIT ? OFFSET ?
+        ";
+        $params[] = $limit;
+        $params[] = $offset;
         
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($bindParams);
+        $stmt->execute($params);
         $products = $stmt->fetchAll();
-        
-        // Get total count
-        $countSql = "SELECT COUNT(*) as total FROM products p WHERE $whereClause";
-        $countStmt = $pdo->prepare($countSql);
-        array_pop($bindParams); // Remove limit
-        array_pop($bindParams); // Remove offset
-        $countStmt->execute($bindParams);
-        $total = $countStmt->fetch()['total'];
         
         echo json_encode([
             'success' => true,
             'data' => [
                 'products' => $products,
                 'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
+                    'page' => (int)$page,
+                    'limit' => (int)$limit,
                     'total' => (int)$total,
                     'pages' => ceil($total / $limit)
                 ]
@@ -370,242 +288,179 @@ function getProducts($pdo, $params, $currentUser, $currentTenant) {
     }
 }
 
-function createProduct($pdo, $data, $currentUser, $currentTenant) {
+function createProduct($pdo, $currentTenant) {
     try {
-        if (empty($data['name']) || empty($data['price'])) {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['name']) || empty($data['price'])) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Name and price are required']);
             return;
         }
         
-        $tenantId = $currentUser['tenant_id'];
+        $sql = "
+            INSERT INTO products (id, tenant_id, name, description, price, cost_price, stock_quantity, category_id, sku, barcode, created_at, updated_at)
+            VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            RETURNING *
+        ";
         
-        // Check for duplicate SKU/barcode
-        if (!empty($data['sku'])) {
-            $checkStmt = $pdo->prepare("SELECT id FROM products WHERE tenant_id = ? AND sku = ?");
-            $checkStmt->execute([$tenantId, $data['sku']]);
-            if ($checkStmt->fetch()) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'SKU already exists']);
-                return;
-            }
-        }
-        
-        if (!empty($data['barcode'])) {
-            $checkStmt = $pdo->prepare("SELECT id FROM products WHERE tenant_id = ? AND barcode = ?");
-            $checkStmt->execute([$tenantId, $data['barcode']]);
-            if ($checkStmt->fetch()) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'Barcode already exists']);
-                return;
-            }
-        }
-        
-        $pdo->beginTransaction();
-        
-        // Create product
-        $productSql = "INSERT INTO products (id, tenant_id, category_id, name, description, sku, barcode, price, cost, tax_rate, track_inventory, status, image_url, created_at, updated_at) 
-                      VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) RETURNING id";
-        $productStmt = $pdo->prepare($productSql);
-        $productStmt->execute([
-            $tenantId,
-            $data['category_id'] ?? null,
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $currentTenant['id'],
             $data['name'],
-            $data['description'] ?? null,
-            $data['sku'] ?? null,
-            $data['barcode'] ?? null,
+            $data['description'] ?? '',
             $data['price'],
-            $data['cost'] ?? 0,
-            $data['tax_rate'] ?? 0,
-            $data['track_inventory'] ?? true,
-            $data['status'] ?? 'active',
-            $data['image_url'] ?? null
+            $data['cost_price'] ?? 0,
+            $data['stock_quantity'] ?? 0,
+            $data['category_id'] ?? null,
+            $data['sku'] ?? '',
+            $data['barcode'] ?? ''
         ]);
         
-        $productId = $productStmt->fetch()['id'];
-        
-        // Create inventory record if tracking inventory
-        if ($data['track_inventory'] ?? true) {
-            $inventorySql = "INSERT INTO inventory (id, tenant_id, product_id, quantity, min_stock, max_stock, created_at, updated_at) 
-                            VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?, NOW(), NOW())";
-            $inventoryStmt = $pdo->prepare($inventorySql);
-            $inventoryStmt->execute([
-                $tenantId,
-                $productId,
-                $data['stock'] ?? 0,
-                $data['min_stock'] ?? 0,
-                $data['max_stock'] ?? null
-            ]);
-        }
-        
-        $pdo->commit();
+        $product = $stmt->fetch();
         
         echo json_encode([
             'success' => true,
-            'message' => 'Product created successfully',
-            'data' => ['id' => $productId]
+            'data' => $product
         ]);
     } catch (Exception $e) {
-        $pdo->rollBack();
         error_log("Create product error: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to create product']);
     }
 }
 
-function updateProduct($pdo, $data, $currentUser, $currentTenant) {
+function updateProduct($pdo, $currentTenant) {
     try {
-        if (empty($data['id']) || empty($data['name']) || empty($data['price'])) {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['id'])) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'ID, name and price are required']);
+            echo json_encode(['success' => false, 'error' => 'Product ID is required']);
             return;
         }
         
-        $tenantId = $currentUser['tenant_id'];
+        $sql = "
+            UPDATE products 
+            SET name = ?, description = ?, price = ?, cost_price = ?, stock_quantity = ?, category_id = ?, sku = ?, barcode = ?, updated_at = NOW()
+            WHERE id = ? AND tenant_id = ?
+            RETURNING *
+        ";
         
-        // Check if product exists and belongs to tenant
-        $checkStmt = $pdo->prepare("SELECT id FROM products WHERE id = ? AND tenant_id = ?");
-        $checkStmt->execute([$data['id'], $tenantId]);
-        if (!$checkStmt->fetch()) {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $data['name'] ?? '',
+            $data['description'] ?? '',
+            $data['price'] ?? 0,
+            $data['cost_price'] ?? 0,
+            $data['stock_quantity'] ?? 0,
+            $data['category_id'] ?? null,
+            $data['sku'] ?? '',
+            $data['barcode'] ?? '',
+            $data['id'],
+            $currentTenant['id']
+        ]);
+        
+        $product = $stmt->fetch();
+        
+        if (!$product) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Product not found']);
             return;
         }
         
-        // Check for duplicate SKU/barcode (excluding current product)
-        if (!empty($data['sku'])) {
-            $checkStmt = $pdo->prepare("SELECT id FROM products WHERE tenant_id = ? AND sku = ? AND id != ?");
-            $checkStmt->execute([$tenantId, $data['sku'], $data['id']]);
-            if ($checkStmt->fetch()) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'SKU already exists']);
-                return;
-            }
-        }
-        
-        if (!empty($data['barcode'])) {
-            $checkStmt = $pdo->prepare("SELECT id FROM products WHERE tenant_id = ? AND barcode = ? AND id != ?");
-            $checkStmt->execute([$tenantId, $data['barcode'], $data['id']]);
-            if ($checkStmt->fetch()) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'Barcode already exists']);
-                return;
-            }
-        }
-        
-        $pdo->beginTransaction();
-        
-        // Update product
-        $productSql = "UPDATE products SET 
-                      category_id = ?, name = ?, description = ?, sku = ?, barcode = ?, 
-                      price = ?, cost = ?, tax_rate = ?, track_inventory = ?, status = ?, 
-                      image_url = ?, updated_at = NOW() 
-                      WHERE id = ? AND tenant_id = ?";
-        $productStmt = $pdo->prepare($productSql);
-        $productStmt->execute([
-            $data['category_id'] ?? null,
-            $data['name'],
-            $data['description'] ?? null,
-            $data['sku'] ?? null,
-            $data['barcode'] ?? null,
-            $data['price'],
-            $data['cost'] ?? 0,
-            $data['tax_rate'] ?? 0,
-            $data['track_inventory'] ?? true,
-            $data['status'] ?? 'active',
-            $data['image_url'] ?? null,
-            $data['id'],
-            $tenantId
-        ]);
-        
-        // Update inventory if exists
-        if (isset($data['stock']) || isset($data['min_stock']) || isset($data['max_stock'])) {
-            $inventorySql = "UPDATE inventory SET 
-                            quantity = ?, min_stock = ?, max_stock = ?, updated_at = NOW() 
-                            WHERE product_id = ? AND tenant_id = ?";
-            $inventoryStmt = $pdo->prepare($inventorySql);
-            $inventoryStmt->execute([
-                $data['stock'] ?? 0,
-                $data['min_stock'] ?? 0,
-                $data['max_stock'] ?? null,
-                $data['id'],
-                $tenantId
-            ]);
-        }
-        
-        $pdo->commit();
-        
         echo json_encode([
             'success' => true,
-            'message' => 'Product updated successfully'
+            'data' => $product
         ]);
     } catch (Exception $e) {
-        $pdo->rollBack();
         error_log("Update product error: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to update product']);
     }
 }
 
-function deleteProduct($pdo, $params, $currentUser, $currentTenant) {
+function deleteProduct($pdo, $currentTenant) {
     try {
-        $productId = $params['id'] ?? null;
-        if (!$productId) {
+        $id = $_GET['id'] ?? '';
+        
+        if (empty($id)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Product ID required']);
+            echo json_encode(['success' => false, 'error' => 'Product ID is required']);
             return;
         }
         
-        $tenantId = $currentUser['tenant_id'];
+        $sql = "DELETE FROM products WHERE id = ? AND tenant_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$id, $currentTenant['id']]);
         
-        // Check if product exists and belongs to tenant
-        $checkStmt = $pdo->prepare("SELECT id FROM products WHERE id = ? AND tenant_id = ?");
-        $checkStmt->execute([$productId, $tenantId]);
-        if (!$checkStmt->fetch()) {
+        if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Product not found']);
             return;
         }
-        
-        $pdo->beginTransaction();
-        
-        // Delete inventory records
-        $inventorySql = "DELETE FROM inventory WHERE product_id = ? AND tenant_id = ?";
-        $inventoryStmt = $pdo->prepare($inventorySql);
-        $inventoryStmt->execute([$productId, $tenantId]);
-        
-        // Delete product
-        $productSql = "DELETE FROM products WHERE id = ? AND tenant_id = ?";
-        $productStmt = $pdo->prepare($productSql);
-        $productStmt->execute([$productId, $tenantId]);
-        
-        $pdo->commit();
         
         echo json_encode([
             'success' => true,
             'message' => 'Product deleted successfully'
         ]);
     } catch (Exception $e) {
-        $pdo->rollBack();
         error_log("Delete product error: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to delete product']);
     }
 }
 
-// Categories Functions
-function getCategories($pdo, $params, $currentUser, $currentTenant) {
+function getCategories($pdo, $currentTenant) {
     try {
-        $tenantId = $currentUser['tenant_id'];
+        $page = $_GET['page'] ?? 1;
+        $limit = $_GET['limit'] ?? 10;
+        $search = $_GET['search'] ?? '';
+        $offset = ($page - 1) * $limit;
         
-        $sql = "SELECT * FROM categories WHERE tenant_id = ? ORDER BY name ASC";
+        $whereConditions = ['tenant_id = ?'];
+        $params = [$currentTenant['id']];
+        
+        if (!empty($search)) {
+            $whereConditions[] = 'name ILIKE ?';
+            $params[] = "%$search%";
+        }
+        
+        $whereClause = implode(' AND ', $whereConditions);
+        
+        // Get total count
+        $countSql = "SELECT COUNT(*) FROM categories WHERE $whereClause";
+        $stmt = $pdo->prepare($countSql);
+        $stmt->execute($params);
+        $total = $stmt->fetchColumn();
+        
+        // Get categories
+        $sql = "
+            SELECT * FROM categories 
+            WHERE $whereClause 
+            ORDER BY created_at DESC 
+            LIMIT ? OFFSET ?
+        ";
+        $params[] = $limit;
+        $params[] = $offset;
+        
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$tenantId]);
+        $stmt->execute($params);
         $categories = $stmt->fetchAll();
         
         echo json_encode([
             'success' => true,
-            'data' => $categories
+            'data' => [
+                'categories' => $categories,
+                'pagination' => [
+                    'page' => (int)$page,
+                    'limit' => (int)$limit,
+                    'total' => (int)$total,
+                    'pages' => ceil($total / $limit)
+                ]
+            ]
         ]);
     } catch (Exception $e) {
         error_log("Get categories error: " . $e->getMessage());
@@ -614,41 +469,35 @@ function getCategories($pdo, $params, $currentUser, $currentTenant) {
     }
 }
 
-function createCategory($pdo, $data, $currentUser, $currentTenant) {
+function createCategory($pdo, $currentTenant) {
     try {
-        if (empty($data['name'])) {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['name'])) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Name is required']);
+            echo json_encode(['success' => false, 'error' => 'Category name is required']);
             return;
         }
         
-        $tenantId = $currentUser['tenant_id'];
+        $sql = "
+            INSERT INTO categories (id, tenant_id, name, description, created_at, updated_at)
+            VALUES (uuid_generate_v4(), ?, ?, ?, NOW(), NOW())
+            RETURNING *
+        ";
         
-        // Check for duplicate name
-        $checkStmt = $pdo->prepare("SELECT id FROM categories WHERE tenant_id = ? AND name = ?");
-        $checkStmt->execute([$tenantId, $data['name']]);
-        if ($checkStmt->fetch()) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Category name already exists']);
-            return;
-        }
-        
-        $sql = "INSERT INTO categories (id, tenant_id, name, description, color, created_at, updated_at) 
-                VALUES (uuid_generate_v4(), ?, ?, ?, ?, NOW(), NOW()) RETURNING id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            $tenantId,
+            $currentTenant['id'],
             $data['name'],
-            $data['description'] ?? null,
-            $data['color'] ?? '#e41e5b'
+            $data['description'] ?? ''
         ]);
         
-        $categoryId = $stmt->fetch()['id'];
+        $category = $stmt->fetch();
         
         echo json_encode([
             'success' => true,
-            'message' => 'Category created successfully',
-            'data' => ['id' => $categoryId]
+            'data' => $category
         ]);
     } catch (Exception $e) {
         error_log("Create category error: " . $e->getMessage());
@@ -657,48 +506,43 @@ function createCategory($pdo, $data, $currentUser, $currentTenant) {
     }
 }
 
-function updateCategory($pdo, $data, $currentUser, $currentTenant) {
+function updateCategory($pdo, $currentTenant) {
     try {
-        if (empty($data['id']) || empty($data['name'])) {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['id'])) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'ID and name are required']);
+            echo json_encode(['success' => false, 'error' => 'Category ID is required']);
             return;
         }
         
-        $tenantId = $currentUser['tenant_id'];
+        $sql = "
+            UPDATE categories 
+            SET name = ?, description = ?, updated_at = NOW()
+            WHERE id = ? AND tenant_id = ?
+            RETURNING *
+        ";
         
-        // Check if category exists and belongs to tenant
-        $checkStmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND tenant_id = ?");
-        $checkStmt->execute([$data['id'], $tenantId]);
-        if (!$checkStmt->fetch()) {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $data['name'] ?? '',
+            $data['description'] ?? '',
+            $data['id'],
+            $currentTenant['id']
+        ]);
+        
+        $category = $stmt->fetch();
+        
+        if (!$category) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Category not found']);
             return;
         }
         
-        // Check for duplicate name (excluding current category)
-        $checkStmt = $pdo->prepare("SELECT id FROM categories WHERE tenant_id = ? AND name = ? AND id != ?");
-        $checkStmt->execute([$tenantId, $data['name'], $data['id']]);
-        if ($checkStmt->fetch()) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Category name already exists']);
-            return;
-        }
-        
-        $sql = "UPDATE categories SET name = ?, description = ?, color = ?, updated_at = NOW() 
-                WHERE id = ? AND tenant_id = ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            $data['name'],
-            $data['description'] ?? null,
-            $data['color'] ?? '#e41e5b',
-            $data['id'],
-            $tenantId
-        ]);
-        
         echo json_encode([
             'success' => true,
-            'message' => 'Category updated successfully'
+            'data' => $category
         ]);
     } catch (Exception $e) {
         error_log("Update category error: " . $e->getMessage());
@@ -707,43 +551,25 @@ function updateCategory($pdo, $data, $currentUser, $currentTenant) {
     }
 }
 
-function deleteCategory($pdo, $params, $currentUser, $currentTenant) {
+function deleteCategory($pdo, $currentTenant) {
     try {
-        $categoryId = $params['id'] ?? null;
-        if (!$categoryId) {
+        $id = $_GET['id'] ?? '';
+        
+        if (empty($id)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Category ID required']);
-            return;
-        }
-        
-        $tenantId = $currentUser['tenant_id'];
-        
-        // Check if category exists and belongs to tenant
-        $checkStmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND tenant_id = ?");
-        $checkStmt->execute([$categoryId, $tenantId]);
-        if (!$checkStmt->fetch()) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Category not found']);
-            return;
-        }
-        
-        // Check if category has products
-        $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM products WHERE category_id = ? AND tenant_id = ?");
-        $checkStmt->execute([$categoryId, $tenantId]);
-        $productCount = $checkStmt->fetch()['count'];
-        
-        if ($productCount > 0) {
-            http_response_code(400);
-            echo json_encode([
-                'success' => false, 
-                'error' => "Cannot delete category with $productCount products. Please move or delete the products first."
-            ]);
+            echo json_encode(['success' => false, 'error' => 'Category ID is required']);
             return;
         }
         
         $sql = "DELETE FROM categories WHERE id = ? AND tenant_id = ?";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$categoryId, $tenantId]);
+        $stmt->execute([$id, $currentTenant['id']]);
+        
+        if ($stmt->rowCount() === 0) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Category not found']);
+            return;
+        }
         
         echo json_encode([
             'success' => true,
@@ -756,38 +582,70 @@ function deleteCategory($pdo, $params, $currentUser, $currentTenant) {
     }
 }
 
-// Additional functions for sales, customers, and inventory will be added in the next part
-function getSales($pdo, $params, $currentUser, $currentTenant) {
+function getSales($pdo, $currentTenant) {
     try {
-        $tenantId = $currentUser['tenant_id'];
-        $page = isset($params['page']) ? (int)$params['page'] : 1;
-        $limit = isset($params['limit']) ? (int)$params['limit'] : 50;
+        $page = $_GET['page'] ?? 1;
+        $limit = $_GET['limit'] ?? 10;
+        $search = $_GET['search'] ?? '';
+        $start_date = $_GET['start_date'] ?? '';
+        $end_date = $_GET['end_date'] ?? '';
         $offset = ($page - 1) * $limit;
         
-        $sql = "SELECT s.*, CONCAT(c.first_name, ' ', c.last_name) as customer_name
-                FROM sales s
-                LEFT JOIN customers c ON s.customer_id = c.id
-                WHERE s.tenant_id = ?
-                ORDER BY s.created_at DESC
-                LIMIT ? OFFSET ?";
+        $whereConditions = ['s.tenant_id = ?'];
+        $params = [$currentTenant['id']];
         
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$tenantId, $limit, $offset]);
-        $sales = $stmt->fetchAll();
+        if (!empty($search)) {
+            $whereConditions[] = '(s.invoice_number ILIKE ? OR c.first_name ILIKE ? OR c.last_name ILIKE ?)';
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+        
+        if (!empty($start_date)) {
+            $whereConditions[] = 's.created_at >= ?';
+            $params[] = $start_date;
+        }
+        
+        if (!empty($end_date)) {
+            $whereConditions[] = 's.created_at <= ?';
+            $params[] = $end_date;
+        }
+        
+        $whereClause = implode(' AND ', $whereConditions);
         
         // Get total count
-        $countSql = "SELECT COUNT(*) as total FROM sales WHERE tenant_id = ?";
-        $countStmt = $pdo->prepare($countSql);
-        $countStmt->execute([$tenantId]);
-        $total = $countStmt->fetch()['total'];
+        $countSql = "
+            SELECT COUNT(*) FROM sales s 
+            LEFT JOIN customers c ON s.customer_id = c.id 
+            WHERE $whereClause
+        ";
+        $stmt = $pdo->prepare($countSql);
+        $stmt->execute($params);
+        $total = $stmt->fetchColumn();
+        
+        // Get sales with customer info
+        $sql = "
+            SELECT s.*, c.first_name, c.last_name, c.email 
+            FROM sales s 
+            LEFT JOIN customers c ON s.customer_id = c.id 
+            WHERE $whereClause 
+            ORDER BY s.created_at DESC 
+            LIMIT ? OFFSET ?
+        ";
+        $params[] = $limit;
+        $params[] = $offset;
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $sales = $stmt->fetchAll();
         
         echo json_encode([
             'success' => true,
             'data' => [
                 'sales' => $sales,
                 'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
+                    'page' => (int)$page,
+                    'limit' => (int)$limit,
                     'total' => (int)$total,
                     'pages' => ceil($total / $limit)
                 ]
@@ -800,51 +658,251 @@ function getSales($pdo, $params, $currentUser, $currentTenant) {
     }
 }
 
-function getCustomers($pdo, $params, $currentUser, $currentTenant) {
+function createSale($pdo, $currentTenant) {
     try {
-        $tenantId = $currentUser['tenant_id'];
-        $page = isset($params['page']) ? (int)$params['page'] : 1;
-        $limit = isset($params['limit']) ? (int)$params['limit'] : 50;
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['items']) || !is_array($data['items'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Sale items are required']);
+            return;
+        }
+        
+        $pdo->beginTransaction();
+        
+        try {
+            // Create sale record
+            $invoiceNumber = 'INV-' . date('Y') . '-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            
+            $sql = "
+                INSERT INTO sales (id, tenant_id, invoice_number, customer_id, total_amount, tax_amount, discount_amount, payment_method, status, created_at, updated_at)
+                VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?, 'completed', NOW(), NOW())
+                RETURNING *
+            ";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $currentTenant['id'],
+                $invoiceNumber,
+                $data['customer_id'] ?? null,
+                $data['total_amount'] ?? 0,
+                $data['tax_amount'] ?? 0,
+                $data['discount_amount'] ?? 0,
+                $data['payment_method'] ?? 'cash'
+            ]);
+            
+            $sale = $stmt->fetch();
+            $saleId = $sale['id'];
+            
+            // Create sale items and update inventory
+            foreach ($data['items'] as $item) {
+                // Create sale item
+                $itemSql = "
+                    INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price, total_price, created_at)
+                    VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?, NOW())
+                ";
+                $itemStmt = $pdo->prepare($itemSql);
+                $itemStmt->execute([
+                    $saleId,
+                    $item['product_id'],
+                    $item['quantity'],
+                    $item['unit_price'],
+                    $item['quantity'] * $item['unit_price']
+                ]);
+                
+                // Update product stock
+                $updateStockSql = "
+                    UPDATE products 
+                    SET stock_quantity = stock_quantity - ?, updated_at = NOW()
+                    WHERE id = ? AND tenant_id = ?
+                ";
+                $updateStockStmt = $pdo->prepare($updateStockSql);
+                $updateStockStmt->execute([
+                    $item['quantity'],
+                    $item['product_id'],
+                    $currentTenant['id']
+                ]);
+            }
+            
+            $pdo->commit();
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $sale
+            ]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    } catch (Exception $e) {
+        error_log("Create sale error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to create sale']);
+    }
+}
+
+function updateSale($pdo, $currentTenant) {
+    try {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['id'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Sale ID is required']);
+            return;
+        }
+        
+        $sql = "
+            UPDATE sales 
+            SET customer_id = ?, total_amount = ?, tax_amount = ?, discount_amount = ?, payment_method = ?, status = ?, updated_at = NOW()
+            WHERE id = ? AND tenant_id = ?
+            RETURNING *
+        ";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $data['customer_id'] ?? null,
+            $data['total_amount'] ?? 0,
+            $data['tax_amount'] ?? 0,
+            $data['discount_amount'] ?? 0,
+            $data['payment_method'] ?? 'cash',
+            $data['status'] ?? 'completed',
+            $data['id'],
+            $currentTenant['id']
+        ]);
+        
+        $sale = $stmt->fetch();
+        
+        if (!$sale) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Sale not found']);
+            return;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $sale
+        ]);
+    } catch (Exception $e) {
+        error_log("Update sale error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to update sale']);
+    }
+}
+
+function deleteSale($pdo, $currentTenant) {
+    try {
+        $id = $_GET['id'] ?? '';
+        
+        if (empty($id)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Sale ID is required']);
+            return;
+        }
+        
+        $pdo->beginTransaction();
+        
+        try {
+            // Get sale items to restore inventory
+            $itemsSql = "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?";
+            $itemsStmt = $pdo->prepare($itemsSql);
+            $itemsStmt->execute([$id]);
+            $items = $itemsStmt->fetchAll();
+            
+            // Restore inventory
+            foreach ($items as $item) {
+                $updateStockSql = "
+                    UPDATE products 
+                    SET stock_quantity = stock_quantity + ?, updated_at = NOW()
+                    WHERE id = ? AND tenant_id = ?
+                ";
+                $updateStockStmt = $pdo->prepare($updateStockSql);
+                $updateStockStmt->execute([
+                    $item['quantity'],
+                    $item['product_id'],
+                    $currentTenant['id']
+                ]);
+            }
+            
+            // Delete sale items
+            $deleteItemsSql = "DELETE FROM sale_items WHERE sale_id = ?";
+            $deleteItemsStmt = $pdo->prepare($deleteItemsSql);
+            $deleteItemsStmt->execute([$id]);
+            
+            // Delete sale
+            $deleteSaleSql = "DELETE FROM sales WHERE id = ? AND tenant_id = ?";
+            $deleteSaleStmt = $pdo->prepare($deleteSaleSql);
+            $deleteSaleStmt->execute([$id, $currentTenant['id']]);
+            
+            if ($deleteSaleStmt->rowCount() === 0) {
+                throw new Exception('Sale not found');
+            }
+            
+            $pdo->commit();
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Sale deleted successfully'
+            ]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    } catch (Exception $e) {
+        error_log("Delete sale error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to delete sale']);
+    }
+}
+
+function getCustomers($pdo, $currentTenant) {
+    try {
+        $page = $_GET['page'] ?? 1;
+        $limit = $_GET['limit'] ?? 10;
+        $search = $_GET['search'] ?? '';
         $offset = ($page - 1) * $limit;
-        $search = $params['search'] ?? '';
         
         $whereConditions = ['tenant_id = ?'];
-        $bindParams = [$tenantId];
+        $params = [$currentTenant['id']];
         
-        if ($search) {
-            $whereConditions[] = "(first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ? OR phone ILIKE ?)";
-            $searchParam = "%$search%";
-            $bindParams[] = $searchParam;
-            $bindParams[] = $searchParam;
-            $bindParams[] = $searchParam;
-            $bindParams[] = $searchParam;
+        if (!empty($search)) {
+            $whereConditions[] = '(first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ? OR phone ILIKE ?)';
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
         }
         
         $whereClause = implode(' AND ', $whereConditions);
         
-        $sql = "SELECT * FROM customers WHERE $whereClause ORDER BY created_at DESC LIMIT ? OFFSET ?";
-        $bindParams[] = $limit;
-        $bindParams[] = $offset;
+        // Get total count
+        $countSql = "SELECT COUNT(*) FROM customers WHERE $whereClause";
+        $stmt = $pdo->prepare($countSql);
+        $stmt->execute($params);
+        $total = $stmt->fetchColumn();
+        
+        // Get customers
+        $sql = "
+            SELECT * FROM customers 
+            WHERE $whereClause 
+            ORDER BY created_at DESC 
+            LIMIT ? OFFSET ?
+        ";
+        $params[] = $limit;
+        $params[] = $offset;
         
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($bindParams);
+        $stmt->execute($params);
         $customers = $stmt->fetchAll();
-        
-        // Get total count
-        $countSql = "SELECT COUNT(*) as total FROM customers WHERE $whereClause";
-        $countStmt = $pdo->prepare($countSql);
-        array_pop($bindParams); // Remove limit
-        array_pop($bindParams); // Remove offset
-        $countStmt->execute($bindParams);
-        $total = $countStmt->fetch()['total'];
         
         echo json_encode([
             'success' => true,
             'data' => [
                 'customers' => $customers,
                 'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
+                    'page' => (int)$page,
+                    'limit' => (int)$limit,
                     'total' => (int)$total,
                     'pages' => ceil($total / $limit)
                 ]
@@ -857,65 +915,179 @@ function getCustomers($pdo, $params, $currentUser, $currentTenant) {
     }
 }
 
-function getInventory($pdo, $params, $currentUser, $currentTenant) {
+function createCustomer($pdo, $currentTenant) {
     try {
-        $tenantId = $currentUser['tenant_id'];
-        $page = isset($params['page']) ? (int)$params['page'] : 1;
-        $limit = isset($params['limit']) ? (int)$params['limit'] : 50;
-        $offset = ($page - 1) * $limit;
-        $search = $params['search'] ?? '';
-        $lowStock = $params['low_stock'] ?? false;
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
         
-        $whereConditions = ['i.tenant_id = ?'];
-        $bindParams = [$tenantId];
-        
-        if ($search) {
-            $whereConditions[] = "(p.name ILIKE ? OR p.sku ILIKE ?)";
-            $searchParam = "%$search%";
-            $bindParams[] = $searchParam;
-            $bindParams[] = $searchParam;
+        if (!$data || empty($data['first_name']) || empty($data['last_name'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'First name and last name are required']);
+            return;
         }
         
-        if ($lowStock) {
-            $whereConditions[] = "i.quantity <= i.min_stock";
+        $sql = "
+            INSERT INTO customers (id, tenant_id, first_name, last_name, email, phone, address, created_at, updated_at)
+            VALUES (uuid_generate_v4(), ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            RETURNING *
+        ";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $currentTenant['id'],
+            $data['first_name'],
+            $data['last_name'],
+            $data['email'] ?? '',
+            $data['phone'] ?? '',
+            $data['address'] ?? ''
+        ]);
+        
+        $customer = $stmt->fetch();
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $customer
+        ]);
+    } catch (Exception $e) {
+        error_log("Create customer error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to create customer']);
+    }
+}
+
+function updateCustomer($pdo, $currentTenant) {
+    try {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['id'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Customer ID is required']);
+            return;
+        }
+        
+        $sql = "
+            UPDATE customers 
+            SET first_name = ?, last_name = ?, email = ?, phone = ?, address = ?, updated_at = NOW()
+            WHERE id = ? AND tenant_id = ?
+            RETURNING *
+        ";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $data['first_name'] ?? '',
+            $data['last_name'] ?? '',
+            $data['email'] ?? '',
+            $data['phone'] ?? '',
+            $data['address'] ?? '',
+            $data['id'],
+            $currentTenant['id']
+        ]);
+        
+        $customer = $stmt->fetch();
+        
+        if (!$customer) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Customer not found']);
+            return;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $customer
+        ]);
+    } catch (Exception $e) {
+        error_log("Update customer error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to update customer']);
+    }
+}
+
+function deleteCustomer($pdo, $currentTenant) {
+    try {
+        $id = $_GET['id'] ?? '';
+        
+        if (empty($id)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Customer ID is required']);
+            return;
+        }
+        
+        $sql = "DELETE FROM customers WHERE id = ? AND tenant_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$id, $currentTenant['id']]);
+        
+        if ($stmt->rowCount() === 0) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Customer not found']);
+            return;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Customer deleted successfully'
+        ]);
+    } catch (Exception $e) {
+        error_log("Delete customer error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to delete customer']);
+    }
+}
+
+function getInventory($pdo, $currentTenant) {
+    try {
+        $page = $_GET['page'] ?? 1;
+        $limit = $_GET['limit'] ?? 10;
+        $low_stock = $_GET['low_stock'] ?? false;
+        $product_id = $_GET['product_id'] ?? '';
+        $offset = ($page - 1) * $limit;
+        
+        $whereConditions = ['p.tenant_id = ?'];
+        $params = [$currentTenant['id']];
+        
+        if ($low_stock) {
+            $whereConditions[] = 'p.stock_quantity <= 10';
+        }
+        
+        if (!empty($product_id)) {
+            $whereConditions[] = 'p.id = ?';
+            $params[] = $product_id;
         }
         
         $whereClause = implode(' AND ', $whereConditions);
         
-        $sql = "SELECT p.id, p.name, p.sku, p.price, i.quantity, i.min_stock, i.max_stock,
-                       CASE 
-                           WHEN i.quantity <= i.min_stock THEN 'low'
-                           WHEN i.quantity >= i.max_stock THEN 'high'
-                           ELSE 'normal'
-                       END as stock_status
-                FROM products p
-                JOIN inventory i ON p.id = i.product_id
-                WHERE $whereClause
-                ORDER BY p.name ASC
-                LIMIT ? OFFSET ?";
+        // Get total count
+        $countSql = "
+            SELECT COUNT(*) FROM products p 
+            WHERE $whereClause
+        ";
+        $stmt = $pdo->prepare($countSql);
+        $stmt->execute($params);
+        $total = $stmt->fetchColumn();
         
-        $bindParams[] = $limit;
-        $bindParams[] = $offset;
+        // Get inventory with category info
+        $sql = "
+            SELECT p.*, c.name as category_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            WHERE $whereClause 
+            ORDER BY p.stock_quantity ASC, p.name ASC 
+            LIMIT ? OFFSET ?
+        ";
+        $params[] = $limit;
+        $params[] = $offset;
         
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($bindParams);
+        $stmt->execute($params);
         $inventory = $stmt->fetchAll();
-        
-        // Get total count
-        $countSql = "SELECT COUNT(*) as total FROM products p JOIN inventory i ON p.id = i.product_id WHERE $whereClause";
-        $countStmt = $pdo->prepare($countSql);
-        array_pop($bindParams); // Remove limit
-        array_pop($bindParams); // Remove offset
-        $countStmt->execute($bindParams);
-        $total = $countStmt->fetch()['total'];
         
         echo json_encode([
             'success' => true,
             'data' => [
                 'inventory' => $inventory,
                 'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
+                    'page' => (int)$page,
+                    'limit' => (int)$limit,
                     'total' => (int)$total,
                     'pages' => ceil($total / $limit)
                 ]
@@ -925,5 +1097,49 @@ function getInventory($pdo, $params, $currentUser, $currentTenant) {
         error_log("Get inventory error: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to fetch inventory']);
+    }
+}
+
+function updateInventory($pdo, $currentTenant) {
+    try {
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (!$data || empty($data['product_id']) || !isset($data['quantity'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Product ID and quantity are required']);
+            return;
+        }
+        
+        $sql = "
+            UPDATE products 
+            SET stock_quantity = ?, updated_at = NOW()
+            WHERE id = ? AND tenant_id = ?
+            RETURNING *
+        ";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $data['quantity'],
+            $data['product_id'],
+            $currentTenant['id']
+        ]);
+        
+        $product = $stmt->fetch();
+        
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Product not found']);
+            return;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $product
+        ]);
+    } catch (Exception $e) {
+        error_log("Update inventory error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to update inventory']);
     }
 }
